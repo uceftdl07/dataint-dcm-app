@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.1",
+  "collection_run_id": "94129a81-79d6-43d0-8c79-1d10e0bcbd12",
+  "source_lz_id": "lz-azure-prod",
+  "subscription_or_account_id": "fa5abbc4-02eb-416f-a75f-f8f6c5cc7d8a",
+  "cloud_provider": "azure",
+  "domain": "cost",
+  "collected_at": "2026-04-14T07:16:42.435836Z",
+  "metrics": [
+    {
+      "service_name": "Azure Databricks",
+      "resource_group": "rg-data",
+      "subscription_or_account_id": "fa5abbc4-02eb-416f-a75f-f8f6c5cc7d8a",
+      "period_start": "2026-04-01",
+      "period_end": "2026-04-13",
+      "cost_usd": 1842.5,
+      "currency": "USD",
+      "budget_name": "budget-data-platform",
+      "budget_limit_usd": 5000.0,
+      "budget_consumed_pct": 36.85,
+      "tags": {
+        "env": "prod",
+        "service": "databricks"
+      }
+    },
+    {
+      "service_name": "Azure Data Factory",
+      "resource_group": "rg-data",
+      "subscription_or_account_id": "fa5abbc4-02eb-416f-a75f-f8f6c5cc7d8a",
+      "period_start": "2026-04-01",
+      "period_end": "2026-04-13",
+      "cost_usd": 312.75,
+      "currency": "USD",
+      "budget_name": "budget-data-platform",
+      "budget_limit_usd": 5000.0,
+      "budget_consumed_pct": 6.26,
+      "tags": {
+        "env": "prod",
+        "service": "adf"
+      }
+    }
+  ],
+  "metadata": {
+    "collector_version": "1.4.0",
+    "currency": "USD"
+  },
+  "metric_count": 2,
+  "is_empty": false
+}

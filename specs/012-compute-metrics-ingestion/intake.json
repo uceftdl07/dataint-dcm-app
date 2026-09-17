@@ -1,0 +1,50 @@
+{
+  "work_type": "feature",
+  "domains": ["dataeng"],
+  "packages": ["packages/dcm-databricks-pipeline"],
+  "priority": "P1",
+  "preset": "manual",
+  "selection_mode": "manual",
+  "ticket_plan": {
+    "mode": "custom",
+    "ticket_domains": ["dataeng"],
+    "expected_story_count": 5,
+    "stories": [
+      { "slug": "curated-compute-system-tables", "title": "Curated system tables compute (warehouses, warehouse_events, node_types) → curated_dbx_compute_*" },
+      { "slug": "gold-compute-clusters", "title": "Gold clusters (cost, efficiency/rightsizing, reliability, governance) daily" },
+      { "slug": "gold-warehouses", "title": "Gold SQL warehouses (cost, utilization/rightsizing, query performance) daily" },
+      { "slug": "gold-compute-transverse", "title": "Gold transverse réactif (gold_dbx_compute_recommendations)" },
+      { "slug": "gold-compute-forecast", "title": "Gold transverse prédictif (gold_dbx_compute_forecast_daily, SQL Warehouse natif) — amendé, scindé de gold-compute-transverse" }
+    ]
+  },
+  "amended_at": "2026-08-27T00:00:00Z",
+  "amend_count": 1,
+  "dependency_gaps": [
+    {
+      "need": "Exposition API backend + UI monitoring des nouvelles gold tables compute",
+      "required_domain": "backend",
+      "ticket_planned": false,
+      "resolution": "deferred",
+      "user_label": "DataEng seul — c'est bon",
+      "evidence": "packages/dcm-backend — aucune route sur gold_dbx_compute_cluster_*/gold_dbx_compute_warehouse_* (recherche grep sans résultat)",
+      "spec_note": "Cet Epic couvre uniquement l'ingestion (curated + gold). L'exposition backend/API + affichage frontend fera l'objet d'un Epic distinct ultérieur, une fois les gold tables disponibles."
+    }
+  ],
+  "source_spike": "docs/spike/compute-metrics-definition/",
+  "target_schema": "it.ba_data_connect_monitoring__{env}",
+  "naming_convention": "gold_<source>_<domain>_<metric> — curated_dbx_* (system tables, inchangé) / gold_dbx_compute_cluster_* + gold_dbx_compute_warehouse_* + gold_dbx_compute_recommendations + gold_dbx_compute_forecast_daily (gold, préfixe dbx pour distinguer du domaine compute générique existant gold_compute_utilization)",
+  "cloud_scope": "azure_and_aws",
+  "created_at": "2026-08-12T00:00:00Z",
+  "task_dispatch_mode": "granular",
+  "existing_code_verified": {
+    "curated_dbx_compute_clusters": "existe déjà (packages/dcm-databricks-pipeline/pipelines/system_tables/specs.py)",
+    "curated_dbx_compute_node_timeline": "existe déjà (packages/dcm-databricks-pipeline/pipelines/system_tables/specs.py)",
+    "curated_dbx_compute_warehouses": "à créer",
+    "curated_dbx_compute_warehouse_events": "à créer",
+    "curated_dbx_compute_node_types": "à créer",
+    "gold_dbx_compute_cluster_*": "à créer (4 tables)",
+    "gold_dbx_compute_warehouse_*": "à créer (3 tables)",
+    "gold_dbx_compute_recommendations": "à créer",
+    "gold_dbx_compute_forecast_daily": "à créer"
+  }
+}

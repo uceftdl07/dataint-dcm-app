@@ -1,0 +1,39 @@
+{
+  "schema_version": "1.1",
+  "collection_run_id": "4ad29459-030c-42f9-affc-1ae54f309b04",
+  "source_lz_id": "lz-azure-prod",
+  "subscription_or_account_id": "fa5abbc4-02eb-416f-a75f-f8f6c5cc7d8a",
+  "cloud_provider": "azure",
+  "domain": "user",
+  "collected_at": "2026-04-14T07:16:42.437743Z",
+  "metrics": [
+    {
+      "user_id": "5678901234",
+      "user_name": "jane.doe@company.com",
+      "user_type": "databricks",
+      "is_active": true,
+      "display_name": "Jane DOE",
+      "workspace_or_account": "https://adb-3059738143768593.13.azuredatabricks.net",
+      "last_activity_at": "2026-04-13T17:42:00Z",
+      "groups": [
+        "admins",
+        "data-engineers",
+        "ml-practitioners"
+      ],
+      "roles": [
+        "CAN_MANAGE",
+        "CAN_RESTART"
+      ],
+      "tags": {
+        "department": "Data & Analytics",
+        "cost-center": "dc-monitoring"
+      }
+    }
+  ],
+  "metadata": {
+    "collector_version": "1.4.0",
+    "scim_version": "2.0"
+  },
+  "metric_count": 1,
+  "is_empty": false
+}

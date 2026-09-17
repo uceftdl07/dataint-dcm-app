@@ -1,0 +1,57 @@
+resources:
+
+  # Job Databricks PySpark — Vue gold `dim_dbx_workspace` (no DLT, no MERGE).
+  #
+  # Contrairement aux autres jobs gold/system-tables (qui MATERIALISENT des
+  # tables via MERGE), ce job execute un unique DDL `CREATE OR REPLACE VIEW` :
+  # la vue `dim_dbx_workspace` est un inner join filtre du curated
+  # `curated_dbx_access_workspaces_latest` (produit par `dcm_system_tables`) et
+  # du referentiel `dim_reference_landing_zone_dbx_workspace` (produit par
+  # `dcm_reference_lz`). Aucune dependance de job explicite (`run_job_task`) :
+  # planification decalee suffit — system-tables 03:00, reference-lz 04:30,
+  # cette vue 05:00 — les deux tables source sont ecrites avant le run. La vue
+  # n'etant pas materialisee, elle refletera de toute facon le dernier etat des
+  # tables source a chaque LECTURE ; le run quotidien ne fait que garantir que
+  # la definition de la vue existe/est a jour.
+  jobs:
+    dcm_gold_dbx_workspace:
+      name: "[${bundle.target}] DCM Gold Workspace Dimension"
+      max_concurrent_runs: 1
+      timeout_seconds: 1800
+
+      # Planification quotidienne apres system-tables (03:00) et reference-lz
+      # (04:30) : les deux tables source de la vue sont ecrites avant ce run.
+      schedule:
+        quartz_cron_expression: "0 0 5 * * ?"
+        timezone_id: "Europe/Paris"
+        pause_status: UNPAUSED
+
+      # Compute serverless : pas de job cluster a provisionner/dimensionner.
+      environments:
+        - environment_key: gold_workspace_env
+          spec:
+            environment_version: "3"
+            dependencies:
+              - ../dist/*.whl
+
+      tasks:
+        - task_key: gold_dim_dbx_workspace
+          description: "Vue gold dim_dbx_workspace : inner join curated workspaces_latest x referentiel LZ (status=RUNNING, subscription_or_account_id non nul)"
+          environment_key: gold_workspace_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-workspace
+            named_parameters:
+              catalog: ${var.catalog}
+              schema:  ${var.schema}
+          max_retries: 0
+
+      email_notifications:
+        on_failure:
+          - ${var.notification_email}
+        no_alert_for_skipped_runs: true
+
+      tags:
+        project: dcm-databricks-pipeline
+        managed_by: databricks-asset-bundle
+        domain: gold-dbx-workspace

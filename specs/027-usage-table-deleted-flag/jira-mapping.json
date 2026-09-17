@@ -1,0 +1,20 @@
+{
+  "spec": "027-usage-table-deleted-flag",
+  "epic": {
+    "key": "DCINT-355",
+    "url": "https://tdf.atlassian.net/browse/DCINT-355",
+    "summary": "[027] Marquage des tables supprimées dans le Data Product Usage"
+  },
+  "stories": [
+    {
+      "task_id": "T001",
+      "key": "DCINT-356",
+      "url": "https://tdf.atlassian.net/browse/DCINT-356",
+      "summary": "T001: DataEng usage table deleted flag",
+      "domain": "dataeng",
+      "branch": "dataeng/027-usage-table-deleted-flag",
+      "sub_spec": "stories/T001-usage-table-deleted-flag.md"
+    }
+  ],
+  "updated_at": "2026-09-16T00:00:00Z"
+}

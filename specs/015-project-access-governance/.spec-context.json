@@ -1,0 +1,24 @@
+{
+  "workflow": "speckit",
+  "specName": "Gouvernance des accès DCM — modèle « projet » + groupe Entra unique",
+  "branch": "main",
+  "history": [
+    {
+      "step": "plan",
+      "substep": null,
+      "kind": "complete",
+      "by": "ai",
+      "at": "2026-08-21T15:40:25.604Z"
+    },
+    {
+      "step": "tasks",
+      "substep": null,
+      "kind": "complete",
+      "by": "ai",
+      "at": "2026-08-21T15:43:19.144Z"
+    }
+  ],
+  "currentStep": "tasks",
+  "status": "implementing",
+  "telemetryInstanceId": "9b9ff797-86e9-464c-aa40-3e2c1f9ab2be"
+}

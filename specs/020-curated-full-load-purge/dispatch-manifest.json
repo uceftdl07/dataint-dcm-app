@@ -1,0 +1,26 @@
+{
+  "updated_at": "2026-09-02T00:00:00Z",
+  "spec": "020-curated-full-load-purge",
+  "branch_strategy": "direct_to_base",
+  "child_branch_base": "develop",
+  "pr_target": "develop",
+  "integration_branch": null,
+  "epic": null,
+  "dispatch": [
+    {
+      "task_id": "T001",
+      "jira_key": "DCINT-298",
+      "branch": "dataeng/020-purge-curated-full-load-registre-opt-in",
+      "domain": "dataeng",
+      "sub_spec": "stories/T001-curated-purge-mechanism.md",
+      "status": "pending"
+    }
+  ],
+  "summary": {
+    "jira_stories_done": 1,
+    "jira_stories_total": 1,
+    "branches_done": 1,
+    "branches_total": 1,
+    "status": "complete"
+  }
+}

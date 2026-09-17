@@ -1,0 +1,94 @@
+resources:
+
+  # Job Python — socle predictif transverse (compute + usage), decouple des
+  # jobs quotidiens `dcm_gold_dbx_compute`/`dcm_gold_dbx_usage` : `ai_forecast`
+  # exige un Pro/Serverless SQL Warehouse, incompatible avec l'environnement
+  # serverless generique d'une tache standard (cf.
+  # `pipelines.gold_dbx_compute.forecast` et `pipelines.gold_dbx_usage.forecast_daily`).
+  # Reste un `python_wheel_task` classique, meme pattern que les autres tables
+  # des deux modules. Regroupe les deux taches (independantes l'une de
+  # l'autre, executees en parallele) pour mutualiser le warehouse dedie et la
+  # cadence hebdomadaire.
+  #
+  # Cadence hebdomadaire (pas quotidienne) : coherente avec l'horizon de
+  # prevision resserre a 7 jours (`FORECAST_HORIZON_DAYS`, cf. specs.py, les
+  # deux modules partagent la meme constante).
+  #
+  # Depend fonctionnellement :
+  # - gold_compute_forecast_daily : de 6 tables gold deja materialisees par
+  #   `dcm_gold_dbx_compute` (gold_dbx_compute_cluster_cost_daily,
+  #   gold_dbx_compute_cluster_efficiency_daily,
+  #   gold_dbx_compute_job_cluster_cost_daily, gold_dbx_compute_pipeline_cost_daily,
+  #   gold_dbx_compute_warehouse_cost_daily,
+  #   gold_dbx_compute_warehouse_query_performance_daily).
+  # - gold_usage_forecast_daily : de gold_dbx_usage_table_popularity_daily
+  #   deja materialisee par `dcm_gold_dbx_usage`.
+  # Pas de dependance explicite de job a job (cadence differente dans les deux
+  # cas) : suppose que ce job tourne apres que les runs quotidiens aient deja
+  # produit ces tables.
+  jobs:
+    dcm_gold_forecast:
+      name: "[${bundle.target}] DCM Gold Forecast"
+      max_concurrent_runs: 1
+      timeout_seconds: 5400
+
+      # Hebdomadaire, lundi 07h Europe/Paris (apres les jobs gold quotidiens
+      # compute 05h / usage 06h) : laisse une marge pour que les tables source
+      # du jour soient a jour avant la projection.
+      schedule:
+        quartz_cron_expression: "0 0 7 ? * MON"
+        timezone_id: "Europe/Paris"
+        pause_status: UNPAUSED
+
+      # `full_refresh` : parametre de job optionnel pour forcer un recalcul
+      # complet, meme convention que `dcm_gold_dbx_compute`.
+      parameters:
+        - name: full_refresh
+          default: ""
+
+      # Compute serverless : pas de job cluster a provisionner/dimensionner.
+      environments:
+        - environment_key: gold_forecast_env
+          spec:
+            environment_version: "3"
+            dependencies:
+              - ../dist/*.whl
+
+      tasks:
+        - task_key: gold_compute_forecast_daily
+          description: "Projection ai_forecast, clusters + jobs + pipelines + warehouses (gold_dbx_compute_forecast_daily)"
+          environment_key: gold_forecast_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-compute
+            named_parameters:
+              table:        "forecast_daily"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+              warehouse_id: ${var.warehouse_id}
+          max_retries: 0
+
+        - task_key: gold_usage_forecast_daily
+          description: "Projection ai_forecast, 4 metriques par data product (gold_dbx_usage_forecast_daily)"
+          environment_key: gold_forecast_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-usage
+            named_parameters:
+              table:        "forecast_daily"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+              warehouse_id: ${var.warehouse_id}
+          max_retries: 0
+
+      email_notifications:
+        on_failure:
+          - ${var.notification_email}
+        no_alert_for_skipped_runs: true
+
+      tags:
+        project: dcm-databricks-pipeline
+        managed_by: databricks-asset-bundle
+        domain: gold-forecast

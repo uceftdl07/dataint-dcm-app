@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# Git pre-commit — DCM agent review stamp. The only gate that also covers a plain
+# terminal commit, so it is the backstop for every host.
+# Source of truth: spec-kit-dcm-workflow/git-hooks/pre-commit
+# Installed via: sync-dcm-extension.sh  OR  pre-commit framework (local hook)
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+HELPER="$REPO_ROOT/spec-kit-dcm-workflow/scripts/dcm-pre-commit-review-stamp.sh"
+
+# Emergency bypass (same escape hatch as the Claude Code hook)
+if [[ "${DCM_SKIP_PRE_COMMIT_REVIEW:-}" == "1" ]]; then
+  echo "⚠️  DCM_SKIP_PRE_COMMIT_REVIEW=1 — skipping agent review stamp check"
+  exit 0
+fi
+
+if [[ ! -x "$HELPER" ]]; then
+  chmod +x "$HELPER" 2>/dev/null || true
+fi
+
+if [[ ! -x "$HELPER" ]]; then
+  echo "❌ DCM pre-commit: missing $HELPER" >&2
+  echo "   Run: ./spec-kit-dcm-workflow/scripts/sync-dcm-extension.sh" >&2
+  exit 1
+fi
+
+# review.before_commit_require_pass, read with grep: yq is not installed on the
+# team's machines, so a `command -v yq` guard never honoured this key.
+REQUIRE_PASS=true
+CFG="$REPO_ROOT/.specify/extensions/dcm/dcm-config.yml"
+if [[ -f "$CFG" ]]; then
+  rp="$(grep -E '^[[:space:]]*before_commit_require_pass:' "$CFG" 2>/dev/null | head -1 \
+    | sed -E 's/^[^:]*:[[:space:]]*//; s/[[:space:]]*#.*$//' | tr -d '"'"'"' ')"
+  [[ "$rp" == "false" ]] && REQUIRE_PASS=false
+fi
+
+ARGS=(check --max-age-min 120)
+$REQUIRE_PASS && ARGS+=(--require-pass)
+
+if "$HELPER" "${ARGS[@]}"; then
+  echo "✅ DCM pre-commit review stamp OK"
+  exit 0
+fi
+
+cat >&2 <<'EOF'
+❌ Commit bloqué — review agent DCM obligatoire.
+
+  1. Lance:  /speckit.dcm.review --commit
+  2. Corrige les findings 🔴
+  3. Réessaie: git commit …
+
+Bypass urgence seulement:
+  DCM_SKIP_PRE_COMMIT_REVIEW=1 git commit …
+
+Rappel: la revue d'agent sur PR → develop est une convention d'equipe,
+elle n'est pas verifiee par la CI.
+EOF
+exit 1

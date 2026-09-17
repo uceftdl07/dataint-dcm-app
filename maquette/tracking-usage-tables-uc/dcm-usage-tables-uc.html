@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCM — Tracking d'usage · Usage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --font-sans:"Inter",ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --background:oklch(100% 0 0);
+  --foreground:oklch(14.1% .005 285.823);
+  --card:oklch(98.5% 0 0);
+  --card-foreground:oklch(14.1% .005 285.823);
+  --card-background:oklch(99.5% 0 0);
+  --card-radius:1.375rem;
+  --card-padding-x:1.25rem;
+  --card-padding-y:1rem;
+  --card-shadow:0 10px 30px #0f172a12;
+  --primary:oklch(60% .25 264.376);
+  --primary-foreground:oklch(100% 0 0);
+  --secondary:oklch(96.7% .001 286.375);
+  --secondary-foreground:oklch(21% .006 285.885);
+  --muted:oklch(96.7% .001 286.375);
+  --muted-foreground:oklch(55.2% .016 285.938);
+  --destructive:oklch(57.7% .245 27.325);
+  --destructive-foreground:oklch(100% 0 0);
+  --success:oklch(52% .1483 133.57);
+  --success-foreground:oklch(100% 0 0);
+  --success-subtle:oklch(96.5% .035 145);
+  --success-border:oklch(84% .09 145);
+  --warning:oklch(46% .13 70);
+  --warning-foreground:oklch(100% 0 0);
+  --warning-subtle:oklch(97.5% .045 85);
+  --warning-border:oklch(86% .12 80);
+  --danger:oklch(57.7% .245 27.325);
+  --danger-foreground:oklch(100% 0 0);
+  --danger-subtle:oklch(96% .035 25);
+  --danger-border:oklch(86% .105 25);
+  --info:oklch(60% .25 264.376);
+  --info-foreground:oklch(100% 0 0);
+  --info-subtle:oklch(95.5% .035 265);
+  --info-border:oklch(82% .09 265);
+  --purple:oklch(56% .22 300);
+  --purple-foreground:oklch(100% 0 0);
+  --purple-subtle:oklch(95.5% .035 300);
+  --purple-border:oklch(82% .09 300);
+  --border:oklch(92% .004 286.32);
+  --input:oklch(98.5% 0 0);
+  --ring:oklch(87.1% .006 286.286);
+  --radius:.625rem;
+  --sidebar:oklch(98.5% 0 0);
+  --sidebar-foreground:oklch(14.1% .005 285.823);
+  --sidebar-accent:oklch(96.7% .001 286.375);
+  --sidebar-accent-foreground:oklch(21% .006 285.885);
+  --sidebar-border:oklch(92% .004 286.32);
+  --tdf-gradient-brand:linear-gradient(135deg,oklch(47.42% .215 265.21),oklch(45.82% .081 176.28));
+}
+*{box-sizing:border-box;}
+body{margin:0;font-family:var(--font-sans);background:var(--background);color:var(--foreground);font-size:16px;-webkit-font-smoothing:antialiased;}
+
+.btn{font-family:inherit;cursor:pointer;border:1px solid var(--border);background:var(--background);color:var(--foreground);border-radius:999px;padding:.4rem .9rem;font-size:.8125rem;font-weight:600;display:inline-flex;align-items:center;gap:.4rem;}
+.btn-guide{background:var(--info-subtle);color:var(--info);border-color:var(--info-border);}
+.icon-btn{width:2rem;height:2rem;border-radius:999px;border:1px solid var(--border);background:var(--background);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:.9rem;}
+.dropdown-btn{border:1px solid var(--border);border-radius:999px;padding:.4rem .9rem;font-size:.8125rem;background:var(--background);display:inline-flex;align-items:center;gap:.5rem;color:var(--foreground);cursor:pointer;}
+select.select-pill{appearance:none;border:1px solid var(--border);border-radius:999px;padding:.4rem 1.75rem .4rem .9rem;font-size:.8125rem;font-family:inherit;background:var(--background) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><path d="M1 3l4 4 4-4" stroke="%2355544f" fill="none" stroke-width="1.4"/></svg>') no-repeat right .75rem center;color:var(--foreground);cursor:pointer;}
+.pill{font-family:inherit;border:1px solid var(--border);border-radius:999px;padding:.4rem .9rem;font-size:.8125rem;font-weight:600;background:var(--background);color:var(--foreground);cursor:pointer;}
+.pill.active{background:var(--primary);color:var(--primary-foreground);border-color:var(--primary);}
+.search{display:inline-flex;align-items:center;gap:.5rem;border:1px solid var(--border);border-radius:999px;padding:.5rem 1rem;color:var(--muted-foreground);font-size:.875rem;min-width:220px;}
+.search input{border:none;outline:none;background:transparent;font-family:inherit;font-size:.875rem;color:var(--foreground);width:100%;}
+.segmented{display:inline-flex;background:var(--muted);border-radius:999px;padding:3px;gap:2px;}
+.segmented button{font-family:inherit;border:none;background:transparent;padding:.4rem .8rem;border-radius:999px;font-size:.8125rem;font-weight:700;color:var(--muted-foreground);cursor:pointer;}
+.segmented button.active{background:var(--primary);color:var(--primary-foreground);}
+
+.tabbar{display:inline-flex;background:var(--muted);border-radius:999px;padding:4px;gap:2px;}
+.tabbar button{font-family:inherit;border:none;background:transparent;padding:.5rem 1.1rem;border-radius:999px;font-size:.85rem;font-weight:700;color:var(--muted-foreground);cursor:pointer;display:inline-flex;align-items:center;gap:.4rem;}
+.tabbar button.active{background:var(--background);color:var(--foreground);box-shadow:0 1px 4px #0f172a1a;}
+
+.badge{display:inline-flex;align-items:center;gap:.3rem;padding:.15rem .55rem;border-radius:999px;font-size:.72rem;font-weight:700;border:1px solid transparent;white-space:nowrap;}
+.badge-danger{background:var(--danger-subtle);color:var(--danger);border-color:var(--danger-border);}
+.badge-success{background:var(--success-subtle);color:var(--success);border-color:var(--success-border);}
+.badge-warning{background:var(--warning-subtle);color:var(--warning);border-color:var(--warning-border);}
+.badge-info{background:var(--info-subtle);color:var(--info);border-color:var(--info-border);}
+.badge-purple{background:var(--purple-subtle);color:var(--purple);border-color:var(--purple-border);}
+.badge-neutral{background:var(--secondary);color:var(--secondary-foreground);border-color:var(--border);}
+.badge-rank{background:var(--primary);color:var(--primary-foreground);}
+
+.card{background:var(--card-background);border:1px solid var(--border);border-radius:var(--card-radius);padding:var(--card-padding-y) var(--card-padding-x);box-shadow:var(--card-shadow);}
+.section-label{font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-foreground);margin:.5rem 0;}
+.kpi-card{border:1px solid var(--border);border-radius:var(--card-radius);overflow:hidden;background:var(--card-background);}
+.kpi-card-header{padding:.75rem 1rem;display:flex;justify-content:space-between;align-items:center;font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;}
+.kpi-card.blue .kpi-card-header{background:var(--info-subtle);color:var(--foreground);}
+.kpi-card.green .kpi-card-header{background:var(--success-subtle);color:var(--foreground);}
+.kpi-card.amber .kpi-card-header{background:var(--warning-subtle);color:var(--foreground);}
+.kpi-icon{width:2rem;height:2rem;border-radius:999px;background:var(--background);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.9rem;}
+.kpi-card-body{padding:1rem;}
+.kpi-value{font-size:1.5rem;font-weight:700;}
+.kpi-value.blue{color:var(--primary);}
+.kpi-value.green{color:var(--success);}
+.kpi-value.amber{color:var(--warning);}
+.kpi-sub{font-size:.8125rem;color:var(--muted-foreground);}
+.kpi-delta{font-size:.72rem;font-weight:700;margin-left:.35rem;}
+.kpi-delta.up{color:var(--success);}
+.kpi-delta.down{color:var(--danger);}
+.attn-list{display:flex;flex-direction:column;}
+.attn-row{display:flex;align-items:center;gap:.75rem;padding:.65rem 0;border-bottom:1px solid var(--border);}
+.attn-row:last-child{border-bottom:none;}
+.attn-dot{width:.55rem;height:.55rem;border-radius:999px;flex:none;}
+.attn-dot.high{background:var(--danger);}
+.attn-dot.medium{background:var(--warning);}
+.attn-text{flex:1;font-size:.8125rem;}
+.attn-text b{font-weight:700;}
+.attn-cat{font-size:.7rem;color:var(--muted-foreground);}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:1rem;}
+.trend-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem;}
+.trend-card{display:flex;flex-direction:column;gap:.5rem;}
+.trend-head{display:flex;justify-content:space-between;align-items:baseline;}
+.trend-head .t-title{font-size:.8125rem;font-weight:700;color:var(--muted-foreground);text-transform:uppercase;letter-spacing:.04em;}
+.trend-value{font-size:1.35rem;font-weight:700;}
+.spark{width:100%;height:52px;}
+.trend-foot{font-size:.72rem;color:var(--muted-foreground);}
+
+table.data-table{width:100%;border-collapse:collapse;font-size:.8125rem;}
+.data-table thead th{text-align:left;text-transform:uppercase;font-size:.66rem;letter-spacing:.05em;color:var(--muted-foreground);padding:.7rem .5rem;border-bottom:1px solid var(--border);white-space:nowrap;position:relative;}
+.th-adv-inner{display:flex;align-items:center;gap:.3rem;}
+.th-adv-inner.th-num{justify-content:flex-end;}
+.th-label-btn{display:inline-flex;align-items:center;gap:.3rem;min-width:0;background:none;border:none;cursor:pointer;color:inherit;font:inherit;padding:0;font-size:.66rem;text-transform:uppercase;letter-spacing:.05em;font-weight:700;}
+.th-label-btn .lbl{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.th-label-btn:hover{color:var(--foreground);}
+.th-sort-icon{width:11px;height:11px;flex:none;opacity:.45;transition:.15s;}
+.th-adv[aria-sort="ascending"] .th-sort-icon{opacity:1;color:var(--primary);transform:rotate(180deg);}
+.th-adv[aria-sort="descending"] .th-sort-icon{opacity:1;color:var(--primary);}
+.th-filter-btn{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:4px;color:var(--muted-foreground);cursor:pointer;border:none;background:none;flex:none;}
+.th-filter-btn svg{width:10px;height:10px;}
+.th-filter-btn:hover{color:var(--foreground);}
+.th-filter-btn.active{color:var(--primary);}
+.th-resizer{position:absolute;top:0;bottom:0;right:0;width:6px;cursor:col-resize;}
+.th-resizer::after{content:"";position:absolute;top:6px;bottom:6px;right:2px;width:1px;background:var(--border);}
+.th-resizer:hover::after,.th-resizer.active::after{background:var(--primary);}
+.th-filter-panel{position:absolute;top:calc(100% + 4px);left:0;z-index:40;background:var(--background);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--card-shadow);padding:.4rem;width:190px;max-height:220px;overflow:auto;display:none;flex-direction:column;gap:.15rem;text-transform:none;letter-spacing:normal;font-weight:400;}
+.th-filter-panel.open{display:flex;}
+.th-filter-opt{display:flex;align-items:center;gap:.4rem;padding:.3rem .35rem;border-radius:6px;font-size:.75rem;cursor:pointer;}
+.th-filter-opt:hover{background:var(--muted);}
+.th-filter-opt input{margin:0;}
+.th-filter-actions{display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:.3rem;margin-top:.15rem;}
+.th-filter-actions button{background:none;border:none;font-family:inherit;font-size:.68rem;font-weight:700;color:var(--primary);cursor:pointer;padding:.1rem;}
+.data-table tbody td{padding:.65rem .5rem;border-bottom:1px solid var(--border);vertical-align:middle;}
+.data-table tbody tr:hover{background:var(--muted);}
+.data-table tbody tr:last-child td{border-bottom:none;}
+.muted{color:var(--muted-foreground);}
+.mono-id{display:block;font-size:.7rem;color:var(--muted-foreground);margin-top:.1rem;}
+.cell-num{text-align:right;font-variant-numeric:tabular-nums;}
+th.cell-num{text-align:right;}
+.table-name{font-weight:600;}
+.kpi-delta{font-size:.68rem;font-weight:700;margin-left:.3rem;}
+.kpi-delta.up{color:var(--success);}
+.kpi-delta.down{color:var(--danger);}
+
+/* ===== Expandable drill-down row ===== */
+.expand-row td{padding:0;background:var(--muted);}
+.expand-wrap{padding:.75rem 1.5rem 1rem 2.5rem;}
+.expand-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted-foreground);margin-bottom:.5rem;}
+.mini-table{width:100%;border-collapse:collapse;font-size:.78rem;}
+.mini-table th{text-align:left;font-size:.65rem;text-transform:uppercase;color:var(--muted-foreground);padding:.35rem .5rem;position:relative;}
+.mini-table td{padding:.4rem .5rem;border-top:1px solid var(--border);}
+.mini-table td.cell-num{text-align:right;}
+.row-toggle{cursor:pointer;}
+.row-toggle .chev{display:inline-block;transition:.15s;margin-right:.3rem;color:var(--muted-foreground);}
+.row-toggle.open .chev{transform:rotate(90deg);}
+
+.content-toolbar{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;justify-content:space-between;}
+.content-toolbar .left-group{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;}
+
+/* ===== Multi-select (filtre Tables) ===== */
+.msel{position:relative;}
+.msel-btn{border:1px solid var(--border);border-radius:999px;padding:.4rem .9rem;font-size:.8125rem;background:var(--background);display:inline-flex;align-items:center;gap:.45rem;color:var(--foreground);cursor:pointer;font-family:inherit;}
+.msel-count{background:var(--primary);color:var(--primary-foreground);border-radius:999px;font-size:.68rem;font-weight:700;padding:.05rem .4rem;min-width:1.1rem;text-align:center;}
+.msel-panel{position:absolute;top:calc(100% + 6px);left:0;z-index:30;background:var(--background);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--card-shadow);padding:.5rem;width:300px;max-height:300px;display:none;flex-direction:column;gap:.4rem;}
+.msel-panel.open{display:flex;}
+.msel-search{display:flex;align-items:center;gap:.4rem;border:1px solid var(--border);border-radius:999px;padding:.3rem .7rem;}
+.msel-search input{border:none;outline:none;background:transparent;font-family:inherit;font-size:.8125rem;width:100%;}
+.msel-options{overflow:auto;max-height:190px;display:flex;flex-direction:column;gap:.1rem;}
+.msel-option{display:flex;align-items:center;gap:.5rem;padding:.4rem .45rem;border-radius:6px;font-size:.8125rem;cursor:pointer;}
+.msel-option:hover{background:var(--muted);}
+.msel-option input{margin:0;}
+.msel-option .o-cat{display:block;font-size:.68rem;color:var(--muted-foreground);}
+.msel-actions{display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:.4rem;}
+.msel-actions button{background:none;border:none;font-family:inherit;font-size:.75rem;font-weight:700;color:var(--primary);cursor:pointer;padding:.2rem;}
+.chip-row{display:flex;gap:.4rem;flex-wrap:wrap;}
+.chip-row:empty{display:none;}
+.chip{display:inline-flex;align-items:center;gap:.35rem;background:var(--secondary);color:var(--secondary-foreground);border-radius:999px;padding:.25rem .6rem .25rem .75rem;font-size:.72rem;font-weight:600;}
+.chip button{border:none;background:transparent;cursor:pointer;font-size:.85rem;color:var(--muted-foreground);line-height:1;padding:0;}
+.chip button:hover{color:var(--danger);}
+.card-footnote{font-size:.72rem;color:var(--muted-foreground);margin-top:.75rem;padding-top:.75rem;border-top:1px dashed var(--border);}
+.card-head-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;flex-wrap:wrap;gap:.5rem;}
+.card-head-row h3{margin:0;font-size:.95rem;}
+.empty-state{text-align:center;color:var(--muted-foreground);font-size:.8125rem;padding:2rem 0;}
+
+.app-shell{display:grid;grid-template-columns:220px 1fr;min-height:100vh;border:1px solid var(--border);}
+.app-sidebar{background:var(--sidebar);color:var(--sidebar-foreground);border-right:1px solid var(--sidebar-border);padding:1rem .75rem;display:flex;flex-direction:column;justify-content:space-between;}
+.app-logo{display:flex;align-items:center;gap:.5rem;padding:.5rem;margin-bottom:1rem;}
+.app-logo .mark{width:28px;height:28px;border-radius:8px;background:var(--tdf-gradient-brand);}
+.app-logo .word b{display:block;line-height:1.1;font-size:.95rem;}
+.app-logo .word .accent{color:var(--primary);}
+.nav-group{margin-bottom:.25rem;}
+.nav-item{display:flex;align-items:center;gap:.6rem;padding:.5rem .6rem;border-radius:var(--radius);font-size:.85rem;font-weight:500;color:var(--sidebar-foreground);cursor:pointer;text-decoration:none;}
+.nav-item:hover{background:var(--sidebar-accent);}
+.nav-item.current{background:var(--sidebar-accent);font-weight:700;}
+.nav-sub{margin-left:1.5rem;display:flex;flex-direction:column;}
+.nav-sub .nav-item{font-size:.82rem;padding:.4rem .6rem;}
+.sidebar-footer{border-top:1px solid var(--sidebar-border);padding-top:.75rem;}
+.user-chip{display:flex;align-items:center;gap:.5rem;padding:.4rem;font-size:.75rem;}
+.avatar{width:28px;height:28px;border-radius:999px;background:var(--secondary);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.7rem;}
+.app-main{display:flex;flex-direction:column;}
+.app-topbar{padding:0;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:0;}
+
+/* ===== Nouveau bandeau (sticky, style Jobs & Pipelines) ===== */
+.tb-wrap{position:sticky;top:0;z-index:40;background:color-mix(in oklch, var(--background) 90%, transparent);backdrop-filter:blur(16px);padding:.75rem 1.5rem;display:flex;flex-direction:column;gap:.5rem;width:100%;}
+.tb-title-row{display:flex;align-items:center;gap:.6rem;}
+.tb-title{font-size:1.125rem;font-weight:700;letter-spacing:-.02em;}
+.tb-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;background:var(--muted);border-radius:1.25rem;padding:.4rem;box-shadow:0 1px 2px #0000000d;}
+.tb-guide{position:relative;display:inline-flex;align-items:center;gap:.5rem;height:2.5rem;padding:0 .75rem;border-radius:1rem;border:1px solid var(--info-border);background:var(--background);color:var(--info);font-size:.75rem;font-weight:700;cursor:pointer;overflow:visible;}
+.tb-guide-icon{width:1.75rem;height:1.75rem;border-radius:.7rem;background:var(--info-subtle);display:flex;align-items:center;justify-content:center;font-size:.85rem;}
+.tb-guide-dot{width:.45rem;height:.45rem;border-radius:999px;background:var(--success);box-shadow:0 0 6px color-mix(in oklch, var(--success) 70%, transparent);}
+.tb-icon-btn{width:2.5rem;height:2.5rem;flex:none;border-radius:1rem;border:1px solid var(--border);background:var(--background);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--info);font-size:1rem;}
+.tb-filter{min-width:9.5rem;flex:1 1 9.5rem;}
+.tb-select-btn{height:2.5rem;width:100%;border-radius:1rem;border:1px solid var(--border);background:var(--background);padding:0 .75rem;font-size:.8125rem;font-weight:500;display:flex;align-items:center;justify-content:space-between;gap:.4rem;cursor:pointer;color:var(--foreground);font-family:inherit;}
+.tb-select-btn .ic{color:var(--info);font-size:.85rem;}
+.tb-select-btn .chev{color:var(--info);font-size:.7rem;}
+.tb-date{height:2.5rem;border-radius:1rem;border:1px solid var(--border);background:var(--background);padding:0 .75rem;display:flex;align-items:center;gap:.4rem;font-size:.8125rem;min-width:8.5rem;flex:1 1 8.5rem;cursor:pointer;}
+.tb-date .lbl{color:var(--muted-foreground);flex:none;}
+.tb-date .val{color:var(--foreground);font-weight:500;}
+.tb-range{display:flex;align-items:center;gap:.3rem;margin-left:auto;}
+.tb-range button{height:2rem;min-width:2.35rem;border-radius:999px;border:1px solid var(--border);background:var(--background);font-size:.72rem;font-weight:700;color:var(--muted-foreground);cursor:pointer;transition:.2s;font-family:inherit;}
+.tb-range button:hover{transform:translateY(-1px);border-color:var(--info-border);background:var(--info-subtle);color:var(--info);}
+.tb-range button.active{background:var(--primary);color:var(--primary-foreground);border-color:var(--primary);}
+.topbar-left .breadcrumb{font-size:.75rem;color:var(--muted-foreground);margin-bottom:.15rem;}
+.topbar-left .page-title{font-size:1.15rem;font-weight:700;}
+.topbar-right{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;}
+.app-content{padding:1.5rem;display:flex;flex-direction:column;gap:1.5rem;}
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+  <aside class="app-sidebar">
+    <div>
+      <div class="app-logo"><span class="mark"></span><span class="word"><b>Data</b><b class="accent">connect</b></span></div>
+      <nav>
+        <a class="nav-item">▦ Home</a>
+        <div class="nav-group">
+          <a class="nav-item">⛓ Databricks</a>
+          <div class="nav-sub">
+            <a class="nav-item">Overview</a>
+            <a class="nav-item">Jobs &amp; Pipelines</a>
+            <a class="nav-item">Compute</a>
+            <a class="nav-item">FinOps</a>
+            <div class="nav-group" style="margin-bottom:0;">
+              <a class="nav-item">📈 Usage</a>
+              <div class="nav-sub">
+                <a class="nav-item current">Usage des tables UC</a>
+                <a class="nav-item">Gouvernance &amp; Recommandations</a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="nav-group">
+          <a class="nav-item">🛎 Anomalies</a>
+          <div class="nav-sub">
+            <a class="nav-item">Rules</a>
+            <a class="nav-item">Reports</a>
+          </div>
+        </div>
+        <a class="nav-item">🗂 Talk to your Data</a>
+      </nav>
+    </div>
+    <div class="sidebar-footer">
+      <div class="nav-group">
+        <a class="nav-item">⚙ Administration</a>
+        <div class="nav-sub"><a class="nav-item">Notification Settings</a></div>
+      </div>
+      <div class="user-chip"><span class="avatar">ML</span> Maher Lezhari</div>
+    </div>
+  </aside>
+
+  <div class="app-main">
+    <div class="app-topbar">
+      <div class="tb-wrap">
+        <div class="tb-title-row">
+          <div class="tb-title">Usage des tables UC</div>
+        </div>
+        <div class="tb-toolbar">
+          <button class="tb-guide" type="button">
+            <span class="tb-guide-icon">◎</span>
+            <span>Guide</span>
+            <span class="tb-guide-dot"></span>
+          </button>
+          <button class="tb-icon-btn" aria-label="Notifications">🔔</button>
+          <div class="tb-filter">
+            <button class="tb-select-btn" type="button"><span><span class="ic">☁</span> Tous les clouds</span><span class="chev">▾</span></button>
+          </div>
+          <div class="tb-date"><span class="lbl">From</span><span class="val">01/06/2026</span></div>
+          <div class="tb-date"><span class="lbl">To</span><span class="val">08/09/2026</span></div>
+          <div class="tb-range">
+            <button type="button">30d</button>
+            <button type="button" class="active">90d</button>
+            <button type="button">6m</button>
+            <button type="button">1y</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="app-content">
+
+      <!-- ===================== FILTRES COMMUNS (catalogue/schéma/table) ===================== -->
+      <div class="content-toolbar">
+        <select class="select-pill" id="f-catalog">
+          <option value="all">Tous les catalogues</option>
+          <option value="it_ba_dcm">it.ba_data_connect_monitoring</option>
+          <option value="it_ba_finance">it.ba_finance</option>
+          <option value="it_ba_supply">it.ba_supply_chain</option>
+        </select>
+        <select class="select-pill" id="f-schema">
+          <option value="all">Tous les schémas</option>
+          <option value="gold">gold</option>
+          <option value="curated">curated</option>
+          <option value="raw">raw</option>
+        </select>
+        <div class="msel" id="msel-tables">
+          <button class="msel-btn" id="msel-btn-tables" type="button">
+            🗄 Tables <span class="msel-count" id="msel-count-tables" style="display:none;">0</span> ▾
+          </button>
+          <div class="msel-panel" id="msel-panel-tables">
+            <div class="msel-search"><span>🔍</span><input type="text" id="msel-search-tables" placeholder="Filtrer les tables…"></div>
+            <div class="msel-options" id="msel-options-tables">
+              <label class="msel-option" data-name="gold_dbx_usage_table_daily"><input type="checkbox" value="gold_dbx_usage_table_daily"><span>gold_dbx_usage_table_daily<span class="o-cat">it.ba_data_connect_monitoring · gold</span></span></label>
+              <label class="msel-option" data-name="gold_cost_summary"><input type="checkbox" value="gold_cost_summary"><span>gold_cost_summary<span class="o-cat">it.ba_finance · gold</span></span></label>
+              <label class="msel-option" data-name="curated_inventory_snapshot"><input type="checkbox" value="curated_inventory_snapshot"><span>curated_inventory_snapshot<span class="o-cat">it.ba_supply_chain · curated</span></span></label>
+              <label class="msel-option" data-name="curated_dbx_query_history"><input type="checkbox" value="curated_dbx_query_history"><span>curated_dbx_query_history<span class="o-cat">it.ba_data_connect_monitoring · curated</span></span></label>
+              <label class="msel-option" data-name="gold_compute_utilization"><input type="checkbox" value="gold_compute_utilization"><span>gold_compute_utilization<span class="o-cat">it.ba_data_connect_monitoring · gold</span></span></label>
+              <label class="msel-option" data-name="raw_legacy_billing_2023"><input type="checkbox" value="raw_legacy_billing_2023"><span>raw_legacy_billing_2023<span class="o-cat">it.ba_finance · raw</span></span></label>
+            </div>
+            <div class="msel-actions">
+              <button type="button" id="msel-clear-tables">Tout effacer</button>
+              <button type="button" id="msel-apply-tables">Appliquer</button>
+            </div>
+          </div>
+        </div>
+        <span class="muted" style="font-size:.72rem;">S'applique à l'ensemble de la page (vue d'ensemble et les 3 vues ci-dessous)</span>
+      </div>
+      <div class="chip-row" id="chip-row-tables"></div>
+
+      <!-- ===================== VUE D'ENSEMBLE (fusionnée depuis Overview) ===================== -->
+      <div>
+        <div class="section-label">Vue d'ensemble — période</div>
+        <div class="kpi-grid">
+          <div class="kpi-card blue">
+            <div class="kpi-card-header">Tables suivies <span class="kpi-icon">🗄</span></div>
+            <div class="kpi-card-body"><div class="kpi-value blue">1 284</div><div class="kpi-sub">Vues dans table_lineage / access_audit</div></div>
+          </div>
+          <div class="kpi-card blue">
+            <div class="kpi-card-header">Requêtes <span class="kpi-icon">▤</span></div>
+            <div class="kpi-card-body"><div class="kpi-value blue">482k<span class="kpi-delta up">▲ 6,2 %</span></div><div class="kpi-sub">vs période précédente</div></div>
+          </div>
+          <div class="kpi-card blue">
+            <div class="kpi-card-header">Consommateurs distincts <span class="kpi-icon">◎</span></div>
+            <div class="kpi-card-body"><div class="kpi-value blue">213</div><div class="kpi-sub">Users, SP, jobs, dashboards…</div></div>
+          </div>
+          <div class="kpi-card green">
+            <div class="kpi-card-header">Coût attribué <span class="kpi-icon">$</span></div>
+            <div class="kpi-card-body"><div class="kpi-value green">$18 940<span class="kpi-delta up">▲ 3,1 %</span></div><div class="kpi-sub">Compute des requêtes de lecture</div></div>
+          </div>
+          <div class="kpi-card amber">
+            <div class="kpi-card-header">Tables inutilisées <span class="kpi-icon">🧊</span></div>
+            <div class="kpi-card-body"><div class="kpi-value amber">96</div><div class="kpi-sub">0 lecture sur 90 jours</div></div>
+          </div>
+          <div class="kpi-card red">
+            <div class="kpi-card-header">Taux d'échec d'accès <span class="kpi-icon">⚠</span></div>
+            <div class="kpi-card-body"><div class="kpi-value red">1,8 %</div><div class="kpi-sub">getTable refusés / échoués</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-label">Tendances — socle prédictif (ai_forecast)</div>
+        <div class="trend-grid">
+          <div class="card trend-card">
+            <div class="trend-head">
+              <span class="t-title">Lectures — 14j projetés</span>
+              <span class="badge badge-success">Adoption stable</span>
+            </div>
+            <div class="trend-value">482k <span class="kpi-sub" style="font-size:.75rem;">→ 512k est.</span></div>
+            <svg class="spark" viewBox="0 0 300 52" preserveAspectRatio="none">
+              <polyline points="0,38 30,34 60,36 90,28 120,30 150,22 180,24 210,16 240,18" fill="none" stroke="var(--primary)" stroke-width="2"/>
+              <polyline points="240,18 270,14 300,10" fill="none" stroke="var(--primary)" stroke-width="2" stroke-dasharray="4 3"/>
+            </svg>
+            <div class="trend-foot">Source : gold_dbx_usage_table_popularity_daily → forecast_daily (metric request_count)</div>
+          </div>
+          <div class="card trend-card">
+            <div class="trend-head">
+              <span class="t-title">Coût $ — 14j projetés</span>
+              <span class="badge badge-warning">Dérive modérée</span>
+            </div>
+            <div class="trend-value">$18 940 <span class="kpi-sub" style="font-size:.75rem;">→ $21 300 est.</span></div>
+            <svg class="spark" viewBox="0 0 300 52" preserveAspectRatio="none">
+              <polyline points="0,40 30,38 60,32 90,34 120,26 150,28 180,20 210,22 240,14" fill="none" stroke="var(--warning)" stroke-width="2"/>
+              <polyline points="240,14 270,8 300,4" fill="none" stroke="var(--warning)" stroke-width="2" stroke-dasharray="4 3"/>
+            </svg>
+            <div class="trend-foot">Source : gold_dbx_usage_consumer_daily → forecast_daily (metric cost_usd)</div>
+          </div>
+          <div class="card trend-card">
+            <div class="trend-head">
+              <span class="t-title">Consommateurs distincts — 14j projetés</span>
+              <span class="badge badge-success">Croissance</span>
+            </div>
+            <div class="trend-value">213 <span class="kpi-sub" style="font-size:.75rem;">→ 229 est.</span></div>
+            <svg class="spark" viewBox="0 0 300 52" preserveAspectRatio="none">
+              <polyline points="0,42 30,40 60,36 90,37 120,30 150,31 180,24 210,20 240,18" fill="none" stroke="var(--purple)" stroke-width="2"/>
+              <polyline points="240,18 270,12 300,8" fill="none" stroke="var(--purple)" stroke-width="2" stroke-dasharray="4 3"/>
+            </svg>
+            <div class="trend-foot">Source : gold_dbx_usage_table_popularity_daily → forecast_daily (metric distinct_consumers)</div>
+          </div>
+          <div class="card trend-card">
+            <div class="trend-head">
+              <span class="t-title">Volume écrit — évolution</span>
+              <span class="badge badge-neutral">En attente de données</span>
+            </div>
+            <div class="trend-value">0 GB <span class="kpi-sub" style="font-size:.75rem;">sur la période</span></div>
+            <svg class="spark" viewBox="0 0 300 52" preserveAspectRatio="none">
+              <polyline points="0,48 300,48" fill="none" stroke="var(--border)" stroke-width="2" stroke-dasharray="3 3"/>
+            </svg>
+            <div class="trend-foot">Source : gold_dbx_usage_table_daily (data_written_bytes) — actuellement toujours à 0, aucune source ne fournit le volume écrit par table dans le pipeline actuel. Ingestion en cours de correction côté data engineering ; la carte s'activera automatiquement une fois la donnée alimentée.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== SWITCH VUE ===================== -->
+      <div class="content-toolbar">
+        <div class="tabbar">
+          <button class="active" data-view="table">🗄 Par table</button>
+          <button data-view="consumer">◎ Par consommateur</button>
+          <button data-view="finops">$ FinOps</button>
+        </div>
+        <span class="search"><span>🔍</span><input type="text" id="q" placeholder="Rechercher…"></span>
+      </div>
+
+      <!-- ===================== FILTRES SPÉCIFIQUES À LA VUE ===================== -->
+      <div class="content-toolbar">
+        <div class="left-group" id="filters-table">
+          <select class="select-pill">
+            <option>Trier par popularité</option>
+            <option>Trier par coût</option>
+            <option>Trier par latence p95</option>
+            <option>Trier par taux d'échec</option>
+          </select>
+        </div>
+        <div class="left-group" id="filters-consumer" style="display:none;">
+          <select class="select-pill">
+            <option value="all">Tous les types</option>
+            <option>USER</option>
+            <option>SERVICE_PRINCIPAL</option>
+            <option>JOB</option>
+            <option>DASHBOARD</option>
+            <option>NOTEBOOK</option>
+            <option>PIPELINE</option>
+            <option>GENIE</option>
+          </select>
+          <select class="select-pill">
+            <option>Trier par coût</option>
+            <option>Trier par requêtes</option>
+            <option>Trier par tables distinctes</option>
+          </select>
+        </div>
+        <div class="left-group" id="filters-finops" style="display:none;">
+          <select class="select-pill">
+            <option>Trier par coût</option>
+            <option>Trier par coût / requête</option>
+            <option>Trier par volume lu</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- ===================== VUE PAR TABLE ===================== -->
+      <div class="card" id="view-table">
+        <div class="card-head-row">
+          <h3>Popularité &amp; performance par table</h3>
+          <span class="muted" style="font-size:.75rem;">Cliquer sur une ligne pour voir le top consommateurs</span>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Table</th>
+              <th class="cell-num">Lectures</th>
+              <th class="cell-num">Consomm.</th>
+              <th class="cell-num">Volume lu</th>
+              <th class="cell-num">Coût $</th>
+              <th class="cell-num">p95 latence</th>
+              <th class="cell-num">Éch. accès</th>
+              <th>Fraîcheur</th>
+            </tr>
+          </thead>
+          <tbody id="rows-table">
+
+            <tr class="row-toggle" data-target="exp-1" data-catalog="it_ba_dcm" data-schema="gold" data-name="gold_dbx_usage_table_daily">
+              <td><span class="chev">▸</span><span class="table-name">gold_dbx_usage_table_daily</span><span class="mono-id">it.ba_data_connect_monitoring__p.gold</span></td>
+              <td class="cell-num">58 240<span class="kpi-delta up">▲12%</span></td>
+              <td class="cell-num">64</td>
+              <td class="cell-num">142 GB</td>
+              <td class="cell-num">$2 180</td>
+              <td class="cell-num">340 ms</td>
+              <td class="cell-num">0,2 %</td>
+              <td class="muted">Écrit il y a 4h</td>
+            </tr>
+            <tr class="expand-row" id="exp-1" style="display:none;">
+              <td colspan="8">
+                <div class="expand-wrap">
+                  <div class="expand-title">Top consommateurs — gold_dbx_usage_table_daily</div>
+                  <table class="mini-table">
+                    <thead><tr><th>Rang</th><th>Consommateur</th><th>Type</th><th class="cell-num">Requêtes</th><th class="cell-num">Coût $</th><th>Dernier accès</th></tr></thead>
+                    <tbody>
+                      <tr><td><span class="badge badge-rank">1</span></td><td>svc-finops-pipeline</td><td class="muted">SERVICE_PRINCIPAL</td><td class="cell-num">14 210</td><td class="cell-num">$620</td><td class="muted">il y a 12 min</td></tr>
+                      <tr><td><span class="badge badge-rank">2</span></td><td>dashboard_finops_exec</td><td class="muted">DASHBOARD</td><td class="cell-num">9 840</td><td class="cell-num">$410</td><td class="muted">il y a 40 min</td></tr>
+                      <tr><td><span class="badge badge-rank">3</span></td><td>j.martin@totalenergies.com</td><td class="muted">USER</td><td class="cell-num">6 120</td><td class="cell-num">$260</td><td class="muted">il y a 2h</td></tr>
+                      <tr><td><span class="badge badge-rank">4</span></td><td>job_daily_cost_rollup</td><td class="muted">JOB</td><td class="cell-num">4 980</td><td class="cell-num">$205</td><td class="muted">il y a 3h</td></tr>
+                      <tr><td><span class="badge badge-rank">5</span></td><td>a.dubois@totalenergies.com</td><td class="muted">USER</td><td class="cell-num">3 340</td><td class="cell-num">$140</td><td class="muted">il y a 5h</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </td>
+            </tr>
+
+            <tr class="row-toggle" data-target="exp-2" data-catalog="it_ba_finance" data-schema="gold" data-name="gold_cost_summary">
+              <td><span class="chev">▸</span><span class="table-name">gold_cost_summary</span><span class="mono-id">it.ba_finance__p.gold</span></td>
+              <td class="cell-num">31 902<span class="kpi-delta up">▲4%</span></td>
+              <td class="cell-num">38</td>
+              <td class="cell-num">64 GB</td>
+              <td class="cell-num">$960</td>
+              <td class="cell-num">210 ms</td>
+              <td class="cell-num">0,0 %</td>
+              <td class="muted">Écrit il y a 6h</td>
+            </tr>
+            <tr class="expand-row" id="exp-2" style="display:none;">
+              <td colspan="8">
+                <div class="expand-wrap">
+                  <div class="expand-title">Top consommateurs — gold_cost_summary</div>
+                  <table class="mini-table">
+                    <thead><tr><th>Rang</th><th>Consommateur</th><th>Type</th><th class="cell-num">Requêtes</th><th class="cell-num">Coût $</th><th>Dernier accès</th></tr></thead>
+                    <tbody>
+                      <tr><td><span class="badge badge-rank">1</span></td><td>dashboard_finops_exec</td><td class="muted">DASHBOARD</td><td class="cell-num">8 210</td><td class="cell-num">$310</td><td class="muted">il y a 3h</td></tr>
+                      <tr><td><span class="badge badge-rank">2</span></td><td>svc-finops-pipeline</td><td class="muted">SERVICE_PRINCIPAL</td><td class="cell-num">7 640</td><td class="cell-num">$280</td><td class="muted">il y a 1h</td></tr>
+                      <tr><td><span class="badge badge-rank">3</span></td><td>m.leroy@totalenergies.com</td><td class="muted">USER</td><td class="cell-num">4 120</td><td class="cell-num">$150</td><td class="muted">il y a 6h</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </td>
+            </tr>
+
+            <tr class="row-toggle" data-target="exp-3" data-catalog="it_ba_supply" data-schema="curated" data-name="curated_inventory_snapshot">
+              <td><span class="chev">▸</span><span class="table-name">curated_inventory_snapshot</span><span class="mono-id">it.ba_supply_chain__p.curated</span></td>
+              <td class="cell-num">9 415<span class="kpi-delta down">▼8%</span></td>
+              <td class="cell-num">17</td>
+              <td class="cell-num">21 GB</td>
+              <td class="cell-num">$340</td>
+              <td class="cell-num">1 240 ms</td>
+              <td class="cell-num">0,4 %</td>
+              <td class="muted">Écrit il y a 6j</td>
+            </tr>
+            <tr class="expand-row" id="exp-3" style="display:none;">
+              <td colspan="8">
+                <div class="expand-wrap">
+                  <div class="expand-title">Top consommateurs — curated_inventory_snapshot</div>
+                  <table class="mini-table">
+                    <thead><tr><th>Rang</th><th>Consommateur</th><th>Type</th><th class="cell-num">Requêtes</th><th class="cell-num">Coût $</th><th>Dernier accès</th></tr></thead>
+                    <tbody>
+                      <tr><td><span class="badge badge-rank">1</span></td><td>job_supply_reorder</td><td class="muted">JOB</td><td class="cell-num">5 210</td><td class="cell-num">$180</td><td class="muted">il y a 40 min</td></tr>
+                      <tr><td><span class="badge badge-rank">2</span></td><td>p.nguyen@totalenergies.com</td><td class="muted">USER</td><td class="cell-num">2 340</td><td class="cell-num">$95</td><td class="muted">il y a 2h</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </td>
+            </tr>
+
+            <tr class="row-toggle" data-target="exp-4" data-catalog="it_ba_dcm" data-schema="curated" data-name="curated_dbx_query_history">
+              <td><span class="chev">▸</span><span class="table-name">curated_dbx_query_history</span><span class="mono-id">it.ba_data_connect_monitoring__p.curated</span></td>
+              <td class="cell-num">4 802</td>
+              <td class="cell-num">11</td>
+              <td class="cell-num">9 GB</td>
+              <td class="cell-num">$120</td>
+              <td class="cell-num">2 010 ms</td>
+              <td class="cell-num" style="color:var(--danger);font-weight:700;">7,6 %</td>
+              <td class="muted">Écrit il y a 1h</td>
+            </tr>
+            <tr class="expand-row" id="exp-4" style="display:none;">
+              <td colspan="8">
+                <div class="expand-wrap">
+                  <div class="expand-title">Top consommateurs — curated_dbx_query_history</div>
+                  <table class="mini-table">
+                    <thead><tr><th>Rang</th><th>Consommateur</th><th>Type</th><th class="cell-num">Requêtes</th><th class="cell-num">Coût $</th><th>Dernier accès</th></tr></thead>
+                    <tbody>
+                      <tr><td><span class="badge badge-rank">1</span></td><td>svc-dcm-backend</td><td class="muted">SERVICE_PRINCIPAL</td><td class="cell-num">4 120</td><td class="cell-num">$105</td><td class="muted">il y a 5 min</td></tr>
+                      <tr><td><span class="badge badge-rank">2</span></td><td>notebook_debug_dcm</td><td class="muted">NOTEBOOK</td><td class="cell-num">682</td><td class="cell-num">$15</td><td class="muted">il y a 1h</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </td>
+            </tr>
+
+          </tbody>
+        </table>
+        <p class="empty-state" id="empty-table" style="display:none;">Aucune table ne correspond aux filtres.</p>
+        <div class="card-footnote">Source : gold_dbx_usage_table_daily (top consommateurs, filtré par table) · gold_dbx_usage_table_popularity_daily · gold_dbx_usage_table_query_performance_daily · gold_dbx_usage_table_catalog (fraîcheur = last_write_at).</div>
+      </div>
+
+      <!-- ===================== VUE PAR CONSOMMATEUR ===================== -->
+      <div class="card" id="view-consumer" style="display:none;">
+        <div class="card-head-row">
+          <h3>Top consommateurs</h3>
+          <span class="muted" style="font-size:.75rem;">Classement par coût attribué sur la période</span>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Rang</th>
+              <th>Consommateur</th>
+              <th>Type</th>
+              <th class="cell-num">Tables distinctes</th>
+              <th class="cell-num">Requêtes</th>
+              <th class="cell-num">Volume lu</th>
+              <th class="cell-num">Coût $</th>
+            </tr>
+          </thead>
+          <tbody id="rows-consumer">
+            <tr data-type="SERVICE_PRINCIPAL" data-name="svc-finops-pipeline" data-catalog="it_ba_finance" data-schema="gold" data-tables="gold_cost_summary,gold_dbx_usage_table_daily">
+              <td><span class="badge badge-rank">1</span></td>
+              <td>svc-finops-pipeline</td>
+              <td><span class="badge badge-info">SERVICE_PRINCIPAL</span></td>
+              <td class="cell-num">42</td>
+              <td class="cell-num">28 410</td>
+              <td class="cell-num">61 GB</td>
+              <td class="cell-num">$1 240</td>
+            </tr>
+            <tr data-type="DASHBOARD" data-name="dashboard_finops_exec" data-catalog="it_ba_finance" data-schema="gold" data-tables="gold_cost_summary">
+              <td><span class="badge badge-rank">2</span></td>
+              <td>dashboard_finops_exec</td>
+              <td><span class="badge badge-purple">DASHBOARD</span></td>
+              <td class="cell-num">19</td>
+              <td class="cell-num">19 640</td>
+              <td class="cell-num">38 GB</td>
+              <td class="cell-num">$860</td>
+            </tr>
+            <tr data-type="JOB" data-name="job_daily_cost_rollup" data-catalog="it_ba_dcm" data-schema="gold" data-tables="gold_dbx_usage_table_daily,gold_compute_utilization">
+              <td><span class="badge badge-rank">3</span></td>
+              <td>job_daily_cost_rollup</td>
+              <td><span class="badge badge-warning">JOB</span></td>
+              <td class="cell-num">8</td>
+              <td class="cell-num">11 980</td>
+              <td class="cell-num">22 GB</td>
+              <td class="cell-num">$540</td>
+            </tr>
+            <tr data-type="USER" data-name="j.martin@totalenergies.com" data-catalog="it_ba_dcm" data-schema="gold" data-tables="gold_dbx_usage_table_daily">
+              <td><span class="badge badge-rank">4</span></td>
+              <td>j.martin@totalenergies.com</td>
+              <td><span class="badge badge-neutral">USER</span></td>
+              <td class="cell-num">14</td>
+              <td class="cell-num">9 210</td>
+              <td class="cell-num">15 GB</td>
+              <td class="cell-num">$410</td>
+            </tr>
+            <tr data-type="SERVICE_PRINCIPAL" data-name="svc-dcm-backend" data-catalog="it_ba_dcm" data-schema="curated" data-tables="curated_dbx_query_history">
+              <td><span class="badge badge-rank">5</span></td>
+              <td>svc-dcm-backend</td>
+              <td><span class="badge badge-info">SERVICE_PRINCIPAL</span></td>
+              <td class="cell-num">6</td>
+              <td class="cell-num">7 340</td>
+              <td class="cell-num">9 GB</td>
+              <td class="cell-num">$305</td>
+            </tr>
+            <tr data-type="USER" data-name="a.dubois@totalenergies.com" data-catalog="it_ba_dcm" data-schema="gold" data-tables="gold_dbx_usage_table_daily">
+              <td class="muted">6</td>
+              <td>a.dubois@totalenergies.com</td>
+              <td><span class="badge badge-neutral">USER</span></td>
+              <td class="cell-num">11</td>
+              <td class="cell-num">5 120</td>
+              <td class="cell-num">7 GB</td>
+              <td class="cell-num">$210</td>
+            </tr>
+            <tr data-type="NOTEBOOK" data-name="notebook_debug_dcm" data-catalog="it_ba_dcm" data-schema="curated" data-tables="curated_dbx_query_history">
+              <td class="muted">7</td>
+              <td>notebook_debug_dcm</td>
+              <td><span class="badge badge-neutral">NOTEBOOK</span></td>
+              <td class="cell-num">3</td>
+              <td class="cell-num">1 240</td>
+              <td class="cell-num">2 GB</td>
+              <td class="cell-num">$48</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="empty-state" id="empty-consumer" style="display:none;">Aucun consommateur ne correspond aux filtres.</p>
+        <div class="card-footnote">Source : gold_dbx_usage_consumer_daily. consumer_rank = RANK() OVER (PARTITION BY workspace_id, period_start ORDER BY cost_usd DESC). Les 5 premiers sont mis en avant (badge de rang) ; le classement complet reste consultable en dessous.</div>
+      </div>
+
+      <!-- ===================== VUE FINOPS ===================== -->
+      <div id="view-finops" style="display:none;">
+
+        <div style="margin-bottom:1.5rem;">
+          <div class="section-label">FinOps — vue d'ensemble</div>
+          <div class="kpi-grid">
+            <div class="kpi-card green">
+              <div class="kpi-card-header">Coût attribué (période) <span class="kpi-icon">$</span></div>
+              <div class="kpi-card-body"><div class="kpi-value green">$18 940</div><div class="kpi-sub">Compute des requêtes de lecture</div></div>
+            </div>
+            <div class="kpi-card blue">
+              <div class="kpi-card-header">Coût moyen / requête <span class="kpi-icon">÷</span></div>
+              <div class="kpi-card-body"><div class="kpi-value blue">$0,039</div><div class="kpi-sub">cost_usd / request_count</div></div>
+            </div>
+            <div class="kpi-card amber">
+              <div class="kpi-card-header">Top table coûteuse <span class="kpi-icon">🗄</span></div>
+              <div class="kpi-card-body"><div class="kpi-value amber">$2 180</div><div class="kpi-sub">gold_dbx_usage_table_daily</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="trend-grid" style="margin-bottom:1.5rem;">
+          <div class="card trend-card">
+            <div class="trend-head">
+              <span class="t-title">Coût $ — 14j projetés</span>
+              <span class="badge badge-warning">Dérive modérée</span>
+            </div>
+            <div class="trend-value">$18 940 <span class="kpi-sub" style="font-size:.75rem;">→ $21 300 est.</span></div>
+            <svg class="spark" viewBox="0 0 300 52" preserveAspectRatio="none">
+              <polyline points="0,40 30,38 60,32 90,34 120,26 150,28 180,20 210,22 240,14" fill="none" stroke="var(--warning)" stroke-width="2"/>
+              <polyline points="240,14 270,8 300,4" fill="none" stroke="var(--warning)" stroke-width="2" stroke-dasharray="4 3"/>
+            </svg>
+            <div class="trend-foot">Source : gold_dbx_usage_forecast_daily (metric cost_usd, method ai_forecast)</div>
+          </div>
+          <div class="card trend-card">
+            <div class="trend-head">
+              <span class="t-title">Volume lu — 14j projetés</span>
+              <span class="badge badge-success">Stable</span>
+            </div>
+            <div class="trend-value">254 GB <span class="kpi-sub" style="font-size:.75rem;">→ 261 GB est.</span></div>
+            <svg class="spark" viewBox="0 0 300 52" preserveAspectRatio="none">
+              <polyline points="0,30 30,32 60,28 90,30 120,26 150,28 180,25 210,26 240,22" fill="none" stroke="var(--primary)" stroke-width="2"/>
+              <polyline points="240,22 270,20 300,18" fill="none" stroke="var(--primary)" stroke-width="2" stroke-dasharray="4 3"/>
+            </svg>
+            <div class="trend-foot">Source : gold_dbx_usage_table_popularity_daily → forecast_daily (metric data_read_bytes)</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head-row">
+            <h3>Coût par table</h3>
+            <span class="muted" style="font-size:.75rem;">Trié par coût décroissant</span>
+          </div>
+          <table class="data-table">
+            <thead><tr><th>Table</th><th class="cell-num">Coût $ (période)</th><th class="cell-num">Coût / requête</th><th class="cell-num">Volume lu</th><th class="cell-num">Forecast +14j</th></tr></thead>
+            <tbody id="rows-finops">
+              <tr data-catalog="it_ba_dcm" data-schema="gold" data-name="gold_dbx_usage_table_daily">
+                <td><span class="table-name">gold_dbx_usage_table_daily</span></td>
+                <td class="cell-num">$2 180</td>
+                <td class="cell-num">$0,037</td>
+                <td class="cell-num">142 GB</td>
+                <td class="cell-num">$2 410</td>
+              </tr>
+              <tr data-catalog="it_ba_finance" data-schema="gold" data-name="gold_cost_summary">
+                <td><span class="table-name">gold_cost_summary</span></td>
+                <td class="cell-num">$960</td>
+                <td class="cell-num">$0,030</td>
+                <td class="cell-num">64 GB</td>
+                <td class="cell-num">$1 020</td>
+              </tr>
+              <tr data-catalog="it_ba_supply" data-schema="curated" data-name="curated_inventory_snapshot">
+                <td><span class="table-name">curated_inventory_snapshot</span></td>
+                <td class="cell-num">$340</td>
+                <td class="cell-num">$0,036</td>
+                <td class="cell-num">21 GB</td>
+                <td class="cell-num">$355</td>
+              </tr>
+              <tr data-catalog="it_ba_dcm" data-schema="gold" data-name="gold_compute_utilization">
+                <td><span class="table-name">gold_compute_utilization</span></td>
+                <td class="cell-num">$410</td>
+                <td class="cell-num">$0,015</td>
+                <td class="cell-num">18 GB</td>
+                <td class="cell-num">$430</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="empty-state" id="empty-finops" style="display:none;">Aucune table ne correspond aux filtres.</p>
+          <div class="card-footnote">Source : gold_dbx_usage_table_popularity_daily (cost_usd, data_read_bytes) · gold_dbx_usage_forecast_daily (forecast +14j).</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('.tabbar button').forEach(function(b){
+  b.addEventListener('click',function(){
+    document.querySelectorAll('.tabbar button').forEach(function(x){x.classList.remove('active');});
+    b.classList.add('active');
+    var view=b.dataset.view;
+    document.getElementById('view-table').style.display = view==='table' ? '' : 'none';
+    document.getElementById('view-consumer').style.display = view==='consumer' ? '' : 'none';
+    document.getElementById('view-finops').style.display = view==='finops' ? '' : 'none';
+    document.getElementById('filters-table').style.display = view==='table' ? '' : 'none';
+    document.getElementById('filters-consumer').style.display = view==='consumer' ? '' : 'none';
+    document.getElementById('filters-finops').style.display = view==='finops' ? '' : 'none';
+    document.getElementById('q').value='';
+    filterTable();filterConsumer();filterFinops();
+  });
+});
+
+document.querySelectorAll('.row-toggle').forEach(function(r){
+  r.addEventListener('click',function(){
+    r.classList.toggle('open');
+    var t=document.getElementById(r.dataset.target);
+    t.style.display = t.style.display==='none' ? '' : 'none';
+  });
+});
+
+/* ===== Multi-select Tables ===== */
+var selectedTables=new Set();
+var mselBtn=document.getElementById('msel-btn-tables');
+var mselPanel=document.getElementById('msel-panel-tables');
+mselBtn.addEventListener('click',function(e){e.stopPropagation();mselPanel.classList.toggle('open');});
+document.addEventListener('click',function(e){
+  if(!document.getElementById('msel-tables').contains(e.target)) mselPanel.classList.remove('open');
+});
+document.getElementById('msel-search-tables').addEventListener('input',function(e){
+  var v=e.target.value.toLowerCase();
+  document.querySelectorAll('#msel-options-tables .msel-option').forEach(function(o){
+    o.style.display = o.dataset.name.toLowerCase().indexOf(v)!==-1 ? '' : 'none';
+  });
+});
+document.querySelectorAll('#msel-options-tables input[type=checkbox]').forEach(function(cb){
+  cb.addEventListener('change',function(){
+    if(cb.checked) selectedTables.add(cb.value); else selectedTables.delete(cb.value);
+    renderChips();filterTable();filterConsumer();filterFinops();
+  });
+});
+document.getElementById('msel-clear-tables').addEventListener('click',function(){
+  selectedTables.clear();
+  document.querySelectorAll('#msel-options-tables input[type=checkbox]').forEach(function(cb){cb.checked=false;});
+  renderChips();filterTable();filterConsumer();filterFinops();
+});
+document.getElementById('msel-apply-tables').addEventListener('click',function(){mselPanel.classList.remove('open');});
+function renderChips(){
+  var row=document.getElementById('chip-row-tables');
+  var count=document.getElementById('msel-count-tables');
+  row.innerHTML='';
+  if(selectedTables.size===0){count.style.display='none';return;}
+  count.style.display='';count.textContent=selectedTables.size;
+  selectedTables.forEach(function(name){
+    var chip=document.createElement('span');
+    chip.className='chip';
+    chip.innerHTML='🗄 '+name+' <button aria-label="Retirer">×</button>';
+    chip.querySelector('button').addEventListener('click',function(){
+      selectedTables.delete(name);
+      var cb=document.querySelector('#msel-options-tables input[value="'+name+'"]');
+      if(cb) cb.checked=false;
+      renderChips();filterTable();filterConsumer();filterFinops();
+    });
+    row.appendChild(chip);
+  });
+}
+
+var stateCommon={catalog:'all',schema:'all',q:''};
+document.getElementById('f-catalog').addEventListener('change',function(e){stateCommon.catalog=e.target.value;filterTable();filterConsumer();filterFinops();});
+document.getElementById('f-schema').addEventListener('change',function(e){stateCommon.schema=e.target.value;filterTable();filterConsumer();filterFinops();});
+document.getElementById('q').addEventListener('input',function(e){
+  stateCommon.q=e.target.value.toLowerCase();filterTable();filterConsumer();filterFinops();
+});
+function filterTable(){
+  var visible=0;
+  document.querySelectorAll('#rows-table > tr.row-toggle').forEach(function(r){
+    var ok=(stateCommon.catalog==='all'||r.dataset.catalog===stateCommon.catalog)
+      &&(stateCommon.schema==='all'||r.dataset.schema===stateCommon.schema)
+      &&(stateCommon.q===''||r.dataset.name.toLowerCase().indexOf(stateCommon.q)!==-1)
+      &&(selectedTables.size===0||selectedTables.has(r.dataset.name));
+    r.style.display=ok?'':'none';
+    var exp=document.getElementById(r.dataset.target);
+    if(!ok){exp.style.display='none';r.classList.remove('open');}
+    if(ok)visible++;
+  });
+  document.getElementById('empty-table').style.display=visible===0?'block':'none';
+}
+function filterConsumer(){
+  var visible=0;
+  document.querySelectorAll('#rows-consumer > tr').forEach(function(r){
+    var rowTables=(r.dataset.tables||'').split(',');
+    var tablesOk = selectedTables.size===0 || rowTables.some(function(t){return selectedTables.has(t);});
+    var ok=(stateCommon.catalog==='all'||r.dataset.catalog===stateCommon.catalog)
+      &&(stateCommon.schema==='all'||r.dataset.schema===stateCommon.schema)
+      &&(stateCommon.q===''||r.dataset.name.toLowerCase().indexOf(stateCommon.q)!==-1)
+      &&tablesOk;
+    r.style.display=ok?'':'none';
+    if(ok)visible++;
+  });
+  document.getElementById('empty-consumer').style.display=visible===0?'block':'none';
+}
+function filterFinops(){
+  var visible=0;
+  document.querySelectorAll('#rows-finops > tr').forEach(function(r){
+    var ok=(stateCommon.catalog==='all'||r.dataset.catalog===stateCommon.catalog)
+      &&(stateCommon.schema==='all'||r.dataset.schema===stateCommon.schema)
+      &&(stateCommon.q===''||r.dataset.name.toLowerCase().indexOf(stateCommon.q)!==-1)
+      &&(selectedTables.size===0||selectedTables.has(r.dataset.name));
+    r.style.display=ok?'':'none';
+    if(ok)visible++;
+  });
+  document.getElementById('empty-finops').style.display=visible===0?'block':'none';
+}
+
+/* ===== Pattern générique d'en-tête de colonne : tooltip / tri / filtre / redimensionnement ===== */
+(function(){
+  function parseVal(td, isNum){
+    if(!td) return isNum ? -Infinity : '';
+    var txt=(td.querySelector('.table-name')||td).textContent.trim();
+    if(!isNum) return txt.toLowerCase();
+    var n=txt.replace(/[^\d,.\-]/g,'').replace(/\s/g,'').replace(',', '.');
+    var f=parseFloat(n);
+    return isNaN(f) ? -Infinity : f;
+  }
+  function getUnits(tbody){
+    var units=[]; var rows=Array.prototype.slice.call(tbody.children);
+    for(var i=0;i<rows.length;i++){
+      var r=rows[i];
+      if(r.classList.contains('expand-row')) continue;
+      var next=rows[i+1];
+      units.push({lead:r, extra:(next && next.classList.contains('expand-row')) ? next : null});
+    }
+    return units;
+  }
+  function enhanceHeader(th, colIndex, table){
+    if(th.dataset.thAdv) return;
+    var label=th.textContent.trim();
+    if(!label) return;
+    var isNum=th.classList.contains('cell-num');
+    th.dataset.thAdv='1';
+    th.classList.add('th-adv');
+    th.setAttribute('aria-sort','none');
+    var wrap=document.createElement('span');
+    wrap.className='th-adv-inner'+(isNum?' th-num':'');
+    var btn=document.createElement('button');
+    btn.type='button'; btn.className='th-label-btn';
+    btn.innerHTML='<span class="lbl" title="'+label+'">'+label+'</span><svg class="th-sort-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m21 16-4 4-4-4"/><path d="M17 20V4"/><path d="m3 8 4-4 4 4"/><path d="M7 4v16"/></svg>';
+    var fbtn=document.createElement('button');
+    fbtn.type='button'; fbtn.className='th-filter-btn'; fbtn.setAttribute('aria-label','Filtrer '+label);
+    fbtn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>';
+    var panel=document.createElement('div'); panel.className='th-filter-panel';
+    wrap.appendChild(btn); wrap.appendChild(fbtn);
+    th.innerHTML=''; th.appendChild(wrap); th.appendChild(panel);
+    var resizer=document.createElement('span'); resizer.className='th-resizer';
+    th.appendChild(resizer);
+
+    var tbody=table.querySelector('tbody');
+    var activeFilters=new Set();
+
+    function buildPanel(){
+      var units=getUnits(tbody); var seen={}; var vals=[];
+      units.forEach(function(u){
+        var td=u.lead.children[colIndex]; if(!td) return;
+        var raw=(td.querySelector('.table-name, .badge')||td).textContent.trim();
+        if(raw && !seen[raw]){seen[raw]=1; vals.push(raw);}
+      });
+      panel.innerHTML='';
+      vals.slice(0,30).forEach(function(v){
+        var opt=document.createElement('label'); opt.className='th-filter-opt';
+        opt.innerHTML='<input type="checkbox" value="'+v.replace(/"/g,'&quot;')+'"'+(activeFilters.has(v)?' checked':'')+'><span>'+v+'</span>';
+        opt.querySelector('input').addEventListener('change', function(e){
+          if(e.target.checked) activeFilters.add(v); else activeFilters.delete(v);
+          applyFilter(); fbtn.classList.toggle('active', activeFilters.size>0);
+        });
+        panel.appendChild(opt);
+      });
+      var actions=document.createElement('div'); actions.className='th-filter-actions';
+      var clearBtn=document.createElement('button'); clearBtn.type='button'; clearBtn.textContent='Effacer';
+      clearBtn.addEventListener('click', function(){activeFilters.clear(); buildPanel(); applyFilter(); fbtn.classList.remove('active');});
+      actions.appendChild(clearBtn);
+      panel.appendChild(actions);
+    }
+    function applyFilter(){
+      var units=getUnits(tbody);
+      units.forEach(function(u){
+        var td=u.lead.children[colIndex]; if(!td) return;
+        var raw=(td.querySelector('.table-name, .badge')||td).textContent.trim();
+        var ok=activeFilters.size===0 || activeFilters.has(raw);
+        u.lead.style.display=ok?'':'none';
+        if(u.extra) u.extra.style.display = ok ? (u.lead.classList.contains('open') ? '' : 'none') : 'none';
+      });
+    }
+    fbtn.addEventListener('click', function(e){
+      e.stopPropagation();
+      var wasOpen=panel.classList.contains('open');
+      document.querySelectorAll('.th-filter-panel.open').forEach(function(p){p.classList.remove('open');});
+      if(!wasOpen){ buildPanel(); panel.classList.add('open'); }
+    });
+    document.addEventListener('click', function(e){ if(!th.contains(e.target)) panel.classList.remove('open'); });
+
+    btn.addEventListener('click', function(){
+      var cur=th.getAttribute('aria-sort');
+      var next = cur==='none' ? 'ascending' : (cur==='ascending' ? 'descending' : 'none');
+      Array.prototype.forEach.call(table.querySelectorAll('thead th'), function(h){ if(h!==th) h.setAttribute('aria-sort','none'); });
+      th.setAttribute('aria-sort', next);
+      var units=getUnits(tbody);
+      if(next==='none'){
+        units.sort(function(a,b){ return (+a.lead.dataset.origIdx||0) - (+b.lead.dataset.origIdx||0); });
+      } else {
+        units.sort(function(a,b){
+          var va=parseVal(a.lead.children[colIndex], isNum);
+          var vb=parseVal(b.lead.children[colIndex], isNum);
+          if(va<vb) return next==='ascending' ? -1 : 1;
+          if(va>vb) return next==='ascending' ? 1 : -1;
+          return 0;
+        });
+      }
+      units.forEach(function(u){ tbody.appendChild(u.lead); if(u.extra) tbody.appendChild(u.extra); });
+    });
+
+    resizer.addEventListener('mousedown', function(e){
+      e.preventDefault();
+      var startX=e.clientX, startW=th.offsetWidth;
+      resizer.classList.add('active');
+      function onMove(ev){
+        var w=Math.max(64, Math.min(640, startW + (ev.clientX-startX)));
+        th.style.width=w+'px';
+      }
+      function onUp(){
+        resizer.classList.remove('active');
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+      }
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+  }
+  function enhanceTable(table){
+    var tbody=table.querySelector('tbody');
+    if(tbody){ getUnits(tbody).forEach(function(u,i){ u.lead.dataset.origIdx=i; }); }
+    table.querySelectorAll('thead th').forEach(function(th, i){ enhanceHeader(th, i, table); });
+  }
+  document.querySelectorAll('table.data-table, table.mini-table').forEach(enhanceTable);
+})();
+</script>
+</body>
+</html>

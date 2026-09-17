@@ -1,0 +1,293 @@
+name: dcm-aws-collector - CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'packages/dcm-aws-collector/**'
+      - 'packages/dcm-commons/**'
+      - '.github/workflows/dcm-aws-collector.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'packages/dcm-aws-collector/**'
+      - 'packages/dcm-commons/**'
+      - '.github/workflows/dcm-aws-collector.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        type: choice
+        required: true
+        default: 'dev'
+        options: [dev, prod]
+      deploy:
+        description: 'Run deploy step (uncheck to only test+build)'
+        type: boolean
+        required: false
+        default: true
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  PYTHON_VERSION: '3.12'
+  PACKAGE_DIR: packages/dcm-aws-collector
+  IMAGE_NAME: dcm-aws-collector
+  IMAGE_TARBALL: dcm-aws-collector-image.tar
+
+jobs:
+  setup:
+    name: Resolve target environment
+    runs-on: ubuntu-latest
+    outputs:
+      deploy_env: ${{ steps.env.outputs.name }}
+      should_deploy: ${{ steps.env.outputs.deploy }}
+    steps:
+      - id: env
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          GIT_REF: ${{ github.ref }}
+          INPUT_DEPLOY: ${{ inputs.deploy }}
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
+        run: |
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            if [[ "$INPUT_DEPLOY" == "true" ]]; then
+              echo "name=$INPUT_ENVIRONMENT" >> "$GITHUB_OUTPUT"
+              echo "deploy=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "name=" >> "$GITHUB_OUTPUT"
+              echo "deploy=false" >> "$GITHUB_OUTPUT"
+            fi
+          elif [[ "$EVENT_NAME" == "push" && "$GIT_REF" == "refs/heads/main" ]]; then
+            echo "name=prod" >> "$GITHUB_OUTPUT"
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          elif [[ "$EVENT_NAME" == "push" && "$GIT_REF" == "refs/heads/develop" ]]; then
+            echo "name=dev" >> "$GITHUB_OUTPUT"
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=" >> "$GITHUB_OUTPUT"
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  test:
+    name: Test (pytest, ruff, mypy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        working-directory: ${{ env.PACKAGE_DIR }}
+        run: uv pip install --system -e ".[dev]"
+
+      - name: Run ruff check (non-blocking)
+        id: ruff
+        continue-on-error: true
+        working-directory: ${{ env.PACKAGE_DIR }}
+        run: ruff check . | tee ruff-report.txt
+
+      - name: Ruff summary
+        if: always()
+        working-directory: ${{ env.PACKAGE_DIR }}
+        run: |
+          {
+            echo "## Ruff report - dcm-aws-collector"
+            if [[ "${{ steps.ruff.outcome }}" == "success" ]]; then
+              echo "Status: passed - no issues found."
+            else
+              echo "Status: issues found (non-blocking - to be fixed later)"
+              echo ""
+              echo '```'
+              cat ruff-report.txt 2>/dev/null || echo "(no report file)"
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run mypy type check (non-blocking)
+        id: mypy
+        continue-on-error: true
+        working-directory: ${{ env.PACKAGE_DIR }}
+        run: mypy aws_collector | tee mypy-report.txt
+
+      - name: Mypy summary
+        if: always()
+        working-directory: ${{ env.PACKAGE_DIR }}
+        run: |
+          {
+            echo "## Mypy report - dcm-aws-collector"
+            if [[ "${{ steps.mypy.outcome }}" == "success" ]]; then
+              echo "Status: passed - no type errors."
+            else
+              echo "Status: type errors found (non-blocking - to be fixed later)"
+              echo ""
+              echo '```'
+              cat mypy-report.txt 2>/dev/null || echo "(no report file)"
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run pytest
+        working-directory: ${{ env.PACKAGE_DIR }}
+        run: pytest
+
+  build:
+    name: Build Docker image
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build Docker image (no push)
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ${{ env.PACKAGE_DIR }}/Dockerfile
+          push: false
+          tags: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          outputs: type=docker,dest=/tmp/${{ env.IMAGE_TARBALL }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Upload image artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: dcm-aws-collector-image
+          path: /tmp/${{ env.IMAGE_TARBALL }}
+          retention-days: 1
+
+  deploy:
+    name: Push image to ECR (${{ needs.setup.outputs.deploy_env }})
+    needs: [setup, build]
+    if: needs.setup.outputs.should_deploy == 'true'
+    runs-on: ubuntu-latest
+    environment: ${{ needs.setup.outputs.deploy_env }}
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION || 'eu-central-1' }}
+      ECR_REGISTRY: ${{ vars.AWS_COLLECTOR_ECR_REGISTRY || secrets.AWS_COLLECTOR_ECR_REGISTRY || '551656632516.dkr.ecr.eu-central-1.amazonaws.com' }}
+      ECR_REPOSITORY: ${{ vars.AWS_COLLECTOR_ECR_REPOSITORY || secrets.AWS_COLLECTOR_ECR_REPOSITORY || 'dcm-aws-collector' }}
+      AWS_COLLECTOR_ROLE_ARN: ${{ secrets.AWS_COLLECTOR_AWS_ROLE_ARN || secrets.AWS_ROLE_ARN }}
+    steps:
+      - name: Download image artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: dcm-aws-collector-image
+          path: /tmp
+
+      - name: Validate deploy configuration
+        run: |
+          if [[ -z "$AWS_REGION" ]]; then
+            echo "::error::AWS_REGION is not set for this GitHub environment."
+            exit 1
+          fi
+
+          if [[ -z "$ECR_REPOSITORY" ]]; then
+            echo "::error::AWS_COLLECTOR_ECR_REPOSITORY is not set for this GitHub environment."
+            exit 1
+          fi
+
+          if [[ -z "$ECR_REGISTRY" ]]; then
+            echo "::error::AWS_COLLECTOR_ECR_REGISTRY is not set for this GitHub environment."
+            exit 1
+          fi
+
+          if [[ ! "$ECR_REGISTRY" =~ ^[0-9]{12}\.dkr\.ecr\.[a-z0-9-]+\.amazonaws\.com$ ]]; then
+            echo "::error::AWS_COLLECTOR_ECR_REGISTRY must be an ECR login server like '551656632516.dkr.ecr.eu-central-1.amazonaws.com' without protocol, username, colon, or spaces."
+            exit 1
+          fi
+
+          if [[ "$ECR_REPOSITORY" =~ [[:space:]] ]]; then
+            echo "::error::AWS_COLLECTOR_ECR_REPOSITORY must not contain spaces. Use 'dcm-aws-collector' or a full ECR image path."
+            exit 1
+          fi
+
+          if [[ -z "$AWS_COLLECTOR_ROLE_ARN" ]]; then
+            echo "::error::Set AWS_COLLECTOR_AWS_ROLE_ARN for the AWS collector, or AWS_ROLE_ARN as fallback."
+            exit 1
+          fi
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ env.AWS_COLLECTOR_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Ensure ECR repository exists
+        run: |
+          set -euo pipefail
+
+          if [[ "$ECR_REPOSITORY" == *.dkr.ecr.*.amazonaws.com/* ]]; then
+            REPOSITORY_NAME="${ECR_REPOSITORY#*/}"
+            ECR_LOGIN_SERVER="${ECR_REPOSITORY%%/*}"
+          else
+            REPOSITORY_NAME="$ECR_REPOSITORY"
+            ECR_LOGIN_SERVER="$ECR_REGISTRY"
+          fi
+
+          REGISTRY_ID="${ECR_LOGIN_SERVER%%.dkr.ecr.*}"
+          REGISTRY_ARGS=()
+          if [[ "$REGISTRY_ID" =~ ^[0-9]{12}$ ]]; then
+            REGISTRY_ARGS=(--registry-id "$REGISTRY_ID")
+          fi
+
+          set +e
+          DESCRIBE_OUTPUT=$(aws ecr describe-repositories \
+            "${REGISTRY_ARGS[@]}" \
+            --repository-names "$REPOSITORY_NAME" \
+            --region "$AWS_REGION" 2>&1)
+          DESCRIBE_STATUS=$?
+          set -e
+
+          if [[ "$DESCRIBE_STATUS" -eq 0 ]]; then
+            echo "ECR repository already exists."
+          elif [[ "$DESCRIBE_OUTPUT" == *RepositoryNotFoundException* ]]; then
+            echo "Creating missing ECR repository."
+            aws ecr create-repository \
+              "${REGISTRY_ARGS[@]}" \
+              --repository-name "$REPOSITORY_NAME" \
+              --region "$AWS_REGION" \
+              --image-scanning-configuration scanOnPush=true \
+              --encryption-configuration encryptionType=AES256 >/dev/null
+          else
+            echo "$DESCRIBE_OUTPUT"
+            exit "$DESCRIBE_STATUS"
+          fi
+
+      - name: Login to Amazon ECR
+        run: |
+          if [[ "$ECR_REPOSITORY" == *.dkr.ecr.*.amazonaws.com/* ]]; then
+            ECR_LOGIN_SERVER="${ECR_REPOSITORY%%/*}"
+          else
+            ECR_LOGIN_SERVER="$ECR_REGISTRY"
+          fi
+
+          aws ecr get-login-password --region "$AWS_REGION" \
+            | docker login --username AWS --password-stdin "$ECR_LOGIN_SERVER"
+
+      - name: Load, tag & push image to ECR
+        run: |
+          docker load --input /tmp/${{ env.IMAGE_TARBALL }}
+          if [[ "$ECR_REPOSITORY" == *.dkr.ecr.*.amazonaws.com/* ]]; then
+            ECR_IMAGE="$ECR_REPOSITORY"
+          else
+            ECR_IMAGE="$ECR_REGISTRY/$ECR_REPOSITORY"
+          fi
+          IMAGE_URI="$ECR_IMAGE:${{ github.sha }}"
+          LATEST_URI="$ECR_IMAGE:latest"
+          docker tag ${{ env.IMAGE_NAME }}:${{ github.sha }} "$IMAGE_URI"
+          docker tag ${{ env.IMAGE_NAME }}:${{ github.sha }} "$LATEST_URI"
+          docker push "$IMAGE_URI"
+          docker push "$LATEST_URI"

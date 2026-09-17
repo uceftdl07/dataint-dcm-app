@@ -1,0 +1,159 @@
+bundle:
+  name: dcm-databricks-pipeline
+include:
+  - ./resources/*.yml
+
+# Artifact wheel construit et uploade automatiquement par le bundle.
+# Reference par la tache `python_wheel_task` du job system tables (FinOps).
+# `uv build --wheel` produit dist/*.whl a partir de pyproject.toml (hatchling).
+artifacts:
+  dcm_databricks_pipeline_wheel:
+    type: whl
+    build: uv build --wheel
+    path: .
+
+# Variables paramétrables par target
+variables:
+  catalog:
+    default: it
+    description: Unity Catalog cible
+  schema:
+    default: ba_data_connect_monitoring__d
+    description: Schema cible
+  sqs_queue_url:
+    default: https://sqs.eu-central-1.amazonaws.com/551656632516/dcm-ingestion
+    description: URL de la queue SQS
+  ingestion_volume_path:
+    default: /Volumes/it/ba_data_connect_monitoring__d/ingestion_volume
+    description: Volume d'ingestion DLT
+  notification_email:
+    default: data-int-team@totalworkplace.onmicrosoft.com
+    description: Email pour les notifications d'echec
+  sqs_instance_profile_arn:
+    default: arn:aws:iam::551656632516:instance-profile/workload/dcm-databricks-jobs
+    description: ARN de l'instance profile attaché au job cluster SQS (accès SQS + S3)
+  sqs_cluster_node_type:
+    default: m5d.large
+    description: Type d'instance AWS du job cluster SQS
+  sqs_cluster_spark_version:
+    default: 16.4.x-scala2.13
+    description: Version Databricks Runtime du job cluster SQS
+  aws_account_id:
+    default: "551656632516"
+    description: Compte AWS source des system tables Databricks (enveloppe cloud_provider=aws)
+  azure_workspace_id:
+    default: "3059738143768593"
+    description: Workspace Databricks Azure source (enveloppe cloud_provider=azure ; vide = désactivé)
+  azure_host:
+    default: "adb-3059738143768593.13.azuredatabricks.net"
+    description: Hôte du workspace Azure Databricks (SANS https:// ; vide = lecture Azure désactivée)
+  azure_http_path:
+    default: "/sql/1.0/warehouses/99a35496192ebc6e"
+    description: HTTP path du SQL Warehouse Azure (ex. /sql/1.0/warehouses/xxxx)
+  azure_secret_scope:
+    default: dcm-secret-scope
+    description: Secret scope Databricks contenant les identifiants Entra du SP
+  azure_tenant_id_key:
+    default: azure-sp-tenant-id
+    description: Clé du secret (dans le scope) portant le tenant ID Entra du SP
+  azure_client_id_key:
+    default: azure-sp-client-id
+    description: Clé du secret (dans le scope) portant le client ID Entra du SP
+  azure_secret_key:
+    default: azure-sp-client-secret
+    description: Clé du secret (dans le scope) portant le client secret Entra du SP
+  lookback_days:
+    default: "3"
+    # S'applique à TOUTES les tables curated du `for_each` de `dcm_system_tables`,
+    # pas seulement à `billing.usage` : c'est pourquoi elle reste à 3 alors que la
+    # fenêtre gold est passée à 10. Mesuré en dev sur 2026-08-24 → 08-30 :
+    # curated contient toutes les lignes de `system.billing.usage` sauf 2 sur le
+    # 08-27, où l'`ingestion_date` de Databricks accusait 6 jours de retard.
+    # Élargir cette variable multiplierait par ~3 le volume relu chaque jour sur
+    # `access.audit` (~4,5 M lignes/jour) pour récupérer ces 2 lignes : arbitrage
+    # assumé. Un rattrapage par table demanderait un `lookback_days` dans
+    # `IngestionSpec` (non fait).
+    description: Fenêtre de rattrapage (jours) pour l'ingestion incrementale des system tables curated (arrivées tardives côté source)
+  warehouse_id:
+    lookup:
+      warehouse: "DCM-metrics"
+    description: SQL Warehouse (Pro/Serverless) utilisé par les deux tâches du job dcm_gold_forecast (gold_compute_forecast_daily, gold_usage_forecast_daily) pour exécuter ai_forecast (incompatible avec l'environnement serverless générique du job)
+  azure_batch_size:
+    default: "20000"
+    description: Taille des lots Azure (lignes par fetchmany) pour les tables ÉTROITES — vide = DEFAULT_AZURE_FETCH_BATCH_SIZE (10k). Les tables LARGES (ex. access.audit) surchargent cette valeur via IngestionSpec.azure_fetch_batch_size (anti-OOM).
+
+
+# Targets (environnements)
+targets:
+  dev_local:
+    mode: development
+    workspace:
+      host: https://dbc-223d60ab-45bd.cloud.databricks.com
+    resources:
+      jobs:
+        dcm_system_tables:
+          schedule:
+            pause_status: PAUSED
+        dcm_gold_dbx_compute:
+          schedule:
+            pause_status: PAUSED
+        dcm_gold_dbx_usage:
+          schedule:
+            pause_status: PAUSED
+        dcm_gold_dbx_workspace:
+          schedule:
+            pause_status: PAUSED
+        dcm_gold_landing_zone:
+          schedule:
+            pause_status: PAUSED
+        dcm_gold_forecast:
+          schedule:
+            pause_status: PAUSED
+        dcm_reference_lz:
+          schedule:
+            pause_status: PAUSED
+        dcm_curated_purge:
+          schedule:
+            pause_status: PAUSED
+
+  dev:
+    mode: production
+    default: true
+    workspace:
+      host: https://dbc-223d60ab-45bd.cloud.databricks.com
+      root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
+    resources:
+      jobs:
+        dcm_system_tables:
+          schedule:
+            pause_status: PAUSED
+        dcm_gold_dbx_compute:
+          schedule:
+            pause_status: PAUSED
+        dcm_gold_dbx_usage:
+          schedule:
+            pause_status: PAUSED
+        dcm_gold_dbx_workspace:
+          schedule:
+            pause_status: PAUSED
+        dcm_gold_landing_zone:
+          schedule:
+            pause_status: PAUSED
+        dcm_gold_forecast:
+          schedule:
+            pause_status: PAUSED
+        dcm_reference_lz:
+          schedule:
+            pause_status: PAUSED
+        dcm_curated_purge:
+          schedule:
+            pause_status: PAUSED
+
+  prod:
+    mode: production
+    workspace:
+      host: https://dbc-af3acef9-c998.cloud.databricks.com
+      root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
+    variables:
+      catalog: it
+      schema: ba_data_connect_monitoring__p

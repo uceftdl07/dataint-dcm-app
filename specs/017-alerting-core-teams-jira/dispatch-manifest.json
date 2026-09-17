@@ -1,0 +1,24 @@
+{
+  "spec": "017-alerting-core-teams-jira",
+  "epic": {
+    "key": "DCINT-314",
+    "url": "https://tdf.atlassian.net/browse/DCINT-314"
+  },
+  "stories": {
+    "T001": {
+      "jira_key": "DCINT-320",
+      "branch": "dataeng/017-implement-notification-tables-anomaly",
+      "sub_spec": "stories/T001-dataeng-alert-tables.md"
+    },
+    "T002": {
+      "jira_key": "DCINT-321",
+      "branch": "backend/017-implement-direct-alert-dispatch-teams",
+      "sub_spec": "stories/T002-backend-alerting-core.md"
+    },
+    "T003": {
+      "jira_key": "DCINT-322",
+      "branch": "frontend/017-implement-notification-settings-and",
+      "sub_spec": "stories/T003-frontend-alerting-config.md"
+    }
+  }
+}

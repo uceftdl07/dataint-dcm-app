@@ -1,0 +1,222 @@
+# =============================================================================
+# DATA CONNECT MONITORING — .gitignore
+# =============================================================================
+
+# =============================================================================
+# OUTILS DE DÉVELOPPEMENT — Ne jamais pousser dans le repo d'entreprise
+# =============================================================================
+.cursor/
+agents
+# DCM UX agent source bundle is versioned with the extension.
+!spec-kit-dcm-workflow/agents/
+!spec-kit-dcm-workflow/agents/**
+.agent.md
+AGENTS.md
+.agents/agents
+.agents/$/
+.agents/commands/
+CLAUDE.md
+CLAUDE_BACKUP.md
+.claude/
+# Generated agent artifacts stay local, EXCEPT committed team skills (source-controlled copies)
+.agents/skills/*
+.specify**
+.specify*/
+scripts/
+# spec-kit-dcm-workflow scripts are part of the extension and must be tracked
+!spec-kit-dcm-workflow/scripts/
+# dcm-databricks-pipeline scripts (debug/diagnostic tooling) must be tracked
+!packages/dcm-databricks-pipeline/scripts/
+# dcm-backend scripts (one-off UC migrations, run by hand) must be tracked
+!packages/dcm-backend/scripts/
+caveman*
+**/caveman*
+claude_docs/
+**/claude_docs/
+
+# =============================================================================
+# DOSSIERS EXCLUS DU REPO
+# =============================================================================
+
+# Ancien POC C# .NET — référence locale uniquement, ne pas pousser
+_old-poc/
+
+# Fichiers temporaires de travail
+dcm/solution/_temp/
+
+# Journal de développement interne
+dcm/session-log.md
+
+# Documentation de gestion de projet interne (Jira, user stories, atelier)
+dcm-docs/04-project-management/
+dcm-docs/05-reference/
+dcm-docs/_superseded/
+dcm-docs/analyse_retours_atelier_modele_donnees.md
+dcm-docs/retours_modele_de_données.md
+
+# =============================================================================
+# SECRETS ET CONFIGURATION LOCALE — Ne jamais versionner
+# =============================================================================
+.env
+.env.local
+.env.*.local
+.env.production
+.env.staging
+scripts/.secrets.local
+
+# Secrets applicatifs spécifiques
+**/appsettings.Development.json
+**/appsettings.Production.json
+**/appsettings.Staging.json
+# Garder appsettings.json (template sans valeurs réelles)
+
+# Certificats et clés
+*.pem
+*.key
+*.p12
+*.pfx
+*.cert
+
+# =============================================================================
+# PYTHON
+# =============================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+
+# Environnements virtuels
+.venv/
+venv/
+env/
+.env/
+ENV/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+*.egg
+.eggs/
+
+# uv
+.python-version
+
+# Outils qualité
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.specify*
+.github/agents/
+.github/hooks/
+.github/prompts/
+.specify/
+
+# Keep generated agents ignored; retain only explicitly versioned agents.
+!.github/agents/
+.github/agents/*
+!.github/agents/dp-dcm-sync-infra.agent.md
+
+# =============================================================================
+# NODE.JS / FRONTEND
+# =============================================================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build frontend
+dcm/solution/dcm-frontend/dist/
+dcm/solution/dcm-frontend/build/
+
+# =============================================================================
+# IDE ET ÉDITEURS
+# =============================================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.user
+*.suo
+.vs/
+.specify
+.venv
+
+# =============================================================================
+# SYSTÈME D'EXPLOITATION
+# =============================================================================
+.DS_Store
+.DS_Store?
+Thumbs.db
+desktop.ini
+ehthumbs.db
+
+# =============================================================================
+# DATABRICKS
+# =============================================================================
+.databricks/
+
+# =============================================================================
+# DOCKER
+# =============================================================================
+# (les Dockerfile et docker-compose.yml sont versionnés)
+# Exclure seulement les overrides locaux
+docker-compose.override.yml
+
+# =============================================================================
+# FICHIERS TEMPORAIRES ET LOGS
+# =============================================================================
+*.log
+*.tmp
+*.temp
+*.bak
+*.backup
+reprise.txt
+
+# Backups drawio
+.**/*.bkp
+dcm-docs/**/*.bkp
+
+# =============================================================================
+# ARCHIVES
+# =============================================================================
+*.rar
+*.zip
+*.tar.gz
+*.7z
+
+# =============================================================================
+# SPEC-KIT LOCAL ARTIFACTS — never push in PRs (agent/workflow only)
+# =============================================================================
+specs/**/.pr-shell/
+specs/**/branches-created.json
+specs/**/data-model.md
+specs/**/jira-create-log.json
+specs/**/merge-strategy.md
+specs/**/quickstart.md
+specs/**/research.md
+
+# databricks-data-validator: SQL rendu + findings/plan/rapport de validation (local uniquement)
+specs/**/validation-*.md
+specs/**/validation-*.sql
+
+# =============================================================================
+# LOCAL DATABRICKS BOOTSTRAP / SPN SCRIPTS — keep local only
+# =============================================================================
+/bootstrap_prod_auth_tables.py
+/bootstrap_prod_auth_tables.sql
+/bootstrap_prod_auth_tables_notebook.py
+/our_catalogs_spn_prod.py
+
+# APM dependencies
+apm_modules/
+apm*
+
+**/usage-log.jsonl
+CHANGELOG.md

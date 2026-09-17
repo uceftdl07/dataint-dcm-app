@@ -1,0 +1,54 @@
+{
+  "updated_at": "2026-09-17T00:00:00Z",
+  "spec": "024-usage-tracking-governance",
+  "branch_strategy": "direct_to_base",
+  "child_branch_base": "develop",
+  "pr_target": "develop",
+  "integration_branch": null,
+  "single_branch": "dataeng/024-usage-tracking-governance",
+  "epic": {
+    "key": "DCINT-333",
+    "url": "https://tdf.atlassian.net/browse/DCINT-333"
+  },
+  "dispatch": [
+    {
+      "task_id": "T001",
+      "jira_key": "DCINT-334",
+      "branch": "dataeng/024-usage-tracking-governance",
+      "parser_derived_branch": "dataeng/024-pipeline-gold-usage-histogramme-de",
+      "domain": "dataeng",
+      "sub_spec": "stories/T001-gold-usage-pipeline.md",
+      "status": "completed"
+    },
+    {
+      "task_id": "T002",
+      "jira_key": "DCINT-334",
+      "branch": "dataeng/024-usage-tracking-governance",
+      "parser_derived_branch": "backend/024-endpoints-api-v1-uc-usage-sur-les-8",
+      "domain": "backend",
+      "sub_spec": "stories/T002-uc-usage-api.md",
+      "status": "completed"
+    },
+    {
+      "task_id": "T003",
+      "jira_key": "DCINT-334",
+      "branch": "dataeng/024-usage-tracking-governance",
+      "parser_derived_branch": "frontend/024-pages-usage-des-tables-uc-et-gouvernance",
+      "domain": "frontend",
+      "sub_spec": "stories/T003-uc-usage-pages.md",
+      "status": "completed"
+    }
+  ],
+  "notes": {
+    "branch": "Les 3 tasks partagent UNE branche. parser_derived_branch est ce que dcm-parse-tasks.sh calcule depuis le titre — informatif, ces branches ne doivent PAS etre creees.",
+    "story_model": "1 Story Jira pour les 3 tasks (au lieu de 1 par task). Consequence : sync-status ne peut pas distinguer l'avancement task par task, il faut fermer la Story quand les 3 sont cochees.",
+    "merge": "Squash-and-merge : les commits par task ne survivent pas au merge. Le detail etape par etape de chaque task vit dans son sub-spec (section ## Etape n), pas dans git log."
+  },
+  "summary": {
+    "jira_stories_done": 1,
+    "jira_stories_total": 1,
+    "branches_done": 0,
+    "branches_total": 1,
+    "status": "jira_complete_branches_pending"
+  }
+}

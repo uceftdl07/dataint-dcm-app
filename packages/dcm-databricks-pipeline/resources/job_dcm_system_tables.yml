@@ -1,0 +1,86 @@
+resources:
+
+  # Job Databricks PySpark — Ingestion des system tables vers curated (no DLT).
+  #
+  # Socle commun mutualisé : un unique plugin `pipelines/system_tables` ingère
+  # les 19 system tables Databricks (facturation + compute/access + lakeflow +
+  # registre Unity Catalog + inventaire workspaces) — AWS natif + Azure
+  # cross-tenant via SP OAuth M2M →
+  # Azure SQL Warehouse (JDBC, spike E3).
+  #
+  # Une seule tâche `for_each` boucle sur le registre de tables : chaque table est
+  # une itération PARALLÈLE (bornée par `concurrency`) qui exécute le même wheel
+  # avec `--table {{input}}`. Toutes réutilisent le socle commun
+  # `pipelines/common` (readers/writers/transforms/incremental) et le même
+  # environnement serverless. Ajouter/retirer une table = éditer `inputs` (aligné
+  # sur `pipelines.system_tables.specs.SPEC_KEYS`), sans toucher la structure.
+  jobs:
+    dcm_system_tables:
+      name: "[${bundle.target}] DCM System Tables Ingestion"
+      max_concurrent_runs: 1
+      timeout_seconds: 7200
+
+      # Planification quotidienne (A4 — à ajuster après validation lookback).
+      schedule:
+        quartz_cron_expression: "0 0 3 * * ?"
+        timezone_id: "Europe/Paris"
+        pause_status: UNPAUSED
+
+      # Compute serverless : pas de job cluster à provisionner/dimensionner.
+      # Les dépendances (le wheel + ses deps transitives) sont déclarées dans
+      # l'environnement serverless ci-dessous, référencé par la tâche imbriquée.
+      environments:
+        - environment_key: finops_env
+          spec:
+            environment_version: "3"
+            dependencies:
+              - ../dist/*.whl
+
+      tasks:
+        - task_key: ingest_system_tables
+          description: "Ingestion parallèle des 19 system tables (billing + compute/access + lineage + query history + warehouses + lakeflow + registre Unity Catalog + inventaire workspaces) → curated (fidèle source, MERGE idempotent)"
+          # Boucle sur le registre de tables : une itération = une table = une task
+          # parallèle. `inputs` doit rester aligné sur `specs.SPEC_KEYS` (garde-fou
+          # côté entrypoint : une clé inconnue lève une erreur explicite).
+          # ATTENTION, le garde-fou ne couvre qu'UN sens : une clé en trop échoue,
+          # une clé MANQUANTE est silencieuse — la spec existe, son test passe, et
+          # la table n'est jamais ingérée. C'est ce que verrouille désormais
+          # `tests/system_tables/test_specs.py::test_job_inputs_match_the_registry_exactly`
+          # (égalité de LISTE, ordre compris) : ajouter une spec sans l'ajouter ici
+          # fait échouer les tests au lieu de produire un job incomplet.
+          # `concurrency` borne le parallélisme pour protéger le warehouse Azure
+          # cross-tenant (lectures SQL connector simultanées).
+          for_each_task:
+            inputs: '["billing_usage","billing_list_prices","compute_clusters","compute_node_timeline","access_audit","access_table_lineage","query_history","compute_warehouses","compute_warehouse_events","compute_node_types","lakeflow_jobs","lakeflow_pipelines","lakeflow_job_run_timeline","lakeflow_job_task_run_timeline","uc_tables","uc_table_tags","uc_table_operations","access_workspaces_latest","lakeflow_pipeline_update_timeline"]'
+            concurrency: 4
+            task:
+              task_key: ingest_one_system_table
+              environment_key: finops_env
+              python_wheel_task:
+                package_name: dcm_databricks_pipeline
+                entry_point: dcm-system-tables
+                named_parameters:
+                  table:               "{{input}}"
+                  catalog:             ${var.catalog}
+                  schema:              ${var.schema}
+                  collection_run_id:   "{{job.run_id}}"
+                  collected_at:        "{{job.start_time.iso_datetime}}"
+                  azure_host:          ${var.azure_host}
+                  azure_http_path:     ${var.azure_http_path}
+                  azure_secret_scope:  ${var.azure_secret_scope}
+                  azure_tenant_id_key: ${var.azure_tenant_id_key}
+                  azure_client_id_key: ${var.azure_client_id_key}
+                  azure_secret_key:    ${var.azure_secret_key}
+                  lookback_days:       ${var.lookback_days}
+                  azure_batch_size:    ${var.azure_batch_size}
+              max_retries: 0
+
+      email_notifications:
+        on_failure:
+          - ${var.notification_email}
+        no_alert_for_skipped_runs: true
+
+      tags:
+        project: dcm-databricks-pipeline
+        managed_by: databricks-asset-bundle
+        domain: system-tables

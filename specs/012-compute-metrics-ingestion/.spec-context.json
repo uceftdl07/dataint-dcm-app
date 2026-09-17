@@ -1,0 +1,10 @@
+{
+  "workflow": "speckit",
+  "specName": "012-compute-metrics-ingestion",
+  "branch": "012-compute-metrics-ingestion",
+  "selectedAt": "2026-08-12T09:38:10.009Z",
+  "currentStep": "specify",
+  "status": "draft",
+  "history": [],
+  "reviewComments": []
+}

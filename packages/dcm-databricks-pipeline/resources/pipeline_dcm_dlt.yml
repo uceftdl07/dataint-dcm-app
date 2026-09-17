@@ -1,0 +1,26 @@
+resources:
+
+  # Volume it.ba_data_connect_monitoring__d.ingestion_volume géré hors bundle (déjà existant)
+
+  # Pipeline DLT
+  pipelines:
+    dcm_dlt_pipeline:
+      name: "[${bundle.target}] pipeline_dcm_observability_tool"
+      catalog: ${var.catalog}
+      target: ${var.schema}
+      libraries:
+        - notebook:
+            path: ../pipelines/dlt_01_raw_layer.py
+        - notebook:
+            path: ../pipelines/dlt_02_curated_layer.py
+        - notebook:
+            path: ../pipelines/dlt_03_gold_layer.py
+      serverless: true
+      configuration:
+        pipeline.target_catalog: ${var.catalog}
+        pipeline.target_schema: ${var.schema}
+        pipeline.ingestion_volume_path: ${var.ingestion_volume_path}
+      continuous: false
+      photon: true
+      channel: CURRENT
+      development: false

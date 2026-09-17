@@ -1,0 +1,28 @@
+{
+  "work_type": "technique",
+  "domains": ["dataeng", "backend", "frontend"],
+  "ticket_plan": {
+    "mode": "custom",
+    "ticket_domains": ["dataeng", "backend", "frontend"],
+    "expected_story_count": 5
+  },
+  "dependency_gaps": [],
+  "packages": [
+    "packages/dcm-databricks-pipeline",
+    "packages/dcm-azure-collector",
+    "packages/dcm-commons",
+    "packages/dcm-backend",
+    "packages/dcm-frontend"
+  ],
+  "priority": "P1",
+  "preset": null,
+  "selection_mode": "manual",
+  "summary": "Migrer la source du domaine workflow (observabilite Jobs/Workflows Databricks, epic 009) du collecteur DatabricksWorkflowCollector vers les system tables system.lakeflow.*, en conservant le contrat GOLD gold_dbx_workflow_* inchange, puis supprimer le collecteur.",
+  "spike_reference": "docs/spike/migration_from_collector_to_sys_table/",
+  "architecture_decisions": {
+    "workspace_name": "NULL + repli tags/id",
+    "run_page_url": "reconstruit sans le nom",
+    "creator_user_name": "expose creator_id (pas de lookup identite)"
+  },
+  "created_at": "2026-08-17T00:00:00Z"
+}

@@ -1,0 +1,9 @@
+# Repo-embedded extension (not a standalone distributable package).
+# Scripts are invoked from the source path spec-kit-dcm-workflow/scripts/
+# by the commands, so they are intentionally NOT bundled into the packaged
+# extension. Do not rely on `specify extension add` copying them.
+.DS_Store
+
+# Demo spec artefacts — repo-local example for dcm-render-usage-report.sh,
+# never redistributed into a contributor's install (real git author metadata).
+specs/

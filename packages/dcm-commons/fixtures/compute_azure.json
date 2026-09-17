@@ -1,0 +1,39 @@
+{
+  "schema_version": "1.1",
+  "collection_run_id": "d207ff5d-da18-47d4-862b-baf113651ad2",
+  "source_lz_id": "lz-azure-prod",
+  "subscription_or_account_id": "fa5abbc4-02eb-416f-a75f-f8f6c5cc7d8a",
+  "cloud_provider": "azure",
+  "domain": "compute",
+  "collected_at": "2026-04-14T07:16:42.434156Z",
+  "metrics": [
+    {
+      "compute_resource_id": "0312-151347-reef123",
+      "resource_name": "prod-etl-cluster",
+      "compute_type": "databricks",
+      "state": "running",
+      "num_workers": 4,
+      "autoscale_min": 2,
+      "autoscale_max": 8,
+      "node_type": "Standard_DS3_v2",
+      "spark_version": "13.3.x-scala2.12",
+      "start_time": "2026-04-14T01:00:00Z",
+      "creator": "yahia.zerdoumi@company.com",
+      "estimated_hourly_cost_usd": 3.84,
+      "workspace_id": "adb-3059738143768593",
+      "avg_cpu_utilization_pct": "67.4",
+      "avg_mem_utilization_pct": "54.1",
+      "tags": {
+        "env": "prod",
+        "team": "data-engineering",
+        "cost-center": "dc-monitoring"
+      }
+    }
+  ],
+  "metadata": {
+    "collector_version": "1.4.0",
+    "region": "westeurope"
+  },
+  "metric_count": 1,
+  "is_empty": false
+}

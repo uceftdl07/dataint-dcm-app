@@ -1,0 +1,220 @@
+# DCM Workflow Configuration v2
+# Copy to dcm-config.yml after install: .specify/extensions/dcm/dcm-config.yml
+
+# MCP server id — must match the key in .vscode/mcp.json
+mcp_server: "atlassian"
+
+# GitHub MCP — PR publish (name as shown in the VS Code Tools picker)
+github_mcp_server: "github"
+
+github:
+  owner: "TotalEnergiesCode"
+  repo: "dataint-dcm-app"
+
+project:
+  key: "DCINT"
+
+git:
+  integration_base: "develop"
+  branch_strategy: "direct_to_base"   # direct_to_base | integration_branch (legacy)
+  child_branch_base: "develop"        # fetch+pull origin/develop avant chaque branche fille
+  require_fresh_base: true            # abort si local develop ≠ origin/develop après pull
+  pr_target: "develop"                # PR des branches filles → develop (pas branche mère)
+  sync_before_implement: true         # fetch+rebase avant de coder (implement.md Step 4.5)
+  sync_before_implement_strategy: "rebase"  # rebase | merge (branche déjà partagée)
+  # Le préfixe spec_num évite les collisions inter-epics — pas de flag séparé.
+  child_branch_pattern: "{domain}/{spec_num}-{slug}"
+  push_to_origin: true
+  domains:
+    - frontend
+    - backend
+    - dataeng
+    - devops
+    - qa
+    - misc
+
+# Package registry — le scope limite la conso de tokens (lecture ciblée)
+packages:
+  frontend:
+    - path: packages/dcm-frontend
+      label: "DCM Frontend (React)"
+  backend:
+    - path: packages/dcm-backend
+      label: "DCM Backend (FastAPI)"
+    - path: packages/dcm-commons
+      label: "DCM Commons (shared models)"
+  dataeng:
+    - path: packages/dcm-aws-collector
+      label: "AWS Collector"
+    - path: packages/dcm-azure-collector
+      label: "Azure Collector"
+    - path: packages/dcm-databricks-pipeline
+      label: "Databricks Pipeline"
+    - path: packages/dcm-lambda-ingestion
+      label: "Lambda Ingestion"
+  # Domaines non-code : path = racine de travail, pas un package. Présents pour que
+  # `limits.require_package_path` soit satisfiable partout.
+  devops:
+    - path: .github/workflows
+      label: "CI/CD workflows"
+    - path: scripts
+      label: "Repo scripts"
+  qa:
+    - path: packages/dcm-commons/fixtures
+      label: "Shared test fixtures"
+  misc:
+    - path: docs
+      label: "Docs / misc"
+
+# Scope presets (intake AskQuestion)
+scope_presets:
+  frontend_only:
+    domains: [frontend]
+  backend_only:
+    domains: [backend]
+  dataeng_only:
+    domains: [dataeng]
+  fullstack:
+    domains: [frontend, backend]
+  full_platform:
+    domains: [frontend, backend, dataeng]
+
+# Work types — labels Jira + stratégie git. Pas de `spec_template` : un seul
+# templates/spec.md, le work type décide des blocs que l'agent garde dedans.
+# `max_tasks` est une convention rappelée à l'agent, pas un plafond vérifié.
+work_types:
+  feature:
+    labels: ["work-type:feature", "spec-driven", "dcm", "speckit"]
+    requires_plan: true
+    jira_epic: true
+  technique:
+    labels: ["work-type:technique", "spec-driven", "dcm"]
+    requires_plan: true
+    jira_epic: true
+  dette:
+    labels: ["work-type:debt", "technical-debt", "dcm"]
+    requires_plan: false
+    jira_epic: false
+  hotfix:
+    labels: ["work-type:hotfix", "P0", "dcm"]
+    requires_plan: false
+    jira_epic: false
+    jira_issue_type: Bug
+    max_tasks: 3
+  fixture:
+    labels: ["work-type:fixture", "testing", "dcm"]
+    requires_plan: false
+    jira_epic: true
+
+# Multi-epic coordination — registry + conflict check at dispatch
+multi_epic:
+  # Sous specs/ (versionné) et pas .specify/ (gitignoré) : état d'équipe, sinon
+  # conflict-check ne voit que vos epics. Lu par scripts/lib-dcm-registry.sh.
+  registry_path: "specs/active-epics.json"
+  require_spec_arg_when_multiple: true   # --spec mandatory if 2+ active specs
+  conflict_check_before_dispatch: true   # run dcm-conflict-check.sh before Jira/git
+  epic_title_prefix: true                # Jira Epic summary: [009] Title
+
+# Conventions rappelées à l'agent (tasks.md, implement.md). Aucun script ne les
+# vérifie : règles de revue, pas des gates.
+limits:
+  max_tasks_per_domain: 8
+  require_package_path: true
+  require_story_subspec: true
+
+# Task dispatch model — DCM team default: 1 Story Jira + 1 branch per domain
+task_dispatch:
+  mode: one_per_domain          # one_per_domain | granular
+  # one_per_domain: 1 task max par domaine, sous-étapes dans la sub-spec
+  # granular: plusieurs T00X par domaine (défaut spec-kit)
+
+# Ticket plan — defined at scope intake (Q5), drives spec + tasks + Jira dispatch
+ticket_plan:
+  # mode choisi à l'intake : single_domain | one_per_domain | custom
+  # expected_story_count = len(ticket_domains) → Work Breakdown + lignes de tasks.md
+  dependency_check: true        # Q6 — l'agent cherche les manques (endpoint absent…)
+  dependency_patterns:
+    - pattern: "widget|dashboard|metric|carousel|card"
+      often_needs: [backend]
+      hint: "UI metric — verify GET endpoint + state/filter in codebase before frontend-only ticket"
+      search_backend: "packages/dcm-backend/app/api/routes/"
+      search_frontend: "packages/dcm-frontend/src/hooks/ packages/dcm-frontend/src/pages/"
+    - pattern: "inactive cluster|cluster.*inactive|terminated"
+      often_needs: [backend]
+      hint: "Check clusters.py GET /compute + frontend stateFilter — client filter may suffice"
+      search_backend: "packages/dcm-backend/app/api/routes/clusters.py"
+      search_frontend: "packages/dcm-frontend/src/hooks/useClustersPageData.ts"
+    - pattern: "filter|search|endpoint|api"
+      often_needs: [backend]
+      search_backend: "packages/dcm-backend/app/api/routes/"
+    - pattern: "collector|pipeline|ingestion|lambda"
+      often_needs: [dataeng, backend]
+      search_backend: "packages/dcm-backend/"
+      search_dataeng: "packages/dcm-aws-collector/ packages/dcm-azure-collector/"
+
+mapping:
+  spec_artifact: "Epic"
+  task_artifact: "Story"
+  task_epic_link: "Epic Link"
+
+defaults:
+  epic:
+    labels: ["spec-driven", "dcm", "speckit"]
+    custom_fields: {}
+  story:
+    labels: ["implementation"]
+    custom_fields: {}
+
+status_mapping:
+  completed: "Done"
+  pending: "To Do"
+  in_progress: "In Progress"
+
+implement:
+  # Délégation bloquante : une task dont le `domain` matche est déléguée, l'agent
+  # principal ne code pas. La valeur est l'identifiant de l'agent, le même sur les deux
+  # hôtes (frontmatter `name:` du fichier déployé) — il vient du plugin APM
+  # TotalEnergiesCode/dp-ai-tools/plugins/data-integration, pas de ce dépôt.
+  # Le checkpoint par task est défini dans commands/implement.md, pas ici.
+  domain_subagents:
+    dataeng: "dp-data-databricks-engineer"
+  domain_subagents_required: true       # pas de fallback sur l'agent principal
+
+# Préférences de modèle par étape — indicatif, jamais imposé : l'agent affiche une
+# bannière et propose de switcher. Helper: scripts/dcm-model-pref.sh --step <step>
+model_preferences:
+  enforce_banner: true
+  ask_if_mismatch: true
+  default: "claude-sonnet"
+  specify: "claude-opus-4.8"
+  clarify: "gpt-5.5"
+  plan: "claude-opus-4.8"
+  tasks: "claude-sonnet-5"
+  analyze: "gpt-5.4"
+  dispatch: "claude-haiku"
+  implement: "claude-sonnet-5"     # code
+  review: "claude-sonnet-5"
+  publish-pr: "claude-haiku-4.5"   # mechanical git/PR
+  sync-status: "claude-haiku-4.5"
+  usage-report: "claude-haiku-4.5"
+
+# Gates qualité avant PR (branche fille → integration)
+review:
+  enabled: true
+  before_commit: true                 # hook Claude Code + git hook : commit bloqué sans stamp
+  before_commit_require_pass: true    # un stamp WARN ne suffit pas au commit
+  # CONVENTION seulement — rien ne l'applique : aucun workflow ne se déclenche sur
+  # `pull_request`. À câbler dans les branch protection rules pour un vrai gate.
+  copilot_auto_review_required: true
+  gates:
+    lint: true
+    types: true
+    tests: true
+    coverage_min: 0            # 0 = désactivé
+    duplication: false         # --duplication pour activer jscpd
+    sonar: false               # requiert SONAR_TOKEN + sonar-scanner
+  skills:
+    frontend: dcm-react
+    backend: dcm-python
+
+# Overrides d'env : SPECKIT_DCM_MCP_SERVER, SPECKIT_DCM_GITHUB_MCP_SERVER, SPECKIT_DCM_PROJECT_KEY

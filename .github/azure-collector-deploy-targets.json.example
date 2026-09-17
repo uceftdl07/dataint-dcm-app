@@ -1,0 +1,13 @@
+{
+  "{lzshort}-{env}": {
+    "description": "sub-iasp-lz-{name} ({ENV}) — human-readable label",
+    "azure_subscription_id": "00000000-0000-0000-0000-000000000000",
+    "resource_group": "azrmrgXXXX04",
+    "webapp_name": "azrmfnXXXX-dcm",
+    "key_vault_url": "https://azrmkvXXXX-dcm.vault.azure.net/",
+    "source_lz_id": "azr-lz-{name}-dev",
+    "subscription_id_monitored": "00000000-0000-0000-0000-000000000000",
+    "apigee_base_url": "https://dev.apixnp.alzp.tgscloud.net/ingestion/v0.0.1",
+    "enabled_collectors": "datafactory,databricks,cost_management,databases"
+  }
+}

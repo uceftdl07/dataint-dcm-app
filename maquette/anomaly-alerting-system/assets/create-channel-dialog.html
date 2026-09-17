@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<!-- saved from url=(0060)file:///Users/maherlezhari/Downloads/dcm-channel-dialog.html -->
+<html lang="fr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCM — Créer un canal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link href="./DCM — Créer un canal_files/css2" rel="stylesheet">
+<style>
+:root{
+  --font-sans:"Inter",ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --background:oklch(100% 0 0); --foreground:oklch(14.1% .005 285.823);
+  --card-background:oklch(99.5% 0 0); --card-radius:1.375rem; --card-shadow:0 18px 42px #0f172a1f;
+  --primary:oklch(60% .25 264.376); --primary-foreground:oklch(100% 0 0);
+  --secondary:oklch(96.7% .001 286.375); --secondary-foreground:oklch(21% .006 285.885);
+  --muted:oklch(96.7% .001 286.375); --muted-foreground:oklch(55.2% .016 285.938);
+  --success-subtle:oklch(96.5% .035 145); --success:oklch(52% .1483 133.57);
+  --border:oklch(92% .004 286.32); --input:oklch(98.5% 0 0); --ring:oklch(87.1% .006 286.286); --radius:.625rem;
+}
+*{box-sizing:border-box;}
+body{margin:0;font-family:var(--font-sans);background:var(--muted);color:var(--foreground);font-size:16px;-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:3rem 1rem;}
+.segmented{display:inline-flex;background:var(--muted);border-radius:999px;padding:3px;gap:2px;width:100%;}
+.segmented button{flex:1;font-family:inherit;border:none;background:transparent;padding:.55rem .8rem;border-radius:999px;font-size:.8125rem;font-weight:700;color:var(--muted-foreground);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:.4rem;}
+.segmented button.active{background:var(--primary);color:var(--primary-foreground);}
+.modal{width:480px;max-width:100%;background:var(--card-background);border:1px solid var(--border);border-radius:var(--card-radius);box-shadow:var(--card-shadow);overflow:hidden;}
+.modal-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.modal-header h2{margin:0;font-size:1.05rem;font-weight:700;}
+.close-btn{width:2rem;height:2rem;border-radius:999px;border:1px solid var(--border);background:var(--background);cursor:pointer;font-size:.9rem;}
+.modal-body{padding:1.5rem;display:flex;flex-direction:column;gap:1.1rem;}
+.field label{font-size:.8125rem;font-weight:600;display:block;margin-bottom:.35rem;}
+.field .hint{font-size:.75rem;color:var(--muted-foreground);margin-top:.3rem;}
+input[type=text],input[type=password],select{width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:.55rem .75rem;font-family:inherit;font-size:.875rem;background:var(--input);color:var(--foreground);}
+input:focus,select:focus{outline:none;box-shadow:0 0 0 3px var(--ring);}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;border:1px solid var(--border);border-radius:var(--radius);padding:.5rem;min-height:2.6rem;}
+.chip{background:var(--secondary);color:var(--secondary-foreground);border-radius:999px;padding:.2rem .6rem;font-size:.78rem;display:inline-flex;align-items:center;gap:.3rem;}
+.chip button{border:none;background:transparent;cursor:pointer;color:var(--muted-foreground);font-size:.8rem;line-height:1;}
+.chips input{border:none;outline:none;font-family:inherit;font-size:.8125rem;flex:1;min-width:120px;background:transparent;}
+.type-panel{display:none;flex-direction:column;gap:1.1rem;}
+.type-panel.active{display:flex;}
+.inline-row{display:flex;gap:.6rem;align-items:flex-end;}
+.inline-row .field{flex:1;}
+.test-status{font-size:.78rem;color:var(--success);display:none;align-items:center;gap:.3rem;margin-top:.4rem;}
+.test-status.show{display:flex;}
+.modal-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:.6rem;}
+.btn{font-family:inherit;cursor:pointer;border:1px solid var(--border);background:var(--background);color:var(--foreground);border-radius:999px;padding:.55rem 1.1rem;font-size:.8125rem;font-weight:600;}
+.btn-primary{background:var(--primary);color:var(--primary-foreground);border-color:var(--primary);}
+</style>
+</head>
+<body>
+<div class="modal">
+  <div class="modal-header">
+    <h2>Créer un canal</h2>
+    <button class="close-btn" aria-label="Fermer">✕</button>
+  </div>
+  <div class="modal-body">
+    <div class="segmented" id="type-selector">
+      <button type="button" class="active" data-type="email">📧 Email</button>
+      <button type="button" data-type="teams">💬 Teams</button>
+      <button type="button" data-type="jira">🎫 Jira</button>
+    </div>
+
+    <div class="field"><label for="cname">Nom du canal</label><input type="text" id="cname" placeholder="Ex : Email DBA Team"></div>
+
+    <div class="type-panel active" data-panel="email">
+      <div class="field">
+        <label>Destinataires</label>
+        <div class="chips" id="recipients">
+          <span class="chip">team@totalenergies.com <button aria-label="Retirer">✕</button></span>
+          <input type="text" placeholder="Ajouter un email…">
+        </div>
+      </div>
+    </div>
+
+    <div class="type-panel" data-panel="teams">
+      <div class="inline-row">
+        <div class="field"><label for="webhook">Webhook URL</label><input type="password" id="webhook" placeholder="https://…webhook.office.com/…"></div>
+        <button class="btn" id="test-webhook" type="button">Tester</button>
+      </div>
+      <div class="test-status" id="webhook-status">✓ Connexion réussie</div>
+      <p class="hint">Stockée dans Azure Key Vault, jamais en clair en base.</p>
+    </div>
+
+    <div class="type-panel" data-panel="jira">
+      <div class="inline-row">
+        <div class="field"><label for="pkey">Clé projet</label><input type="text" id="pkey" placeholder="DCINT"></div>
+        <div class="field"><label for="itype">Type d'issue</label><select id="itype"><option>Bug</option><option>Task</option><option>Incident</option></select></div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn">Annuler</button>
+    <button class="btn btn-primary">Enregistrer</button>
+  </div>
+</div>
+<script>
+document.querySelectorAll('#type-selector button').forEach(function(b){
+  b.addEventListener('click',function(){
+    document.querySelectorAll('#type-selector button').forEach(function(x){x.classList.remove('active');});
+    b.classList.add('active');
+    document.querySelectorAll('.type-panel').forEach(function(p){p.classList.toggle('active',p.dataset.panel===b.dataset.type);});
+  });
+});
+document.getElementById('test-webhook').addEventListener('click',function(){
+  document.getElementById('webhook-status').classList.add('show');
+});
+var recipients=document.getElementById('recipients');
+recipients.querySelector('input').addEventListener('keydown',function(e){
+  if(e.key==='Enter'&&e.target.value.trim()){
+    e.preventDefault();
+    var chip=document.createElement('span'); chip.className='chip';
+    chip.innerHTML=e.target.value.trim()+' <button aria-label="Retirer">✕</button>';
+    chip.querySelector('button').addEventListener('click',function(){chip.remove();});
+    recipients.insertBefore(chip,e.target);
+    e.target.value='';
+  }
+});
+recipients.querySelectorAll('.chip button').forEach(function(b){b.addEventListener('click',function(){b.closest('.chip').remove();});});
+</script>
+
+
+</body></html>

@@ -1,0 +1,33 @@
+{
+  "work_type": "feature",
+  "domains": ["backend", "frontend"],
+  "selection_mode": "manual",
+  "packages": {
+    "backend": ["packages/dcm-backend", "packages/dcm-commons"],
+    "frontend": ["packages/dcm-frontend"]
+  },
+  "priority": "P2",
+  "ticket_plan": {
+    "mode": "custom",
+    "count": 2,
+    "tickets": [
+      {
+        "task": "Backend-alerting-email-mailjet",
+        "domain": "backend",
+        "scope": "EmailChannel (MailJet client), HTML email template, secret resolution dcm-mailjet-api-key + dcm-mailjet-secret-key + dcm-mailjet-sender-email"
+      },
+      {
+        "task": "Frontend-alerting-email-ui",
+        "domain": "frontend",
+        "scope": "Enable email channel type in Notification Settings (create channel form: name + recipients) and Alert Config Dialog (email toggle)"
+      }
+    ]
+  },
+  "dependency_notes": "Depends on Spec B1 (017-alerting-core-teams-jira) for AlertingService/NotificationChannel ABC/notification_channels/alert_configs tables. Adds the email channel_type implementation only.",
+  "prerequisites": [
+    "Spec B1 (017-alerting-core-teams-jira) merged/available: AlertingService, NotificationChannel ABC, notification_channels/alert_configs tables exist",
+    "BLOCKING - PO action: MailJet account activated, API key generated, sender domain verified, before this spec can go to production (engineering can build/test against a MailJet sandbox key in the meantime)"
+  ],
+  "contracts_note": "spec.md references the NotificationChannel ABC and config_json schema from Spec B1; adds only the email-specific config_json shape and secret names.",
+  "summary": "Canal de notification Email (MailJet) - dernier canal du module alerting, isole car bloque sur action PO"
+}

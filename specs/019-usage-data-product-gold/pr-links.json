@@ -1,0 +1,21 @@
+{
+  "updated_at": "2026-09-07T00:00:00Z",
+  "pull_requests": [
+    {
+      "task_id": "T001",
+      "branch": "dataeng/019-usage-curated-uc-registry",
+      "number": 231,
+      "url": "https://github.com/TotalEnergiesCode/dataint-dcm-app/pull/231",
+      "base": "develop",
+      "story_key": "DCINT-289"
+    },
+    {
+      "task_id": "T003",
+      "branch": "dataeng/019-usage-gold-catalog-governance",
+      "number": 245,
+      "url": "https://github.com/TotalEnergiesCode/dataint-dcm-app/pull/245",
+      "base": "develop",
+      "story_key": "DCINT-291"
+    }
+  ]
+}

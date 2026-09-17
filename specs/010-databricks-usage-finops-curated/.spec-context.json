@@ -1,0 +1,39 @@
+{
+  "workflow": "speckit",
+  "specName": "Métriques Usage & FinOps Databricks (Azure + AWS) — couche curated",
+  "branch": "feat/T001-usage-metrics",
+  "currentStep": "implement",
+  "status": "implementing",
+  "history": [
+    {
+      "step": "implement",
+      "substep": null,
+      "kind": "start",
+      "by": "extension",
+      "at": "2026-08-04T13:19:19.946Z"
+    },
+    {
+      "step": "implement",
+      "substep": null,
+      "task": "T001",
+      "kind": "complete",
+      "by": "ai",
+      "at": "2026-08-04T13:26:56.330Z"
+    }
+  ],
+  "currentTask": "T001",
+  "task_summaries": {
+    "T001": {
+      "status": "DONE",
+      "did": "Implemented usage ingestion plugin (pipelines/usage) mirroring T002 finops socle: 3 faithful curated tables (compute_clusters, compute_node_timeline, access_audit), idempotent per-cloud MERGE, wheel script + job task, 12 tests",
+      "files": [
+        "packages/dcm-databricks-pipeline/pipelines/usage/specs.py",
+        "packages/dcm-databricks-pipeline/pipelines/usage/ingest.py",
+        "packages/dcm-databricks-pipeline/pipelines/usage/entrypoint.py",
+        "packages/dcm-databricks-pipeline/pyproject.toml",
+        "packages/dcm-databricks-pipeline/resources/job_dcm_system_tables.yml",
+        "packages/dcm-databricks-pipeline/tests/usage/test_ingest.py"
+      ]
+    }
+  }
+}

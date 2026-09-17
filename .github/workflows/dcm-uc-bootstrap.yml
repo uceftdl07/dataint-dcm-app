@@ -1,0 +1,122 @@
+name: dcm-uc-bootstrap — Unity Catalog admin bootstrap / migration
+run-name: "UC bootstrap — env=${{ inputs.environment }} action=${{ inputs.action }} apply=${{ inputs.apply }} [${{ github.ref_name }}]"
+
+# Exécution MANUELLE uniquement d'un script d'état sensible (DDL + seed + bootstrap
+# admins + migration projets) sur le catalog Unity de PROD via SQL Warehouse.
+#
+# Garde-fous (ne pas relâcher sans revue) :
+#   - workflow_dispatch seul : jamais sur push/pull_request (DDL + octroi d'admin).
+#   - environment: dev|prod (choisi au lancement) → gate d'approbation (required
+#     reviewers sur prod) ET fait matcher le subject du federated credential Entra
+#     (repo:<org>/<repo>:environment:<env>) : sans lui, l'échange OIDC échoue.
+#     host / http_path / catalog / schema / warehouse viennent des variables
+#     GitHub SCOPÉES PAR ENVIRONNEMENT (Settings > Environments > <env> > Variables).
+#   - apply=false par défaut : migrate-projects reste en dry-run. bootstrap est
+#     idempotent (CREATE IF NOT EXISTS / INSERT WHERE NOT EXISTS) mais ÉCRIT
+#     toujours (tables + seed + admins) — d'où l'approbation prod.
+#   - Les actions destructives DELETE (--clean-dim-landing-zone,
+#     --delete-dim-lz-null-subscription) ne sont VOLONTAIREMENT pas exposées ici :
+#     à exécuter en manuel local, jamais depuis le CI.
+#
+# Auth secretless (WIF) : réutilise ./.github/actions/acquire-entra-token-oidc,
+# qui échange le jeton OIDC GitHub contre un bearer Entra et l'exporte en
+# DATABRICKS_TOKEN — le script le lit et l'utilise comme access_token.
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environnement cible (détermine host / schema / warehouse via les vars scopées)'
+        type: choice
+        required: true
+        default: 'dev'
+        options:
+          - dev
+          - prod
+      action:
+        description: 'Action à exécuter'
+        type: choice
+        required: true
+        default: 'bootstrap'
+        options:
+          - bootstrap          # ensure tables + seed defaults + bootstrap admins (idempotent, écrit)
+          - migrate-projects   # dcm_user_lz_access -> projets par BA (dry-run sauf apply)
+      apply:
+        description: 'Exécuter réellement (migrate-projects). Décoché = dry-run.'
+        type: boolean
+        required: false
+        default: false
+
+# id-token: write est OBLIGATOIRE pour l'échange OIDC -> Entra (secretless).
+permissions:
+  id-token: write
+  contents: read
+
+# Sérialise les runs par environnement : un seul write concurrent par catalog.
+concurrency:
+  group: dcm-uc-bootstrap-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    name: Bootstrap / migrate UC (${{ inputs.environment }})
+    runs-on: ubuntu-latest
+    # environment dev|prod : gate d'approbation + subject du federated credential.
+    environment: ${{ inputs.environment }}
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Acquire Entra token via GitHub OIDC (secretless)
+        uses: ./.github/actions/acquire-entra-token-oidc
+        with:
+          tenant_id: ${{ secrets.AZURE_SP_TENANT_ID }}
+          client_id: ${{ secrets.AZURE_SP_CLIENT_ID }}
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install script dependencies
+        run: pip install databricks-sql-connector databricks-sdk python-dotenv
+
+      - name: Run bootstrap / migration
+        shell: bash
+        env:
+          ACTION: ${{ inputs.action }}
+          APPLY: ${{ inputs.apply }}
+          # Vars scopées par environnement (Settings > Environments > <env> > Variables).
+          # Vides = le script garde ses valeurs par défaut baked-in.
+          IN_HOST: ${{ vars.DCM_DATABRICKS_HOST }}
+          IN_HTTP_PATH: ${{ vars.DCM_DATABRICKS_HTTP_PATH }}
+          IN_CATALOG: ${{ vars.DCM_DATABRICKS_CATALOG }}
+          IN_SCHEMA: ${{ vars.DCM_DATABRICKS_SCHEMA }}
+          IN_WAREHOUSE_ID: ${{ vars.DCM_DATABRICKS_WAREHOUSE_ID }}
+        run: |
+          set -euo pipefail
+          # export seulement si non vide, sinon on écraserait le défaut du script par "".
+          if [[ -n "${IN_HOST}" ]]; then export DCM_DATABRICKS_HOST="${IN_HOST}"; fi
+          if [[ -n "${IN_HTTP_PATH}" ]]; then export DCM_DATABRICKS_HTTP_PATH="${IN_HTTP_PATH}"; fi
+          if [[ -n "${IN_CATALOG}" ]]; then export DCM_DATABRICKS_CATALOG="${IN_CATALOG}"; fi
+          if [[ -n "${IN_SCHEMA}" ]]; then export DCM_DATABRICKS_SCHEMA="${IN_SCHEMA}"; fi
+          if [[ -n "${IN_WAREHOUSE_ID}" ]]; then export DCM_DATABRICKS_WAREHOUSE_ID="${IN_WAREHOUSE_ID}"; fi
+          args=()
+          case "$ACTION" in
+            bootstrap)
+              : # pas de sous-commande : ensure tables + seed + admins
+              ;;
+            migrate-projects)
+              args+=("--migrate-projects")
+              if [[ "$APPLY" == "true" ]]; then
+                args+=("--apply")
+              fi
+              ;;
+            *)
+              echo "::error::Unknown action: $ACTION"
+              exit 1
+              ;;
+          esac
+          echo "Running: python our_catalogs_spn.py ${args[*]:-}"
+          python our_catalogs_spn.py "${args[@]}"

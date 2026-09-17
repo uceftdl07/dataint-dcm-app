@@ -1,0 +1,86 @@
+resources:
+
+  # Job Databricks PySpark — Purge des tables curated FULL-LOAD (T001, 020-purge-curated-full-load).
+  #
+  # Les tables full-load (`watermark_column is None` cote registre d'ingestion,
+  # ex. `curated_dbx_uc_tables`, `curated_dbx_billing_list_prices`) ne recoivent
+  # AUJOURD'HUI que des upserts (`MERGE ... WHEN MATCHED/NOT MATCHED`, jamais de
+  # DELETE) : une ligne retiree cote source y reste indefiniment, curated derive
+  # alors silencieusement de la source qu'elle est censee refleter fidelement.
+  #
+  # JOB SEPARE de `dcm_system_tables` : cron hebdomadaire decale, aucun
+  # `depends_on`, aucune tache partagee, aucun import croise vers
+  # `pipelines.system_tables.ingest`/`entrypoint` (additif pur, cf. story T001).
+  #
+  # Registre OPT-IN : `pipelines.system_tables.purge_specs.PURGE_ENABLED_KEYS`
+  # (garde-fou a l'import — ValueError si une cle referencerait une table
+  # incrementale). Ajouter/retirer une table = editer `inputs` ci-dessous EN
+  # LOCKSTEP avec ce registre Python.
+  jobs:
+    dcm_curated_purge:
+      name: "[${bundle.target}] DCM Curated Full-Load Purge"
+      max_concurrent_runs: 1
+      timeout_seconds: 3600
+
+      # Hebdomadaire, decale APRES dcm_system_tables (03:00 quotidien) et
+      # dcm_reference_lz (04:30 quotidien) : ces tables full-load sont de
+      # faible volumetrie (registres/references), une cadence journaliere
+      # n'apporte rien — la purge corrige une derive accumulee sur la semaine.
+      schedule:
+        quartz_cron_expression: "0 0 5 ? * SUN"
+        timezone_id: "Europe/Paris"
+        pause_status: UNPAUSED
+
+      # Compute serverless : pas de job cluster à provisionner/dimensionner.
+      environments:
+        - environment_key: curated_purge_env
+          spec:
+            environment_version: "3"
+            dependencies:
+              - ../dist/*.whl
+
+      tasks:
+        - task_key: purge_curated_full_load
+          description: "Purge des tables curated full-load (registre opt-in `purge_specs.PURGE_ENABLED_KEYS`) : suppression des lignes absentes de la derniere lecture source complète, par clé de merge et par cloud, sous garde-fou volumétrique"
+          # Boucle sur le registre opt-in : une iteration = une table = une task
+          # parallele. `inputs` doit rester ALIGNE sur
+          # `pipelines.system_tables.purge_specs.PURGE_ENABLED_KEYS` (garde-fou
+          # cote entrypoint : une cle hors registre leve une erreur explicite).
+          for_each_task:
+            inputs: '["uc_tables","uc_table_tags","compute_node_types","billing_list_prices"]'
+            concurrency: 4
+            task:
+              task_key: purge_one_curated_table
+              environment_key: curated_purge_env
+              python_wheel_task:
+                package_name: dcm_databricks_pipeline
+                entry_point: dcm-curated-purge
+                named_parameters:
+                  table:               "{{input}}"
+                  catalog:             ${var.catalog}
+                  schema:              ${var.schema}
+                  collection_run_id:   "{{job.run_id}}"
+                  collected_at:        "{{job.start_time.iso_datetime}}"
+                  azure_host:          ${var.azure_host}
+                  azure_http_path:     ${var.azure_http_path}
+                  azure_secret_scope:  ${var.azure_secret_scope}
+                  azure_tenant_id_key: ${var.azure_tenant_id_key}
+                  azure_client_id_key: ${var.azure_client_id_key}
+                  azure_secret_key:    ${var.azure_secret_key}
+                  # Suppression reelle par defaut (garde-fou volumetrique
+                  # applique cote entrypoint AVANT tout DELETE, cf.
+                  # `pipelines.common.purge.purge_absent_rows`). Litteral (pas
+                  # une variable bundle) : surchargeable par target directement
+                  # ici si un dry-run de validation est necessaire.
+                  dry_run:             "false"
+              max_retries: 0
+
+      email_notifications:
+        on_failure:
+          - ${var.notification_email}
+        no_alert_for_skipped_runs: true
+
+      tags:
+        project: dcm-databricks-pipeline
+        managed_by: databricks-asset-bundle
+        domain: curated-purge

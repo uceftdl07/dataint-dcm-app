@@ -1,0 +1,38 @@
+{
+  "_comment": [
+    "Template for .mcp.json (project-scoped MCP servers, read by Claude Code).",
+    "NOT installed automatically: adding an MCP server means approving a remote",
+    "endpoint for everyone who opens this repo, so it stays an explicit action.",
+    "",
+    "  cp spec-kit-dcm-workflow/claude-code/mcp.template.json .mcp.json",
+    "  # then remove this _comment key and run: claude mcp list",
+    "",
+    "The server KEYS must stay 'atlassian' and 'github': they match mcp_server and",
+    "github_mcp_server in dcm-config.yml, and Claude Code derives tool names from",
+    "them (mcp__atlassian__createJiraIssue, mcp__github__create_pull_request).",
+    "Renaming a key silently breaks the allowed-tools lists in .claude/commands/.",
+    "",
+    "github: export GITHUB_PAT with repo + read:org scopes before starting Claude.",
+    "atlassian: OAuth in the browser on first use, nothing to export.",
+    "",
+    "Copilot in VS Code reads .vscode/mcp.json instead — a DIFFERENT schema",
+    "('servers' + 'inputs', ${input:name} prompts). Claude Code does not read it,",
+    "so both files are needed on a machine that uses both agents. Keep the",
+    "transports aligned: the team's working .vscode/mcp.json uses streamable http",
+    "on /v1/mcp for Atlassian, which is why this template does too — /v1/sse is",
+    "the legacy transport."
+  ],
+  "mcpServers": {
+    "atlassian": {
+      "type": "http",
+      "url": "https://mcp.atlassian.com/v1/mcp"
+    },
+    "github": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headers": {
+        "Authorization": "Bearer ${GITHUB_PAT}"
+      }
+    }
+  }
+}

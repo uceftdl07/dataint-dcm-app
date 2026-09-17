@@ -1,0 +1,13 @@
+{
+  "updated_at": "2026-07-02T00:00:00Z",
+  "pull_requests": [
+    {
+      "task_id": "T001",
+      "branch": "frontend/009-inactive-cluster-widget",
+      "number": 129,
+      "url": "https://github.com/TotalEnergiesCode/dataint-dcm-app/pull/129",
+      "base": "develop",
+      "story_key": "DCINT-160"
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+resources:
+
+  # Job Databricks PySpark — Vue gold `dim_landing_zone` (no DLT, no MERGE).
+  #
+  # Comme `dcm_gold_dbx_workspace`, ce job execute un unique DDL
+  # `CREATE OR REPLACE VIEW` (precede d'un `DROP TABLE IF EXISTS` de migration
+  # one-off, cf. entrypoint) : la vue `dim_landing_zone` unifie
+  # `dim_dbx_workspace` (produite par `dcm_gold_dbx_workspace`) et
+  # `dim_landing_zone_collector` (table DLT du pipeline gold), enrichis par
+  # `dim_reference_landing_zone_business_application` (produite par
+  # `dcm_reference_lz`). Aucune dependance de job explicite (`run_job_task`) :
+  # planification decalee suffit — reference-lz 04:30, gold-dbx-workspace 05:00,
+  # cette vue 06:00 — les trois objets source sont ecrits avant le run. La vue
+  # n'etant pas materialisee, elle refletera de toute facon le dernier etat des
+  # sources a chaque LECTURE ; le run quotidien ne fait que garantir que la
+  # definition de la vue existe/est a jour.
+  jobs:
+    dcm_gold_landing_zone:
+      name: "[${bundle.target}] DCM Gold Landing Zone Dimension"
+      max_concurrent_runs: 1
+      timeout_seconds: 1800
+
+      # Planification quotidienne apres reference-lz (04:30) et gold-dbx-workspace
+      # (05:00) : les trois objets source de la vue sont ecrits avant ce run.
+      schedule:
+        quartz_cron_expression: "0 0 6 * * ?"
+        timezone_id: "Europe/Paris"
+        pause_status: UNPAUSED
+
+      # Compute serverless : pas de job cluster a provisionner/dimensionner.
+      environments:
+        - environment_key: gold_landing_zone_env
+          spec:
+            environment_version: "3"
+            dependencies:
+              - ../dist/*.whl
+
+      tasks:
+        - task_key: gold_dim_landing_zone
+          description: "Vue gold dim_landing_zone : union dim_dbx_workspace + dim_landing_zone_collector, inner join referentiel Business Application, dedup par subscription_or_account_id"
+          environment_key: gold_landing_zone_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-landing-zone
+            named_parameters:
+              catalog: ${var.catalog}
+              schema:  ${var.schema}
+          max_retries: 0
+
+      email_notifications:
+        on_failure:
+          - ${var.notification_email}
+        no_alert_for_skipped_runs: true
+
+      tags:
+        project: dcm-databricks-pipeline
+        managed_by: databricks-asset-bundle
+        domain: gold-landing-zone

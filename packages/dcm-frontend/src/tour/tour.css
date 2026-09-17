@@ -1,0 +1,110 @@
+/* Branded driver.js overlay — animated spotlight + popover */
+.driver-popover.dcm-tour-popover {
+  animation: dcm-tour-pop-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  background: var(--popover);
+  color: var(--popover-foreground);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  box-shadow:
+    0 24px 48px rgba(15, 23, 42, 0.18),
+    0 0 0 1px color-mix(in oklch, var(--primary) 12%, transparent);
+  max-width: 22rem;
+}
+
+.driver-popover.dcm-tour-popover .driver-popover-title {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+}
+
+.driver-popover.dcm-tour-popover .driver-popover-description {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+}
+
+.driver-popover.dcm-tour-popover .driver-popover-progress-text {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.driver-popover.dcm-tour-popover button {
+  border-radius: 0.625rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-shadow: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.driver-popover.dcm-tour-popover .driver-popover-next-btn,
+.driver-popover.dcm-tour-popover .driver-popover-done-btn {
+  background: linear-gradient(135deg, var(--tdf-blue), var(--tdf-teal));
+  color: white;
+  border: none;
+}
+
+.driver-popover.dcm-tour-popover .driver-popover-next-btn:hover,
+.driver-popover.dcm-tour-popover .driver-popover-done-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px color-mix(in oklch, var(--primary) 35%, transparent);
+}
+
+.driver-popover.dcm-tour-popover .driver-popover-prev-btn {
+  background: var(--muted);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+}
+
+.driver-popover.dcm-tour-popover .driver-popover-close-btn {
+  color: var(--muted-foreground);
+}
+
+.driver-active-element,
+.driver-no-interaction {
+  transition: outline 0.25s ease;
+}
+
+.dcm-tour-modal-backdrop {
+  animation: dcm-tour-fade-in 0.3s ease;
+}
+
+.dcm-tour-modal-panel {
+  animation: dcm-tour-pop-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.dcm-tour-page-prompt {
+  animation: dcm-tour-slide-up 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes dcm-tour-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes dcm-tour-slide-up {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@keyframes dcm-tour-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}

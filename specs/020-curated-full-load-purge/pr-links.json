@@ -1,0 +1,13 @@
+{
+  "updated_at": "2026-09-02T00:00:00Z",
+  "pull_requests": [
+    {
+      "task_id": "T001",
+      "number": 236,
+      "url": "https://github.com/TotalEnergiesCode/dataint-dcm-app/pull/236",
+      "branch": "dataeng/020-purge-curated-full-load-registre-opt-in",
+      "base": "develop",
+      "jira_key": "DCINT-298"
+    }
+  ]
+}

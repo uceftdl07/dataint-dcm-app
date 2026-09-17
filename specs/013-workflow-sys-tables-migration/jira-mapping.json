@@ -1,0 +1,12 @@
+{
+  "updated_at": "2026-08-17T13:53:30Z",
+  "spec": "013-workflow-sys-tables-migration",
+  "epic": { "key": "DCINT-236", "url": "https://tdf.atlassian.net/browse/DCINT-236" },
+  "stories": [
+    { "task_id": "T001", "key": "DCINT-238", "url": "https://tdf.atlassian.net/browse/DCINT-238", "domain": "dataeng", "branch": "dataeng/013-curated-lakeflow-system-tables" },
+    { "task_id": "T002", "key": "DCINT-237", "url": "https://tdf.atlassian.net/browse/DCINT-237", "domain": "dataeng", "branch": "dataeng/013-bridge-views-regold-workflow" },
+    { "task_id": "T003", "key": "DCINT-241", "url": "https://tdf.atlassian.net/browse/DCINT-241", "domain": "dataeng", "branch": "dataeng/013-teardown-workflow-collector" },
+    { "task_id": "T004", "key": "DCINT-239", "url": "https://tdf.atlassian.net/browse/DCINT-239", "domain": "backend", "branch": "backend/013-backend-null-safe-freshness" },
+    { "task_id": "T005", "key": "DCINT-240", "url": "https://tdf.atlassian.net/browse/DCINT-240", "domain": "frontend", "branch": "frontend/013-frontend-null-safe-freshness" }
+  ]
+}

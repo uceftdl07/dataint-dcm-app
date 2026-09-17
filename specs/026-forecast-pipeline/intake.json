@@ -1,0 +1,25 @@
+{
+  "work_type": "feature",
+  "domains": ["dataeng"],
+  "ticket_plan": {
+    "mode": "single_domain",
+    "ticket_domains": ["dataeng"],
+    "expected_story_count": 1
+  },
+  "dependency_gaps": [
+    {
+      "need": "Restitution API + widget UI du forecast",
+      "required_domain": "backend",
+      "ticket_planned": false,
+      "resolution": "deferred",
+      "evidence": "packages/dcm-backend/app/api/services/compute_metrics_forecast.py + packages/dcm-frontend/src/components/domain/compute/forecast-widget.tsx déjà modifiés sur cette branche, hors périmètre de ce ticket rétroactif",
+      "spec_note": "Documentés pour mémoire dans Out of scope ; pas de Story séparée, le code est déjà mergé sur cette branche"
+    }
+  ],
+  "packages": ["packages/dcm-databricks-pipeline"],
+  "priority": "P2",
+  "preset": null,
+  "selection_mode": "manual",
+  "summary": "Documenter rétroactivement le pipeline de prévision (forecast) gold_dbx_compute/usage de bout en bout : construction de l'historique, appel ai_forecast, ancrage de l'horizon, cycle de vie de la table.",
+  "created_at": "2026-09-14T00:00:00Z"
+}

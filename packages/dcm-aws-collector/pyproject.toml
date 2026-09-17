@@ -1,0 +1,117 @@
+[project]
+name = "dcm-aws-collector"
+version = "0.1.0"
+description = "DCM AWS collector agent — ECS Fargate one-shot Task collecting metrics from AWS LZ"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Proprietary — TotalEnergies internal use only" }
+authors = [{ name = "Yahia ZERDOUMI", email = "yahia.zerdoumi@totalenergies.com" }]
+
+dependencies = [
+    "dcm-commons",
+    "boto3>=1.34",
+    "httpx>=0.27",
+    "structlog>=24.4",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=9.0.3",
+    "pytest-asyncio>=0.23",
+    "pytest-mock>=3.14",
+    "moto[glue,emr,rds,ce,budgets,cloudwatch,secretsmanager,sts]>=5.0",
+    "ruff>=0.4",
+    "mypy>=1.10",
+    "boto3-stubs[glue,emr,rds,ce,budgets,cloudwatch,redshift,secretsmanager,sts]>=1.34",
+]
+
+[project.scripts]
+dcm-aws-collector = "aws_collector.main:run"
+
+# ---------------------------------------------------------------------------
+# Build backend
+# ---------------------------------------------------------------------------
+[tool.uv]
+link-mode = "copy"
+constraint-dependencies = [
+    "urllib3>=2.7.0",
+    "cryptography>=50.0.0",
+]
+
+[tool.uv.sources]
+dcm-commons = { path = "../dcm-commons", editable = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["aws_collector"]
+
+# ---------------------------------------------------------------------------
+# Ruff
+# ---------------------------------------------------------------------------
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["aws_collector", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W", "F", "I", "N", "UP", "B", "C4",
+    "SIM", "TCH", "RUF", "ANN", "D", "PTH", "ASYNC",
+]
+ignore = [
+    "D100", "D104", "D107",
+    "ANN101", "ANN102",
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+known-first-party = ["aws_collector", "dcm_commons"]
+force-sort-within-sections = true
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+# ---------------------------------------------------------------------------
+# Mypy
+# ---------------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_return_any = true
+disallow_any_generics = true
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_reexport = true
+
+[[tool.mypy.overrides]]
+module = [
+    "msal.*",
+    "structlog.*",
+    "boto3.*",
+    "botocore.*",
+    "moto.*",
+]
+ignore_missing_imports = true
+
+# ---------------------------------------------------------------------------
+# Pytest
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = ["--strict-markers", "--tb=short", "-q"]
+markers = [
+    "unit: pure unit tests with no I/O",
+    "integration: tests that require real AWS credentials",
+]

@@ -1,0 +1,33 @@
+{
+  "spec": "024-job-dlt-cluster-split",
+  "epic": {
+    "key": "DCINT-325",
+    "url": "https://tdf.atlassian.net/browse/DCINT-325"
+  },
+  "stories": [
+    {
+      "task_id": "T001",
+      "key": "DCINT-326",
+      "url": "https://tdf.atlassian.net/browse/DCINT-326",
+      "domain": "dataeng",
+      "branch": "dataeng/024-purge-liste-all-purpose-rollup-dlt",
+      "sub_spec": "stories/T001-purge-cluster-liste-et-rollup-dlt.md"
+    },
+    {
+      "task_id": "T002",
+      "key": "DCINT-328",
+      "url": "https://tdf.atlassian.net/browse/DCINT-328",
+      "domain": "backend",
+      "branch": "backend/024-filtre-dur-all-purpose-endpoints-schemas",
+      "sub_spec": "stories/T002-filtre-all-purpose-et-endpoints-job-pipeline.md"
+    },
+    {
+      "task_id": "T003",
+      "key": "DCINT-327",
+      "url": "https://tdf.atlassian.net/browse/DCINT-327",
+      "domain": "frontend",
+      "branch": "frontend/024-nav-compute-3-onglets-all-purpose-jobs",
+      "sub_spec": "stories/T003-nav-compute-3-onglets.md"
+    }
+  ]
+}

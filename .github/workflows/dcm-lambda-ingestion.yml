@@ -1,0 +1,316 @@
+name: dcm-lambda-ingestion - CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'packages/dcm-lambda-ingestion/**'
+      - 'packages/dcm-commons/**'
+      - '.github/workflows/dcm-lambda-ingestion.yml'
+      - 'packages/dcm-lambda-ingestion/Dockerfile'
+      - '.dockerignore'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'packages/dcm-lambda-ingestion/**'
+      - 'packages/dcm-commons/**'
+      - '.github/workflows/dcm-lambda-ingestion.yml'
+      - 'packages/dcm-lambda-ingestion/Dockerfile'
+      - '.dockerignore'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        type: choice
+        required: true
+        default: 'dev'
+        options: [dev, prod]
+      deploy:
+        description: 'Run deploy step (uncheck to only test+build)'
+        type: boolean
+        required: false
+        default: true
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  PYTHON_VERSION: '3.12'
+  PACKAGE_DIR: packages/dcm-lambda-ingestion
+  DOCKERFILE: packages/dcm-lambda-ingestion/Dockerfile
+
+jobs:
+  setup:
+    name: Resolve target environment
+    runs-on: ubuntu-latest
+    outputs:
+      deploy_env: ${{ steps.env.outputs.name }}
+      should_deploy: ${{ steps.env.outputs.deploy }}
+    steps:
+      - id: env
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          GIT_REF: ${{ github.ref }}
+          INPUT_DEPLOY: ${{ inputs.deploy }}
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
+        run: |
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            if [[ "$INPUT_DEPLOY" == "true" ]]; then
+              echo "name=$INPUT_ENVIRONMENT" >> "$GITHUB_OUTPUT"
+              echo "deploy=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "name=" >> "$GITHUB_OUTPUT"
+              echo "deploy=false" >> "$GITHUB_OUTPUT"
+            fi
+          elif [[ "$EVENT_NAME" == "push" && "$GIT_REF" == "refs/heads/main" ]]; then
+            echo "name=prod" >> "$GITHUB_OUTPUT"
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          elif [[ "$EVENT_NAME" == "push" && "$GIT_REF" == "refs/heads/develop" ]]; then
+            echo "name=dev" >> "$GITHUB_OUTPUT"
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=" >> "$GITHUB_OUTPUT"
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  test:
+    name: Test (pytest, ruff, mypy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        working-directory: ${{ env.PACKAGE_DIR }}
+        run: uv pip install --system -e ".[dev]"
+
+      - name: Run ruff check (non-blocking)
+        id: ruff
+        continue-on-error: true
+        working-directory: ${{ env.PACKAGE_DIR }}
+        run: ruff check . | tee ruff-report.txt
+
+      - name: Ruff summary
+        if: always()
+        working-directory: ${{ env.PACKAGE_DIR }}
+        run: |
+          {
+            echo "## Ruff report - dcm-lambda-ingestion"
+            if [[ "${{ steps.ruff.outcome }}" == "success" ]]; then
+              echo "Status: passed - no issues found."
+            else
+              echo "Status: issues found (non-blocking - to be fixed later)"
+              echo ""
+              echo '```'
+              cat ruff-report.txt 2>/dev/null || echo "(no report file)"
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run mypy type check (non-blocking)
+        id: mypy
+        continue-on-error: true
+        working-directory: ${{ env.PACKAGE_DIR }}
+        run: mypy lambda_ingestion | tee mypy-report.txt
+
+      - name: Mypy summary
+        if: always()
+        working-directory: ${{ env.PACKAGE_DIR }}
+        run: |
+          {
+            echo "## Mypy report - dcm-lambda-ingestion"
+            if [[ "${{ steps.mypy.outcome }}" == "success" ]]; then
+              echo "Status: passed - no type errors."
+            else
+              echo "Status: type errors found (non-blocking - to be fixed later)"
+              echo ""
+              echo '```'
+              cat mypy-report.txt 2>/dev/null || echo "(no report file)"
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run pytest
+        working-directory: ${{ env.PACKAGE_DIR }}
+        run: pytest
+
+  build:
+    name: Build Lambda layer + function zips (Docker)
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build layer zip (linux/amd64, non-editable dcm_commons)
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ${{ env.PACKAGE_DIR }}/Dockerfile
+          target: layer-export
+          platforms: linux/amd64
+          push: false
+          outputs: type=local,dest=/tmp/layer-build
+
+      - name: Package layer zip
+        run: |
+          set -euo pipefail
+          cd /tmp/layer-build
+          zip -r9 "$GITHUB_WORKSPACE/${{ env.PACKAGE_DIR }}/dcm-lambda-ingestion-layer.zip" .
+          echo "==> Verify dcm_commons is in layer"
+          unzip -l "$GITHUB_WORKSPACE/${{ env.PACKAGE_DIR }}/dcm-lambda-ingestion-layer.zip" | grep -q 'python/dcm_commons/' \
+            || { echo "ERROR: dcm_commons missing from layer"; exit 1; }
+          echo "==> Check for editable .pth files (should be none)"
+          if unzip -l "$GITHUB_WORKSPACE/${{ env.PACKAGE_DIR }}/dcm-lambda-ingestion-layer.zip" | grep -q '\.pth'; then
+            echo "WARNING: .pth files found in layer (may cause import errors):"
+            unzip -l "$GITHUB_WORKSPACE/${{ env.PACKAGE_DIR }}/dcm-lambda-ingestion-layer.zip" | grep '\.pth' || true
+          fi
+
+      - name: Build function code zip
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ${{ env.PACKAGE_DIR }}/Dockerfile
+          target: function-export
+          platforms: linux/amd64
+          push: false
+          outputs: type=local,dest=/tmp/function-build
+
+      - name: Package function zip
+        run: |
+          set -euo pipefail
+          cd /tmp/function-build
+          zip -r9 "$GITHUB_WORKSPACE/${{ env.PACKAGE_DIR }}/dcm-lambda-ingestion-function.zip" .
+
+      - name: Upload layer artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: dcm-lambda-ingestion-layer-zip
+          path: ${{ env.PACKAGE_DIR }}/dcm-lambda-ingestion-layer.zip
+          retention-days: 7
+
+      - name: Upload function artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: dcm-lambda-ingestion-function-zip
+          path: ${{ env.PACKAGE_DIR }}/dcm-lambda-ingestion-function.zip
+          retention-days: 7
+
+  deploy:
+    name: Deploy Lambda (${{ needs.setup.outputs.deploy_env }})
+    needs: [setup, build]
+    if: needs.setup.outputs.should_deploy == 'true'
+    runs-on: ubuntu-latest
+    environment: ${{ needs.setup.outputs.deploy_env }}
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION || 'eu-central-1' }}
+      LAMBDA_FUNCTION_NAME: ${{ vars.LAMBDA_FUNCTION_NAME || 'dcm-ingestion-api' }}
+      LAMBDA_LAYER_NAME: ${{ vars.LAMBDA_LAYER_NAME || 'dcm-ingestion-api-layer' }}
+      # Must match packages/dcm-lambda-ingestion entrypoint (NOT lambda_handler.handler)
+      LAMBDA_HANDLER: ${{ vars.LAMBDA_HANDLER || 'lambda_ingestion.handler.handler' }}
+      LAMBDA_ARTIFACTS_BUCKET: ${{ vars.LAMBDA_ARTIFACTS_BUCKET }}
+      LAYER_S3_KEY: dcm-lambda-ingestion/layer/dcm-lambda-ingestion-layer-${{ github.sha }}.zip
+      FUNCTION_S3_KEY: dcm-lambda-ingestion/function/dcm-lambda-ingestion-function-${{ github.sha }}.zip
+    steps:
+      - name: Download layer artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: dcm-lambda-ingestion-layer-zip
+          path: .
+
+      - name: Download function artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: dcm-lambda-ingestion-function-zip
+          path: .
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Upload zips to S3
+        if: env.LAMBDA_ARTIFACTS_BUCKET != ''
+        run: |
+          set -euo pipefail
+          aws s3 cp dcm-lambda-ingestion-layer.zip \
+            "s3://${{ env.LAMBDA_ARTIFACTS_BUCKET }}/${{ env.LAYER_S3_KEY }}"
+          aws s3 cp dcm-lambda-ingestion-function.zip \
+            "s3://${{ env.LAMBDA_ARTIFACTS_BUCKET }}/${{ env.FUNCTION_S3_KEY }}"
+
+      - name: Publish new Lambda layer version
+        id: layer
+        run: |
+          set -euo pipefail
+          LAYER_ARN=$(aws lambda publish-layer-version \
+            --layer-name "$LAMBDA_LAYER_NAME" \
+            --description "dcm-lambda-ingestion deps - ${{ github.sha }}" \
+            --compatible-runtimes python3.12 \
+            --compatible-architectures x86_64 \
+            --zip-file fileb://dcm-lambda-ingestion-layer.zip \
+            --query 'LayerVersionArn' \
+            --output text)
+          echo "Published layer: $LAYER_ARN"
+          echo "arn=$LAYER_ARN" >> "$GITHUB_OUTPUT"
+
+      - name: Update Lambda function code
+        run: |
+          aws lambda update-function-code \
+            --function-name "$LAMBDA_FUNCTION_NAME" \
+            --zip-file fileb://dcm-lambda-ingestion-function.zip
+
+      - name: Wait for code update to complete
+        run: |
+          aws lambda wait function-updated \
+            --function-name "$LAMBDA_FUNCTION_NAME"
+
+      - name: Set handler + attach new layer version
+        run: |
+          set -euo pipefail
+          if [[ -z "$LAMBDA_HANDLER" ]]; then
+            echo "::error::LAMBDA_HANDLER is empty — expected lambda_ingestion.handler.handler"
+            exit 1
+          fi
+          echo "Handler=$LAMBDA_HANDLER"
+          aws lambda update-function-configuration \
+            --function-name "$LAMBDA_FUNCTION_NAME" \
+            --handler "$LAMBDA_HANDLER" \
+            --layers "${{ steps.layer.outputs.arn }}"
+
+      - name: Wait for configuration update to complete
+        run: |
+          aws lambda wait function-updated \
+            --function-name "$LAMBDA_FUNCTION_NAME"
+
+      - name: Verify Lambda handler
+        run: |
+          set -euo pipefail
+          CURRENT="$(aws lambda get-function-configuration \
+            --function-name "$LAMBDA_FUNCTION_NAME" \
+            --query 'Handler' \
+            --output text)"
+          echo "Deployed handler: $CURRENT"
+          if [[ "$CURRENT" != "$LAMBDA_HANDLER" ]]; then
+            echo "::error::Handler mismatch — got '$CURRENT', expected '$LAMBDA_HANDLER'"
+            exit 1
+          fi
+          echo "✓ Handler OK ($CURRENT)"
+
+      - name: Publish new Lambda version
+        run: |
+          aws lambda publish-version \
+            --function-name "$LAMBDA_FUNCTION_NAME" \
+            --description "dcm-lambda-ingestion ${{ github.sha }}"

@@ -1,0 +1,39 @@
+{
+  "schema_version": "1.1",
+  "collection_run_id": "8d77974f-f462-479f-8775-7406aabc5aeb",
+  "source_lz_id": "lz-aws-prod",
+  "subscription_or_account_id": "123456789012",
+  "cloud_provider": "aws",
+  "domain": "compute",
+  "collected_at": "2026-04-14T07:16:42.434727Z",
+  "metrics": [
+    {
+      "compute_resource_id": "j-3ABCDEFGHIJKL",
+      "resource_name": "emr-cluster-etl-prod",
+      "compute_type": "emr",
+      "state": "running",
+      "num_workers": 6,
+      "autoscale_min": null,
+      "autoscale_max": null,
+      "node_type": "r5.2xlarge",
+      "spark_version": null,
+      "start_time": "2026-04-14T00:30:00Z",
+      "creator": "arn:aws:iam::123456789012:role/emr-service-role",
+      "estimated_hourly_cost_usd": 7.2,
+      "workspace_id": null,
+      "avg_cpu_utilization_pct": "78.9",
+      "avg_mem_utilization_pct": "62.3",
+      "tags": {
+        "env": "prod",
+        "team": "data-platform",
+        "Name": "emr-cluster-etl-prod"
+      }
+    }
+  ],
+  "metadata": {
+    "collector_version": "1.4.0",
+    "region": "eu-west-1"
+  },
+  "metric_count": 1,
+  "is_empty": false
+}

@@ -1,0 +1,49 @@
+{
+  "updated_at": "2026-07-30T07:25:00Z",
+  "spec": "011-nav-v2-cleanup",
+  "branch_strategy": "direct_to_base",
+  "child_branch_base": "develop",
+  "pr_target": "develop",
+  "integration_branch": null,
+  "epic": {
+    "key": "DCINT-195",
+    "status": "created",
+    "url": "https://tdf.atlassian.net/browse/DCINT-195"
+  },
+  "dispatch": [
+    {
+      "task_id": "T001",
+      "title": "Main nav simplification (3 items visible)",
+      "domain": "frontend",
+      "branch": "frontend/011-main-nav-simplification",
+      "branch_pushed": true,
+      "jira_story_key": "DCINT-196",
+      "jira_status": "created"
+    },
+    {
+      "task_id": "T002",
+      "title": "Settings section in Sidebar (Administration + My Landing Zones)",
+      "domain": "frontend",
+      "branch": "frontend/011-settings-section",
+      "branch_pushed": true,
+      "jira_story_key": "DCINT-197",
+      "jira_status": "created"
+    },
+    {
+      "task_id": "T003",
+      "title": "Databricks v2 sub-nav + placeholder pages",
+      "domain": "frontend",
+      "branch": "frontend/011-databricks-v2-subnav",
+      "branch_pushed": true,
+      "jira_story_key": "DCINT-198",
+      "jira_status": "created"
+    }
+  ],
+  "summary": {
+    "jira_stories_done": 3,
+    "jira_stories_total": 3,
+    "branches_done": 3,
+    "branches_total": 3,
+    "status": "complete"
+  }
+}

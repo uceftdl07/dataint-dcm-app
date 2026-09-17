@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.1",
+  "collection_run_id": "f58f5902-488c-4dce-adab-0538fcc1dea0",
+  "source_lz_id": "lz-aws-prod",
+  "subscription_or_account_id": "123456789012",
+  "cloud_provider": "aws",
+  "domain": "cost",
+  "collected_at": "2026-04-14T07:16:42.436337Z",
+  "metrics": [
+    {
+      "service_name": "Amazon EMR",
+      "resource_group": null,
+      "subscription_or_account_id": "123456789012",
+      "period_start": "2026-04-01",
+      "period_end": "2026-04-13",
+      "cost_usd": 2147.3,
+      "currency": "USD",
+      "budget_name": "aws-data-budget",
+      "budget_limit_usd": 8000.0,
+      "budget_consumed_pct": 26.84,
+      "tags": {
+        "env": "prod",
+        "team": "data-platform"
+      }
+    },
+    {
+      "service_name": "AWS Glue",
+      "resource_group": null,
+      "subscription_or_account_id": "123456789012",
+      "period_start": "2026-04-01",
+      "period_end": "2026-04-13",
+      "cost_usd": 418.6,
+      "currency": "USD",
+      "budget_name": null,
+      "budget_limit_usd": null,
+      "budget_consumed_pct": null,
+      "tags": {
+        "env": "prod",
+        "team": "data-platform"
+      }
+    }
+  ],
+  "metadata": {
+    "collector_version": "1.4.0",
+    "currency": "USD"
+  },
+  "metric_count": 2,
+  "is_empty": false
+}

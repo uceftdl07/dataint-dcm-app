@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.1",
+  "collection_run_id": "53d25d06-f9c4-4848-8a38-024e8109bcb2",
+  "source_lz_id": "lz-azure-prod",
+  "subscription_or_account_id": "fa5abbc4-02eb-416f-a75f-f8f6c5cc7d8a",
+  "cloud_provider": "azure",
+  "domain": "database",
+  "collected_at": "2026-04-14T07:16:42.436786Z",
+  "metrics": [
+    {
+      "db_id": "/subscriptions/fa5abbc4/resourceGroups/rg-data/providers/Microsoft.Sql/servers/sql-prod-dcm/databases/db-monitoring",
+      "db_name": "db-monitoring",
+      "db_type": "sqlserver",
+      "server_name": "sql-prod-dcm.database.windows.net",
+      "resource_group": "rg-data",
+      "region": "westeurope",
+      "cpu_percent": 42.5,
+      "memory_percent": 61.3,
+      "storage_used_gb": 18.7,
+      "storage_limit_gb": 250.0,
+      "active_connections": 14,
+      "dtus_used": 38.2,
+      "is_available": true,
+      "tags": {
+        "env": "prod",
+        "tier": "standard"
+      }
+    }
+  ],
+  "metadata": {
+    "collector_version": "1.4.0",
+    "region": "westeurope"
+  },
+  "metric_count": 1,
+  "is_empty": false
+}

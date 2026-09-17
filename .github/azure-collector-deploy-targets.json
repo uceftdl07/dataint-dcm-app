@@ -1,0 +1,25 @@
+{
+  "_comment": "One entry per client LZ. Key: {lzshort}-{d|m|p}. Apigee URL + Entra scope come from GitHub Environment vars DCM_APIGEE_BASE_URL / DCM_ENTRA_SCOPE (see github_environment). Do not hardcode them here.",
+  "datasquad-d": {
+    "description": "LZ DataSquad lab → Core DEV",
+    "github_environment": "dev",
+    "azure_subscription_id": "05ea2e78-8e32-4407-8b27-27ba621fa084",
+    "resource_group": "azrmrgdsde04",
+    "webapp_name": "azrmfndsde-dcm",
+    "key_vault_url": "https://azrmkvdsde-dcm.vault.azure.net/",
+    "source_lz_id": "sub-iasp-lz-DataSquad",
+    "subscription_id_monitored": "05ea2e78-8e32-4407-8b27-27ba621fa084",
+    "enabled_collectors": "datafactory,databricks,databricks_pipelines,databricks_workflows,cost_management,databases"
+  },
+  "novadatahub-m": {
+    "description": "LZ novadatahub → Core PROD",
+    "github_environment": "prod",
+    "azure_subscription_id": "77180ab7-ad22-4e7e-aa0b-e2f909e6d0fa",
+    "resource_group": "azrmrgndth04",
+    "webapp_name": "azrmfnndth-dcm",
+    "key_vault_url": "https://azrmkvndth-dcm.vault.azure.net/",
+    "source_lz_id": "azr-lz-novadatahub-dev",
+    "subscription_id_monitored": "77180ab7-ad22-4e7e-aa0b-e2f909e6d0fa",
+    "enabled_collectors": "datafactory,databricks,databricks_pipelines,databricks_workflows,cost_management,databases"
+  }
+}

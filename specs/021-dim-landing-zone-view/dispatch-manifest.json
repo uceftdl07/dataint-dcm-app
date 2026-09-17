@@ -1,0 +1,25 @@
+{
+  "updated_at": "2026-09-02T00:00:00Z",
+  "spec": "021-dim-landing-zone-view",
+  "branch_strategy": "direct_to_base",
+  "child_branch_base": "develop",
+  "pr_target": "develop",
+  "integration_branch": null,
+  "epic": {
+    "key": "DCINT-301",
+    "url": "https://tdf.atlassian.net/browse/DCINT-301"
+  },
+  "tasks": [
+    {
+      "task_id": "T001",
+      "domain": "dataeng",
+      "story": {
+        "key": "DCINT-302",
+        "url": "https://tdf.atlassian.net/browse/DCINT-302"
+      },
+      "branch": "dataeng/021-rename-collector-vue-union-dim-landing",
+      "sub_spec": "stories/T001-dim-landing-zone-view.md",
+      "status": "created"
+    }
+  ]
+}

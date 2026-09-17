@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.1",
+  "collection_run_id": "887a3742-4fb0-437b-9142-3178472b2272",
+  "source_lz_id": "lz-azure-prod",
+  "subscription_or_account_id": "fa5abbc4-02eb-416f-a75f-f8f6c5cc7d8a",
+  "cloud_provider": "azure",
+  "domain": "pipeline",
+  "collected_at": "2026-04-14T07:16:42.432689Z",
+  "metrics": [
+    {
+      "pipeline_id": "/subscriptions/fa5abbc4/resourceGroups/rg-data/providers/Microsoft.DataFactory/factories/adf-prod/pipelines/transform_silver_compute",
+      "pipeline_name": "transform_silver_compute",
+      "run_id": "adf-run-0002-running",
+      "status": "running",
+      "trigger_type": "scheduled",
+      "start_time": "2026-04-14T03:30:00Z",
+      "end_time": null,
+      "duration_seconds": null,
+      "error_message": null,
+      "factory_name": "adf-prod",
+      "resource_group": "rg-data",
+      "glue_job_name": null,
+      "tags": {
+        "env": "prod",
+        "layer": "silver"
+      }
+    }
+  ],
+  "metadata": {
+    "collector_version": "1.4.0",
+    "region": "westeurope"
+  },
+  "metric_count": 1,
+  "is_empty": false
+}

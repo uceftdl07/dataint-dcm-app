@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DCM — Databricks / Lakeflow / Jobs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Tokens extraits du bundle DCM  /assets/index-BvTme7MZ.css
+   ============================================================ */
+:root{
+  --background:#ffffff; --foreground:#09090b;
+  --card-background:#fdfdfd; --card-radius:1.375rem;
+  --card-padding-x:1.25rem; --card-padding-y:1rem;
+  --card-title-size:.9375rem; --card-subtitle-size:.8125rem; --card-value-size:1.5rem;
+  --card-shadow:0 10px 30px #0f172a12; --card-hover-shadow:0 18px 42px #0f172a1f;
+  --border:#e4e4e7; --ring:#d4d4d8; --muted:#f4f4f5; --muted-foreground:#71717b;
+  --radius:.625rem;
+  --primary:#306dff; --info:#306dff; --info-subtle:#e5f0ff; --info-border:#a8c4ff;
+  --success:#437a00; --success-subtle:#e6fae5; --success-border:#a6dba7;
+  --warning:#844700; --warning-subtle:#fff5d5; --warning-border:#fac871;
+  --danger:#e7000b;  --danger-subtle:#ffe9e6;  --danger-border:#ffb6ae;
+  --purple:#8b46df;
+  --tdf-blue:#1f49d2; --tdf-blue-subtle:#e6edfe; --tdf-blue-border:#7b99f9;
+  --tdf-teal:#0f6656; --tdf-green:#437a00; --tdf-grey:#68707d;
+  --tdf-red:#b30000; --tdf-pink:#a71b4a; --tdf-purple:#6f37b9;
+  --tdf-gradient-brand:linear-gradient(135deg,var(--tdf-blue),var(--tdf-teal));
+  --chart-1:#f54a00; --chart-2:#009689; --chart-3:#104e64; --chart-4:#ffb900; --chart-5:#fe9a00;
+  --sidebar:#fafafa; --sidebar-border:#e4e4e7;
+
+  --st-succeeded:var(--success); --st-failed:var(--danger);
+  --st-timeout:var(--chart-5);   --st-cancelled:var(--tdf-grey);
+  --st-running:var(--primary);   --st-skipped:var(--muted);
+}
+*{box-sizing:border-box}
+body{margin:0;background:#f7f7f8;color:var(--foreground);
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1520px;margin:0 auto;padding:0 24px 56px}
+.eyebrow{font-size:10px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--muted-foreground)}
+
+.topbar{display:flex;align-items:center;gap:20px;padding:16px 0;border-bottom:1px solid var(--border);margin-bottom:20px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo .mark{width:26px;height:26px;border-radius:9px;background:var(--tdf-gradient-brand);
+  display:grid;place-items:center;color:#fff;font-weight:900;font-size:11px;letter-spacing:.5px}
+.logo .txt{font-weight:900;font-size:13px;letter-spacing:1.4px;text-transform:uppercase}
+.navlinks{display:flex;gap:22px;margin-left:14px}
+.navlinks a{text-decoration:none;color:var(--muted-foreground);font-size:10px;font-weight:900;letter-spacing:2px;text-transform:uppercase}
+.navlinks a.on{color:var(--foreground)}
+.spacer{flex:1}
+.opstatus{display:flex;align-items:center;gap:7px;font-size:10px;font-weight:900;letter-spacing:1.6px;text-transform:uppercase;color:var(--success)}
+.opstatus i{width:7px;height:7px;border-radius:50%;background:var(--success);display:inline-block}
+.mockflag{background:var(--warning-subtle);color:var(--warning);border:1px solid var(--warning-border);
+  padding:5px 12px;border-radius:999px;font-size:9.5px;font-weight:900;letter-spacing:1.4px;text-transform:uppercase}
+
+.pagehead{margin-bottom:18px}
+.pagehead h1{margin:2px 0 0;font-size:22px;font-weight:900;letter-spacing:-.55px}
+.crumb{font-size:10px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--muted-foreground)}
+.crumb b{color:var(--tdf-blue)} .crumb a{color:var(--muted-foreground);text-decoration:none}
+
+.tabs{display:flex;gap:6px;margin-bottom:18px;border-bottom:1px solid var(--border)}
+.tab{padding:9px 16px;font-size:10px;font-weight:900;letter-spacing:1.6px;text-transform:uppercase;
+  color:var(--muted-foreground);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab.on{color:var(--tdf-blue);border-bottom-color:var(--tdf-blue)}
+
+.filters{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--card-background);
+  border:1px solid var(--border);border-radius:var(--card-radius);padding:11px 18px;margin-bottom:18px;box-shadow:var(--card-shadow)}
+.search{flex:1;min-width:200px;border:1px solid var(--ring);border-radius:var(--radius);padding:7px 13px;
+  font-size:13px;font-family:inherit;color:var(--foreground);background:#fff}
+.search::placeholder{color:var(--muted-foreground)}
+.sel{display:flex;align-items:center;gap:7px;border:1px solid var(--ring);background:#fff;border-radius:var(--radius);
+  padding:6px 12px;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap}
+.sel .lbl{font-size:9.5px;font-weight:900;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted-foreground)}
+.seg{display:flex;border:1px solid var(--ring);border-radius:var(--radius);overflow:hidden;background:#fff}
+.seg button{border:0;background:transparent;padding:6px 13px;cursor:pointer;color:var(--muted-foreground);font-family:inherit;
+  font-size:9.5px;font-weight:900;letter-spacing:1.4px;text-transform:uppercase;border-right:1px solid var(--border)}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--tdf-blue);color:#fff}
+.tog{border:1px solid var(--ring);background:#fff;border-radius:999px;padding:5px 13px;cursor:pointer;
+  color:var(--muted-foreground);font-size:9.5px;font-weight:900;letter-spacing:1.3px;text-transform:uppercase}
+.tog.on{background:var(--tdf-blue-subtle);border-color:var(--tdf-blue-border);color:var(--tdf-blue)}
+
+.panel{background:var(--card-background);border:1px solid var(--border);border-radius:var(--card-radius);
+  box-shadow:var(--card-shadow);overflow:hidden}
+.ph{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;border-bottom:1px solid var(--border)}
+.ph h3{margin:0;font-size:var(--card-title-size);font-weight:800;letter-spacing:-.2px}
+.ph .note{font-size:11px;color:var(--muted-foreground);font-weight:500}
+
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{text-align:left;font-size:9px;font-weight:900;letter-spacing:1.3px;text-transform:uppercase;color:var(--muted-foreground);
+  padding:11px 12px;border-bottom:1px solid var(--border);background:var(--sidebar);white-space:nowrap}
+th.s::after{content:' ↕';color:var(--ring)}
+th.sorted{color:var(--tdf-blue)} th.sorted::after{content:' ↓'}
+td{padding:11px 12px;border-bottom:1px solid var(--muted);vertical-align:middle;white-space:nowrap}
+tbody tr{cursor:pointer;transition:background .12s}
+tbody tr:hover{background:var(--muted)}
+tbody tr.sel-row{background:var(--tdf-blue-subtle)}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;color:var(--muted-foreground)}
+.wname{font-weight:700}
+.st{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:12px}
+.sd{width:8px;height:8px;border-radius:50%;display:inline-block}
+.badge{font-size:9px;font-weight:900;letter-spacing:1.1px;text-transform:uppercase;padding:3px 9px;
+  border-radius:999px;border:1px solid transparent;white-space:nowrap}
+.b-ok{background:var(--success-subtle);color:var(--success);border-color:var(--success-border)}
+.b-warn{background:var(--warning-subtle);color:var(--warning);border-color:var(--warning-border)}
+.b-ko{background:var(--danger-subtle);color:var(--danger);border-color:var(--danger-border)}
+.b-info{background:var(--info-subtle);color:var(--info);border-color:var(--info-border)}
+.b-n{background:var(--muted);color:var(--muted-foreground);border-color:var(--border)}
+.mini{height:6px;background:var(--muted);border-radius:999px;overflow:hidden;width:50px;display:inline-block;vertical-align:middle}
+.mini i{display:block;height:100%;border-radius:999px}
+.drift{font-size:11px;font-weight:900}
+.drift.up{color:var(--danger)} .drift.down{color:var(--success)} .drift.na{color:var(--muted-foreground);font-weight:600}
+.dim{color:var(--muted-foreground)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted-foreground);font-weight:500}
+.legend s{width:8px;height:8px;border-radius:2px;display:inline-block;margin-right:5px;text-decoration:none}
+.scroll{overflow-x:auto}
+
+/* drill-down */
+.dd{margin-top:18px;display:none} .dd.open{display:block}
+.ddhead{display:flex;align-items:flex-start;gap:18px;padding:16px 20px;border-bottom:1px solid var(--border);flex-wrap:wrap;
+  background:linear-gradient(180deg,var(--tdf-blue-subtle) 0%,var(--card-background) 100%)}
+.ddhead h2{margin:0 0 4px;font-size:17px;font-weight:900;letter-spacing:-.4px}
+.meta{font-size:12px;color:var(--muted-foreground);font-weight:500}
+.meta b{color:var(--foreground);font-weight:700}
+.btn{border:1px solid var(--ring);background:#fff;border-radius:var(--radius);padding:8px 15px;cursor:pointer;
+  font-family:inherit;font-size:9.5px;font-weight:900;letter-spacing:1.4px;text-transform:uppercase;color:var(--foreground)}
+.btn.p{background:var(--tdf-gradient-brand);border-color:transparent;color:#fff}
+.closex{border:0;background:transparent;font-size:19px;color:var(--muted-foreground);cursor:pointer;line-height:1;padding:2px 6px}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border);border-bottom:1px solid var(--border)}
+.kpi{background:var(--card-background);padding:13px 16px}
+.kpi .k{font-size:9px;font-weight:900;letter-spacing:1.3px;text-transform:uppercase;color:var(--muted-foreground)}
+.kpi .v{font-size:19px;font-weight:900;letter-spacing:-.6px;margin-top:3px}
+.kpi .v small{font-size:10px;font-weight:700;color:var(--muted-foreground);letter-spacing:0;margin-left:4px}
+.kpi .s{font-size:11.5px;color:var(--muted-foreground);font-weight:500}
+.sub{padding:16px 20px;border-bottom:1px solid var(--border)}
+.sub h4{margin:0 0 3px;font-size:var(--card-title-size);font-weight:800;letter-spacing:-.2px}
+.sub .hint{font-size:11.5px;color:var(--muted-foreground);margin-bottom:12px;font-weight:500}
+.trunc{color:var(--muted-foreground);max-width:290px;overflow:hidden;text-overflow:ellipsis;display:inline-block;vertical-align:middle;white-space:nowrap}
+a.ext{color:var(--tdf-blue);text-decoration:none;font-weight:900}
+
+.callout{margin-top:24px;background:var(--warning-subtle);border:1px solid var(--warning-border);
+  border-radius:var(--card-radius);padding:16px 20px;font-size:12.5px;color:#5c3200}
+.callout b.h{display:block;margin-bottom:8px;color:var(--warning);font-size:9.5px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase}
+.callout ul{margin:0;padding-left:18px} .callout li{margin:5px 0}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;background:#ffffffb0;
+  padding:1px 5px;border-radius:5px;border:1px solid #00000010}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="logo"><div class="mark">DCM</div><div class="txt">Data Connect Monitoring</div></div>
+    <div class="navlinks">
+      <a href="#">Infrastructures</a><a href="#" class="on">Databricks</a>
+      <a href="#">Compliance</a><a href="#">Performance</a>
+    </div>
+    <div class="spacer"></div>
+    <div class="opstatus"><i></i>Collecte opérationnelle</div>
+    <div class="mockflag">Maquette · données fictives</div>
+  </div>
+
+  <div class="pagehead">
+    <div class="crumb">Databricks / <a href="#">Lakeflow</a> / <b>Jobs</b></div>
+    <h1>Workflows &amp; exécutions</h1>
+  </div>
+
+  <div class="tabs">
+    <div class="tab">Overview</div><div class="tab on">Jobs</div>
+    <div class="tab">Pipelines</div><div class="tab">Compute</div>
+  </div>
+
+  <div class="filters">
+    <input class="search" placeholder="Rechercher un workflow — nom ou workflow_id…">
+    <div class="sel"><span class="lbl">LZ</span><b>Toutes</b> ▾</div>
+    <div class="sel"><span class="lbl">Workspace</span><b>Tous</b> ▾</div>
+    <div class="sel"><span class="lbl">Statut</span><b>Tous</b> ▾</div>
+    <div class="sel"><span class="lbl">Trigger</span><b>Tous</b> ▾</div>
+    <div class="seg"><button class="on">Aujourd'hui</button><button>7 j</button><button>30 j</button></div>
+    <div class="tog on">⚠ En dérive</div><div class="tog">Sans exécution</div><div class="tog">Avec retries</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph">
+      <h3>Workflows <span class="dim" style="font-weight:500">— 8 sur 214</span></h3>
+      <div class="note">Tri : échecs, puis dérive, puis dernière exécution</div>
+    </div>
+    <div class="scroll">
+      <table>
+        <thead><tr>
+          <th class="s" style="width:110px">Statut</th>
+          <th class="s">Workflow</th>
+          <th style="width:134px">10 dernières exéc.</th>
+          <th class="s" style="width:56px">Runs</th>
+          <th class="sorted" style="width:106px">Succès</th>
+          <th class="s" style="width:126px">Durée moy.</th>
+          <th class="s" style="width:76px">p95</th>
+          <th class="s" style="width:116px">Attente</th>
+          <th class="s" style="width:64px">Retries</th>
+          <th class="s" style="width:104px">Trigger</th>
+          <th class="s" style="width:96px">Dernier run</th>
+        </tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div style="padding:11px 20px;border-top:1px solid var(--border);display:flex;align-items:center;gap:12px">
+      <span class="legend">
+        <span><s style="background:var(--st-succeeded)"></s>Succès</span>
+        <span><s style="background:var(--st-failed)"></s>Échec</span>
+        <span><s style="background:var(--st-timeout)"></s>Timeout</span>
+        <span><s style="background:var(--st-cancelled)"></s>Annulé</span>
+        <span><s style="background:var(--st-running)"></s>En cours</span>
+      </span>
+      <span class="spacer"></span>
+      <span class="dim" style="font-size:11.5px;font-weight:500">Hauteur des barres = durée relative</span>
+    </div>
+  </div>
+
+  <!-- ================= DRILL-DOWN N2 ================= -->
+  <div class="panel dd open" id="dd">
+    <div class="ddhead">
+      <div style="flex:1;min-width:300px">
+        <h2>wf_ingest_sap_finance</h2>
+        <div class="meta">
+          <span class="mono">workflow_id 8412</span> · workspace <b>dbx-prod-we</b> · LZ <b>lz-finance</b> ·
+          propriétaire <b>svc-dcm-ingest</b> · trigger <b>CRON</b> <span class="mono">0 0 */2 * * ?</span>
+        </div>
+      </div>
+      <button class="btn p">Ouvrir dans Databricks ↗</button>
+      <button class="closex" onclick="document.getElementById('dd').classList.remove('open')">✕</button>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi"><div class="k">Succès 7 j</div><div class="v" style="color:var(--danger)">83,3 %</div><div class="s">35 / 42 runs</div></div>
+      <div class="kpi"><div class="k">Durée moyenne</div><div class="v">11 m 48 s</div><div class="s"><span class="drift up">+41,2 % ↗</span> vs 8 m 21 s</div></div>
+      <div class="kpi"><div class="k">Percentiles</div><div class="v">18 m 02 s<small>p95</small></div><div class="s">p50 10 m 12 · p99 24 m 40</div></div>
+      <div class="kpi"><div class="k">Attente moyenne</div><div class="v">2 m 14 s</div><div class="s">queue 1 m 52 · lag 22 s</div></div>
+      <div class="kpi"><div class="k">Tâches en échec</div><div class="v" style="color:var(--warning)">9,7 %</div><div class="s">24 / 247 tâches</div></div>
+    </div>
+
+    <div class="sub">
+      <h4>Matrice exécutions × tâches</h4>
+      <div class="hint">Une colonne = un run, une ligne = une <code>task_key</code>. Repère la tâche qui casse dans un workflow qui « passe ».</div>
+      <div class="scroll"><svg id="matrix" width="830" height="200"></svg></div>
+    </div>
+
+    <div class="sub" style="border-bottom:0">
+      <h4>Exécutions</h4>
+      <div class="hint">La barre de durée décompose <b>retard de planification</b> · <b>file d'attente</b> · <b>exécution</b> — c'est ce qui répond à « pourquoi ce run a pris si longtemps ».</div>
+      <div class="scroll">
+        <table>
+          <thead><tr>
+            <th style="width:120px">Début</th><th style="width:106px">Run</th><th style="width:96px">Déclench.</th>
+            <th style="width:236px">Durée</th><th style="width:106px">Statut</th>
+            <th style="width:76px">Tâches</th><th style="width:66px">Retries</th><th>Erreur</th><th style="width:30px"></th>
+          </tr></thead>
+          <tbody id="runs"></tbody>
+        </table>
+      </div>
+      <div class="legend" style="margin-top:11px">
+        <span><s style="background:var(--tdf-blue-border)"></s>Retard planif.</span>
+        <span><s style="background:var(--tdf-blue)"></s>File d'attente</span>
+        <span><s style="background:var(--success)"></s>Exécution (succès)</span>
+        <span><s style="background:var(--danger)"></s>Exécution (échec)</span>
+      </div>
+    </div>
+
+    <!-- ================= DRILL-DOWN N3 ================= -->
+    <div class="sub" style="border-top:1px solid var(--border);background:var(--sidebar)">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:3px">
+        <h4 style="margin:0">Run <span class="mono" style="font-size:12px">1108447321</span> — tâches</h4>
+        <span class="st"><span class="sd" style="background:var(--st-failed)"></span>failed</span>
+        <span class="dim" style="font-size:11.5px;font-weight:500">03/08 13:31 → 13:47 · 15 m 42 s · tentative 3/3</span>
+      </div>
+      <div class="hint">Timeline des <code>task_id</code> : chemin critique, parallélisme réel, trous d'attente entre étapes.</div>
+      <div class="scroll"><svg id="gantt" width="870" height="192"></svg></div>
+
+      <div class="scroll" style="margin-top:14px">
+        <table>
+          <thead><tr>
+            <th>Tâche</th><th style="width:100px">Statut</th><th style="width:74px">Début</th>
+            <th style="width:82px">Durée</th><th style="width:86px">Tentative</th>
+            <th style="width:164px">Cluster</th><th>Erreur</th>
+          </tr></thead>
+          <tbody id="tasks"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <b class="h">Écarts assumés dans cette maquette</b>
+    <ul>
+      <li><b>Pas de filtre par tag / domaine métier</b> : <code>tags</code> est marqué « non utilisé » en gold. On ne peut parler que <code>workflow_id</code> / <code>workflow_name</code> — c'est l'écart le plus pénalisant pour les utilisateurs non-data-engineers.</li>
+      <li><b>Pas de filtre par code d'erreur</b> : <code>termination_code</code> n'existe pas en gold, seul <code>error_message</code> en texte libre est disponible.</li>
+      <li><b>Pas de graphe de dépendances</b> dans le détail d'un run : <code>depends_on_keys</code> n'est pas exposé, donc ni DAG, ni identification des <i>leaf tasks</i>.</li>
+      <li><b>La barre de durée</b> utilise <code>schedule_lag_seconds</code>, <code>queued_duration_seconds</code> et <code>execution_duration_seconds</code> ; <code>setup</code> et <code>cleanup</code> ne sont pas exposés en gold et sont absorbés dans « exécution ».</li>
+      <li><b>La colonne « 10 dernières exéc. »</b> lit <code>gold_dbx_workflow_runs</code> avec un <code>ROW_NUMBER() ≤ 10</code> restreint aux workflows de la page — jamais une requête par ligne.</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+const CSS=getComputedStyle(document.documentElement), T=n=>CSS.getPropertyValue(n).trim();
+const C={succeeded:T('--success'),failed:T('--danger'),timed_out:T('--chart-5'),
+         cancelled:T('--tdf-grey'),running:T('--primary'),skipped:T('--muted')};
+const L={succeeded:'succeeded',failed:'failed',timed_out:'timed out',cancelled:'cancelled',running:'running'};
+
+const jobs=[
+ {n:'wf_ingest_sap_finance',id:'8412',ws:'dbx-prod-we',last:'failed',runs:42,ok:83.3,dur:708,drift:41.2,p95:1082,q:112,lag:22,retry:1.4,trg:'CRON',ago:'il y a 18 min',
+  hist:['succeeded','failed','succeeded','succeeded','failed','succeeded','failed','succeeded','failed','failed'],hd:[.5,.9,.55,.6,1,.62,.85,.7,.95,1]},
+ {n:'wf_gold_sales_daily',id:'9031',ws:'dbx-prod-we',last:'failed',runs:7,ok:57.1,dur:243,drift:null,p95:402,q:31,lag:8,retry:0.9,trg:'CRON',ago:'il y a 2 h',
+  hist:['failed','succeeded','failed','succeeded','failed','succeeded','succeeded','failed','succeeded','failed'],hd:[.7,.4,.9,.45,.8,.5,.42,.85,.48,.75]},
+ {n:'wf_curated_customer_360',id:'2287',ws:'dbx-prod-we',last:'succeeded',runs:168,ok:97.0,dur:186,drift:24.8,p95:388,q:24,lag:4,retry:0.3,trg:'PERIODIC',ago:'il y a 6 min',
+  hist:['succeeded','succeeded','failed','succeeded','succeeded','succeeded','succeeded','failed','succeeded','succeeded'],hd:[.42,.44,.72,.46,.5,.55,.6,.78,.62,.68]},
+ {n:'wf_export_reporting_pack',id:'1177',ws:'dbx-prod-ne',last:'timed_out',runs:14,ok:85.7,dur:2410,drift:12.1,p95:3502,q:203,lag:41,retry:0.6,trg:'CRON',ago:'il y a 8 h',
+  hist:['succeeded','succeeded','timed_out','succeeded','succeeded','cancelled','succeeded','succeeded','timed_out','timed_out'],hd:[.6,.62,1,.58,.61,.2,.63,.66,.98,1]},
+ {n:'wf_ingest_crm_delta',id:'5540',ws:'dbx-prod-we',last:'running',runs:96,ok:97.9,dur:94,drift:-3.4,p95:181,q:18,lag:2,retry:0.1,trg:'FILE_ARRIVAL',ago:'en cours',
+  hist:['succeeded','succeeded','succeeded','failed','succeeded','succeeded','succeeded','succeeded','succeeded','running'],hd:[.44,.46,.42,.68,.45,.43,.47,.44,.46,.3]},
+ {n:'wf_ml_feature_store_refresh',id:'7719',ws:'dbx-ml-we',last:'succeeded',runs:24,ok:100,dur:1520,drift:8.7,p95:1980,q:340,lag:0,retry:0,trg:'CRON',ago:'il y a 3 h',
+  hist:['succeeded','succeeded','succeeded','succeeded','succeeded','succeeded','succeeded','succeeded','succeeded','succeeded'],hd:[.6,.58,.63,.61,.65,.6,.62,.7,.66,.68]},
+ {n:'wf_dq_standard_checks',id:'3308',ws:'dbx-prod-we',last:'succeeded',runs:288,ok:99.7,dur:38,drift:null,p95:71,q:9,lag:1,retry:0,trg:'PERIODIC',ago:'il y a 2 min',
+  hist:['succeeded','succeeded','succeeded','succeeded','succeeded','succeeded','succeeded','succeeded','succeeded','succeeded'],hd:[.4,.42,.4,.44,.41,.4,.43,.42,.4,.41]},
+ {n:'wf_archive_cold_storage',id:'6602',ws:'dbx-prod-ne',last:null,runs:0,ok:null,dur:null,drift:null,p95:null,q:null,lag:null,retry:null,trg:'CRON',ago:'il y a 9 j',hist:[],hd:[]}
+];
+const runs=[
+ {t:'03/08 13:31',id:'1108447321',trg:'CRON',lag:20,q:95,ex:847,st:'failed',tf:2,tt:11,r:3,e:'CLUSTER_ERROR: instance pool exhausted in region westeurope'},
+ {t:'03/08 11:30',id:'1108392044',trg:'CRON',lag:12,q:88,ex:702,st:'succeeded',tf:0,tt:11,r:0,e:''},
+ {t:'03/08 09:30',id:'1108341887',trg:'CRON',lag:410,q:120,ex:731,st:'succeeded',tf:1,tt:11,r:1,e:''},
+ {t:'03/08 07:30',id:'1108288120',trg:'CRON',lag:9,q:102,ex:1180,st:'failed',tf:3,tt:11,r:2,e:'RUN_EXECUTION_ERROR: driver OOM on task task_dedup'},
+ {t:'03/08 05:30',id:'1108231455',trg:'CRON',lag:14,q:76,ex:664,st:'succeeded',tf:0,tt:11,r:0,e:''},
+ {t:'03/08 03:30',id:'1108177901',trg:'MANUAL',lag:0,q:210,ex:598,st:'cancelled',tf:0,tt:11,r:0,e:'Cancelled by user m.lezhari'}
+];
+const tasks=[
+ {k:'task_extract_sap_bkpf',s:0,d:212,st:'succeeded',a:0,c:'0803-091240-a1b2',e:''},
+ {k:'task_extract_sap_bseg',s:0,d:268,st:'succeeded',a:0,c:'0803-091240-a1b2',e:''},
+ {k:'task_extract_sap_lfa1',s:0,d:96,st:'succeeded',a:0,c:'0803-091240-a1b2',e:''},
+ {k:'task_dedup',s:275,d:184,st:'succeeded',a:1,c:'0803-091240-a1b2',e:''},
+ {k:'task_normalize_cur',s:462,d:141,st:'succeeded',a:0,c:'0803-091240-a1b2',e:''},
+ {k:'task_join_ledger',s:608,d:196,st:'failed',a:2,c:'0803-091240-a1b2',e:'CLUSTER_ERROR: driver became unreachable — instance pool exhausted'},
+ {k:'task_publish_curated',s:806,d:0,st:'skipped',a:0,c:'—',e:'Upstream task task_join_ledger failed'},
+ {k:'task_notify',s:806,d:0,st:'skipped',a:0,c:'—',e:'Upstream task task_join_ledger failed'}
+];
+
+const fmt=s=>s==null?'—':s>=3600?Math.floor(s/3600)+' h '+String(Math.floor(s%3600/60)).padStart(2,'0'):
+  s>=60?Math.floor(s/60)+' m '+String(s%60).padStart(2,'0')+' s':s+' s';
+const rateCol=r=>r==null?T('--muted-foreground'):r>=95?C.succeeded:r>=90?T('--warning'):C.failed;
+
+function histSvg(h,hd){
+  if(!h.length) return '<span class="dim" style="font-size:11px;font-weight:500">aucune exécution</span>';
+  const bw=9,gap=4,H=26;
+  return '<svg width="'+(h.length*(bw+gap))+'" height="'+H+'">'+h.map((s,i)=>{
+    const bh=Math.max(4,hd[i]*H);
+    return `<rect x="${i*(bw+gap)}" y="${H-bh}" width="${bw}" height="${bh}" rx="2" fill="${C[s]}"><title>${L[s]||s} · ${Math.round(hd[i]*100)}%</title></rect>`;
+  }).join('')+'</svg>';
+}
+
+document.getElementById('rows').innerHTML=jobs.map((j,i)=>{
+  const none=j.last===null;
+  const drift=j.drift==null?'<span class="drift na">n/a</span>'
+    :`<span class="drift ${j.drift>0?'up':'down'}">${j.drift>0?'+':''}${j.drift.toFixed(1)}% ${j.drift>0?'↗':'↘'}</span>`;
+  const warn=(j.drift!=null&&j.drift>20)?' ⚠':'';
+  return `<tr class="${i===0?'sel-row':''}" ${none?'style="opacity:.5"':''}>
+    <td>${none?'<span class="badge b-n">jamais</span>'
+      :`<span class="st"><span class="sd" style="background:${C[j.last]}"></span>${L[j.last]}</span>`}</td>
+    <td><div class="wname">${j.n}</div><div class="mono">${j.id} · ${j.ws}</div></td>
+    <td>${histSvg(j.hist,j.hd)}</td>
+    <td>${none?'<span class="dim">0</span>':j.runs}</td>
+    <td>${j.ok==null?'<span class="dim">—</span>':
+      `<span class="mini"><i style="width:${j.ok}%;background:${rateCol(j.ok)}"></i></span>
+       <span style="color:${rateCol(j.ok)};font-weight:900;margin-left:7px">${j.ok.toFixed(1)}%</span>`}</td>
+    <td>${j.dur==null?'<span class="dim">—</span>':`${fmt(j.dur)}<br>${drift}${warn}`}</td>
+    <td>${j.p95==null?'<span class="dim">—</span>':fmt(j.p95)}</td>
+    <td>${j.q==null?'<span class="dim">—</span>':`${fmt(j.q+j.lag)}<div class="mono">q ${j.q}s · lag ${j.lag}s</div>`}</td>
+    <td>${j.retry==null?'<span class="dim">—</span>':j.retry.toFixed(1)}</td>
+    <td><span class="badge b-n">${j.trg}</span></td>
+    <td class="${none?'dim':''}">${j.ago}</td></tr>`;
+}).join('');
+
+/* matrice */
+(()=>{const keys=tasks.map(t=>t.k),N=12,cw=30,ch=16,gap=4,lw=200,top=36;
+ const grid=[
+  Array(12).fill('succeeded'),Array(12).fill('succeeded'),Array(12).fill('succeeded'),
+  ['succeeded','succeeded','failed','succeeded','succeeded','succeeded','failed','succeeded','succeeded','succeeded','succeeded','succeeded'],
+  Array(12).fill('succeeded'),
+  ['succeeded','failed','failed','succeeded','failed','succeeded','failed','succeeded','failed','succeeded','failed','failed'],
+  ['succeeded','skipped','skipped','succeeded','skipped','succeeded','skipped','succeeded','skipped','succeeded','skipped','skipped'],
+  ['succeeded','skipped','skipped','succeeded','skipped','succeeded','skipped','succeeded','skipped','succeeded','skipped','skipped']];
+ const runSt=['succeeded','failed','failed','succeeded','failed','succeeded','failed','succeeded','failed','succeeded','failed','failed'];
+ const runDur=[.5,.75,.9,.52,.8,.55,.85,.58,.88,.6,.92,1];
+ let s=`<text x="0" y="14" font-size="9" font-weight="900" letter-spacing="1.3" fill="${T('--muted-foreground')}" font-family="Inter">RUN TOTAL</text>`;
+ for(let c=0;c<N;c++){const H=24,bh=Math.max(5,runDur[c]*H),x=lw+c*(cw+gap);
+  s+=`<rect x="${x}" y="${4+H-bh}" width="${cw}" height="${bh}" rx="2.5" fill="${C[runSt[c]]}"><title>run ${c+1} — ${L[runSt[c]]}</title></rect>`;}
+ keys.forEach((k,r)=>{const y=top+r*(ch+gap);
+  s+=`<text x="0" y="${y+12}" font-size="10.5" fill="#3f3f46" font-family="ui-monospace,monospace">${k}</text>`;
+  for(let c=0;c<N;c++){const st=grid[r][c];
+   s+=`<rect x="${lw+c*(cw+gap)}" y="${y}" width="${cw}" height="${ch}" rx="2.5" fill="${C[st]}" ${st==='skipped'?'stroke="'+T('--ring')+'"':''}><title>${k} — ${st}</title></rect>`;}});
+ const by=top+keys.length*(ch+gap)+13;
+ s+=`<text x="${lw}" y="${by}" font-size="9" font-weight="700" fill="${T('--muted-foreground')}" font-family="Inter">← plus ancien</text>
+     <text x="${lw+N*(cw+gap)-6}" y="${by}" font-size="9" font-weight="700" fill="${T('--muted-foreground')}" text-anchor="end" font-family="Inter">plus récent →</text>`;
+ document.getElementById('matrix').innerHTML=s;})();
+
+/* runs */
+document.getElementById('runs').innerHTML=runs.map((r,i)=>{
+ const tot=r.lag+r.q+r.ex,W=204,
+  exCol=r.st==='failed'?C.failed:r.st==='cancelled'?C.cancelled:C.succeeded;
+ const bar=`<svg width="${W}" height="12" style="vertical-align:middle">
+   <rect x="0" y="2" width="${(r.lag/tot*W).toFixed(1)}" height="9" rx="2" fill="${T('--tdf-blue-border')}"><title>lag ${r.lag}s</title></rect>
+   <rect x="${(r.lag/tot*W).toFixed(1)}" y="2" width="${(r.q/tot*W).toFixed(1)}" height="9" fill="${T('--tdf-blue')}"><title>queue ${r.q}s</title></rect>
+   <rect x="${((r.lag+r.q)/tot*W).toFixed(1)}" y="2" width="${(r.ex/tot*W).toFixed(1)}" height="9" rx="2" fill="${exCol}"><title>exécution ${r.ex}s</title></rect></svg>`;
+ return `<tr class="${i===0?'sel-row':''}">
+  <td>${r.t}</td><td class="mono">${r.id}</td><td><span class="badge b-n">${r.trg}</span></td>
+  <td>${bar} <span style="font-weight:800;margin-left:6px">${fmt(tot)}</span></td>
+  <td><span class="st"><span class="sd" style="background:${C[r.st]}"></span>${L[r.st]}</span></td>
+  <td>${r.tf>0?`<span style="color:${C.failed};font-weight:900">${r.tf}</span>`:r.tf} / ${r.tt}</td>
+  <td>${r.r>0?`<span class="badge b-warn">${r.r}</span>`:'<span class="dim">0</span>'}</td>
+  <td>${r.e?`<span class="trunc" title="${r.e}">${r.e}</span>`:'<span class="dim">—</span>'}</td>
+  <td><a class="ext" href="#" title="run_page_url">↗</a></td></tr>`;}).join('');
+
+/* gantt */
+(()=>{const lw=200,W=640,rowH=19,top=22,total=Math.max(...tasks.map(t=>t.s+t.d))*1.04;
+ let s='';
+ for(let i=0;i<=4;i++){const x=lw+W*i/4;
+  s+=`<line x1="${x}" y1="${top-6}" x2="${x}" y2="${top+tasks.length*rowH}" stroke="${T('--muted')}"/>
+      <text x="${x}" y="${top-10}" font-size="9" font-weight="700" fill="${T('--muted-foreground')}" text-anchor="middle" font-family="Inter">+${Math.round(total*i/4)}s</text>`;}
+ tasks.forEach((t,i)=>{const y=top+i*rowH;
+  s+=`<text x="0" y="${y+12}" font-size="10.5" fill="#3f3f46" font-family="ui-monospace,monospace">${t.k}</text>`;
+  if(t.d===0){s+=`<rect x="${lw+t.s/total*W}" y="${y+2}" width="9" height="12" rx="2" fill="${T('--muted')}" stroke="${T('--ring')}" stroke-dasharray="2 2"><title>skipped</title></rect>`;}
+  else{const x=lw+t.s/total*W,w=Math.max(3,t.d/total*W);
+   s+=`<rect x="${x}" y="${y+2}" width="${w}" height="12" rx="3" fill="${C[t.st]}"><title>${t.k} — ${t.st} — ${t.d}s</title></rect>`;
+   if(t.a>0) s+=`<circle cx="${x+w+8}" cy="${y+8}" r="6" fill="${T('--warning-subtle')}" stroke="${T('--warning-border')}"/>
+                 <text x="${x+w+8}" y="${y+11}" font-size="7.5" font-weight="900" fill="${T('--warning')}" text-anchor="middle" font-family="Inter">${t.a}</text>`;}});
+ document.getElementById('gantt').innerHTML=s;})();
+
+/* tasks */
+document.getElementById('tasks').innerHTML=tasks.map(t=>`<tr>
+ <td class="mono" style="font-size:12px;color:var(--foreground);font-weight:600">${t.k}</td>
+ <td><span class="st"><span class="sd" style="background:${C[t.st]||T('--muted')}"></span>${t.st}</span></td>
+ <td class="mono">+${t.s}s</td><td>${t.d?fmt(t.d):'<span class="dim">—</span>'}</td>
+ <td>${t.a>0?`<span class="badge b-warn">${t.a+1}ᵉ</span>`:'<span class="dim">1ʳᵉ</span>'}</td>
+ <td class="mono">${t.c}</td>
+ <td>${t.e?`<span class="trunc" title="${t.e}">${t.e}</span>`:'<span class="dim">—</span>'}</td></tr>`).join('');
+</script>
+</body>
+</html>

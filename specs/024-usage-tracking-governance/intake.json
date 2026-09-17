@@ -1,0 +1,24 @@
+{
+  "work_type": "feature",
+  "domains": ["dataeng", "backend", "frontend"],
+  "ticket_plan": {
+    "mode": "custom",
+    "ticket_domains": ["dataeng", "backend", "frontend"],
+    "expected_story_count": 1,
+    "single_branch": true,
+    "branch": "dataeng/024-usage-tracking-governance",
+    "note": "Ecart assume a la convention DCM 1-domaine-1-ticket : une seule Story Jira et une seule branche portent les 3 tasks (T001 DataEng, T002 Backend, T003 Frontend), executees sequentiellement sur la meme branche. ticket_domains liste les 3 domaines pour que /speckit.dcm.tasks autorise une task par domaine ; expected_story_count reste a 1 volontairement. Dispatch : creer 1 Epic + 1 Story, puis la branche unique."
+  },
+  "dependency_gaps": [],
+  "packages": [
+    "packages/dcm-databricks-pipeline",
+    "packages/dcm-backend",
+    "packages/dcm-commons",
+    "packages/dcm-frontend"
+  ],
+  "priority": "P1",
+  "preset": null,
+  "selection_mode": "manual",
+  "summary": "Exposer le module Tracking d'usage (Usage des tables UC + Gouvernance & Recommandations) via nouveaux endpoints API et 2 nouvelles pages frontend, basé sur les 8 tables gold_dbx_usage_* livrées par la feature 019, plus un histogramme de latence en gold permettant un P95 exact sur période arbitraire. Périmètre complet des 2 specs draft sauf points bloqués/NEEDS DECISION PO (Genie FR7, acquittement recommandations FR8, lignes CONSUMER hors filtre table FR5/FR9).",
+  "created_at": "2026-09-10T00:00:00Z"
+}

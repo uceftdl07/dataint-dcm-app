@@ -1,0 +1,21 @@
+{
+  "updated_at": "2026-07-27T00:00:00Z",
+  "spec": "010-databricks-usage-finops-curated",
+  "branch_strategy": "consolidated",
+  "child_branch_base": "develop",
+  "pr_target": "develop",
+  "integration_branch": "feature/010_metrics_system",
+  "epic": { "key": "DCINT-191", "url": "https://tdf.atlassian.net/browse/DCINT-191" },
+  "dispatch": [
+    { "task_id": "T001", "jira": "DCINT-192", "branch": "feature/010_metrics_system", "branch_created": true },
+    { "task_id": "T002", "jira": "DCINT-193", "branch": "feature/010_metrics_system", "branch_created": true }
+  ],
+  "summary": {
+    "jira_stories_done": 2,
+    "jira_stories_total": 2,
+    "branches_done": 1,
+    "branches_total": 1,
+    "mode": "jira-only (consolidated branch)",
+    "status": "complete"
+  }
+}

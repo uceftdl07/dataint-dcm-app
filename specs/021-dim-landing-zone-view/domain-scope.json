@@ -1,0 +1,12 @@
+{
+  "work_type": "technique",
+  "domains": {
+    "frontend": false,
+    "backend": false,
+    "dataeng": true,
+    "devops": false,
+    "qa": false
+  },
+  "packages": ["packages/dcm-databricks-pipeline"],
+  "priority": "P2"
+}

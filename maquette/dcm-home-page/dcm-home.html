@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCM — Home</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --font-sans:"Inter",ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --background:oklch(100% 0 0); --foreground:oklch(14.1% .005 285.823);
+  --card-background:oklch(99.5% 0 0); --card-radius:1.375rem; --card-padding-x:1.25rem; --card-padding-y:1rem;
+  --card-shadow:0 10px 30px #0f172a12; --card-hover-shadow:0 18px 42px #0f172a1f;
+  --primary:oklch(60% .25 264.376); --primary-foreground:oklch(100% 0 0);
+  --secondary:oklch(96.7% .001 286.375); --secondary-foreground:oklch(21% .006 285.885);
+  --muted:oklch(96.7% .001 286.375); --muted-foreground:oklch(55.2% .016 285.938);
+  --success:oklch(52% .1483 133.57); --success-subtle:oklch(96.5% .035 145); --success-border:oklch(84% .09 145);
+  --warning:oklch(46% .13 70); --warning-subtle:oklch(97.5% .045 85); --warning-border:oklch(86% .12 80);
+  --danger:oklch(57.7% .245 27.325); --danger-foreground:oklch(100% 0 0); --danger-subtle:oklch(96% .035 25); --danger-border:oklch(86% .105 25);
+  --info:oklch(60% .25 264.376); --info-subtle:oklch(95.5% .035 265); --info-border:oklch(82% .09 265);
+  --purple:oklch(56% .22 300); --purple-subtle:oklch(95.5% .035 300); --purple-border:oklch(82% .09 300);
+  --border:oklch(92% .004 286.32); --radius:.625rem;
+  --sidebar:oklch(98.5% 0 0); --sidebar-foreground:oklch(14.1% .005 285.823);
+  --sidebar-accent:oklch(96.7% .001 286.375); --sidebar-accent-foreground:oklch(21% .006 285.885); --sidebar-border:oklch(92% .004 286.32);
+  --tdf-gradient-brand:linear-gradient(135deg,oklch(47.42% .215 265.21),oklch(45.82% .081 176.28));
+  --chart-1:oklch(64.6% .222 41.116); --chart-2:oklch(60% .118 184.704);
+}
+*{box-sizing:border-box;} body{margin:0;font-family:var(--font-sans);background:var(--background);color:var(--foreground);font-size:16px;-webkit-font-smoothing:antialiased;}
+.btn{font-family:inherit;cursor:pointer;border:1px solid var(--border);background:var(--background);color:var(--foreground);border-radius:999px;padding:.4rem .9rem;font-size:.8125rem;font-weight:600;display:inline-flex;align-items:center;gap:.4rem;}
+.btn-guide{background:var(--info-subtle);color:var(--info);border-color:var(--info-border);}
+.btn-primary{background:var(--primary);color:var(--primary-foreground);border-color:var(--primary);}
+.icon-btn{width:2rem;height:2rem;border-radius:999px;border:1px solid var(--border);background:var(--background);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:.9rem;}
+.dropdown-btn{border:1px solid var(--border);border-radius:999px;padding:.4rem .9rem;font-size:.8125rem;background:var(--background);display:inline-flex;align-items:center;gap:.5rem;color:var(--foreground);cursor:pointer;}
+.pill{font-family:inherit;border:1px solid var(--border);border-radius:999px;padding:.4rem .9rem;font-size:.8125rem;font-weight:600;background:var(--background);color:var(--foreground);cursor:pointer;}
+.pill.active{background:var(--primary);color:var(--primary-foreground);border-color:var(--primary);}
+.chip{display:inline-flex;align-items:center;gap:.35rem;border:1px solid var(--info-border);background:var(--info-subtle);color:var(--info);border-radius:999px;padding:.25rem .65rem;font-size:.75rem;font-weight:600;}
+.chip button{border:none;background:transparent;color:inherit;cursor:pointer;font-size:.85rem;line-height:1;padding:0;}
+.badge{display:inline-flex;align-items:center;gap:.3rem;padding:.15rem .55rem;border-radius:999px;font-size:.72rem;font-weight:700;border:1px solid transparent;}
+.badge-danger{background:var(--danger-subtle);color:var(--danger);border-color:var(--danger-border);}
+.badge-success{background:var(--success-subtle);color:var(--success);border-color:var(--success-border);}
+.badge-warning{background:var(--warning-subtle);color:var(--warning);border-color:var(--warning-border);}
+.badge-info{background:var(--info-subtle);color:var(--info);border-color:var(--info-border);}
+.card{background:var(--card-background);border:1px solid var(--border);border-radius:var(--card-radius);padding:var(--card-padding-y) var(--card-padding-x);box-shadow:var(--card-shadow);}
+.section-label{font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-foreground);margin:0 0 .75rem;}
+.app-shell{display:grid;grid-template-columns:220px 1fr;min-height:100vh;border:1px solid var(--border);}
+.app-sidebar{background:var(--sidebar);color:var(--sidebar-foreground);border-right:1px solid var(--sidebar-border);padding:1rem .75rem;display:flex;flex-direction:column;justify-content:space-between;}
+.app-logo{display:flex;align-items:center;gap:.5rem;padding:.5rem;margin-bottom:1rem;}
+.app-logo .mark{width:28px;height:28px;border-radius:8px;background:var(--tdf-gradient-brand);}
+.app-logo .word b{display:block;line-height:1.1;font-size:.95rem;} .app-logo .word .accent{color:var(--primary);}
+.nav-group{margin-bottom:.25rem;}
+.nav-item{display:flex;align-items:center;gap:.6rem;padding:.5rem .6rem;border-radius:var(--radius);font-size:.85rem;font-weight:500;color:var(--sidebar-foreground);cursor:pointer;text-decoration:none;}
+.nav-item:hover{background:var(--sidebar-accent);} .nav-item.current{background:var(--sidebar-accent);font-weight:700;}
+.nav-item.soon{color:var(--muted-foreground);cursor:default;}
+.nav-item.soon:hover{background:transparent;}
+.nav-soon-tag{margin-left:auto;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted-foreground);background:var(--muted);border-radius:999px;padding:.1rem .4rem;}
+.nav-sub{margin-left:1.5rem;display:flex;flex-direction:column;} .nav-sub .nav-item{font-size:.82rem;padding:.4rem .6rem;}
+.sidebar-footer{border-top:1px solid var(--sidebar-border);padding-top:.75rem;}
+.user-chip{display:flex;align-items:center;gap:.5rem;padding:.4rem;font-size:.75rem;}
+.avatar{width:28px;height:28px;border-radius:999px;background:var(--secondary);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.7rem;}
+.app-main{display:flex;flex-direction:column;}
+.app-topbar{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:.75rem;}
+.topbar-left .breadcrumb{font-size:.75rem;color:var(--muted-foreground);margin-bottom:.15rem;}
+.topbar-left .page-title{font-size:1.15rem;font-weight:700;}
+.topbar-right{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;}
+.app-content{padding:1.5rem;display:flex;flex-direction:column;gap:1.75rem;}
+
+/* ===== Welcome banner ===== */
+.welcome-banner{border-radius:var(--card-radius);padding:1.5rem 1.75rem;background:linear-gradient(120deg,oklch(97.5% .015 265) 0%,oklch(98.5% .012 176) 100%);border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:1.5rem;flex-wrap:wrap;}
+.welcome-banner h1{margin:0 0 .3rem;font-size:1.35rem;font-weight:700;}
+.welcome-banner p{margin:0;color:var(--muted-foreground);font-size:.875rem;max-width:520px;}
+.welcome-meta{display:flex;flex-direction:column;align-items:flex-end;gap:.4rem;font-size:.75rem;color:var(--muted-foreground);}
+
+/* ===== Module cards ===== */
+.module-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1rem;}
+.module-card{background:var(--card-background);border:1px solid var(--border);border-radius:var(--card-radius);padding:1.1rem 1.2rem;display:flex;flex-direction:column;gap:.6rem;cursor:pointer;transition:box-shadow .15s ease,transform .15s ease;}
+.module-card:hover{box-shadow:var(--card-hover-shadow);transform:translateY(-1px);}
+.module-head{display:flex;align-items:center;justify-content:space-between;}
+.module-icon{width:2.1rem;height:2.1rem;border-radius:.65rem;display:flex;align-items:center;justify-content:center;font-size:1rem;}
+.module-icon.blue{background:var(--info-subtle);} .module-icon.green{background:var(--success-subtle);}
+.module-icon.amber{background:var(--warning-subtle);} .module-icon.purple{background:var(--purple-subtle);}
+.module-name{font-size:.8125rem;font-weight:700;color:var(--muted-foreground);}
+.module-value{font-size:1.65rem;font-weight:700;line-height:1;}
+.module-summary{font-size:.8125rem;color:var(--foreground);line-height:1.45;margin:0;min-height:2.6em;}
+.module-value.danger{color:var(--danger);} .module-value.default{color:var(--foreground);}
+.module-sub{font-size:.8125rem;color:var(--muted-foreground);}
+.module-link{font-size:.78rem;font-weight:600;color:var(--primary);margin-top:.15rem;}
+.module-footnote{font-size:.68rem;color:var(--muted-foreground);border-top:1px dashed var(--border);padding-top:.5rem;margin-top:.1rem;}
+
+/* ===== Featured cost card ===== */
+.cost-card{display:grid;grid-template-columns:1fr 1.4fr;gap:1.5rem;align-items:center;}
+.cost-figure{display:flex;flex-direction:column;gap:.4rem;}
+.cost-figure .label{font-size:.8125rem;font-weight:700;color:var(--muted-foreground);text-transform:uppercase;letter-spacing:.04em;}
+.cost-figure .value{font-size:2.1rem;font-weight:800;}
+.cost-figure .delta{font-size:.8125rem;font-weight:600;}
+.cost-figure .delta.up{color:var(--warning);} .cost-figure .delta.down{color:var(--success);}
+.cost-figure .period{font-size:.78rem;color:var(--muted-foreground);}
+.cost-chart-wrap{width:100%;}
+.cost-chart-wrap svg{width:100%;height:auto;display:block;}
+.chart-legend{display:flex;justify-content:space-between;font-size:.68rem;color:var(--muted-foreground);margin-top:.25rem;}
+
+/* ===== Roadmap cards ===== */
+.roadmap-card{border:1px dashed var(--border);border-radius:var(--card-radius);padding:1.1rem 1.2rem;display:flex;align-items:center;gap:.9rem;background:var(--muted);opacity:.85;}
+.roadmap-icon{width:2.3rem;height:2.3rem;border-radius:.65rem;background:var(--background);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.05rem;color:var(--muted-foreground);}
+.roadmap-body{flex:1;}
+.roadmap-name{font-size:.875rem;font-weight:700;display:flex;align-items:center;gap:.5rem;}
+.roadmap-sub{font-size:.78rem;color:var(--muted-foreground);margin-top:.15rem;}
+.tag-soon{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;background:var(--background);border:1px solid var(--border);color:var(--muted-foreground);border-radius:999px;padding:.15rem .5rem;}
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="app-sidebar">
+    <div>
+      <div class="app-logo"><span class="mark"></span><span class="word"><b>Data</b><b class="accent">connect</b></span></div>
+      <nav>
+        <a class="nav-item current">▦ Home</a>
+        <div class="nav-group">
+          <a class="nav-item">⛓ Databricks</a>
+          <div class="nav-sub">
+            <a class="nav-item">Overview</a>
+            <a class="nav-item">Jobs &amp; Pipelines</a>
+            <a class="nav-item">Compute</a>
+            <a class="nav-item">FinOps</a>
+            <a class="nav-item">Usage Data Product</a>
+          </div>
+        </div>
+        <div class="nav-group">
+          <a class="nav-item">🛎 Anomalies</a>
+          <div class="nav-sub">
+            <a class="nav-item">Rules</a>
+            <a class="nav-item">Reports</a>
+          </div>
+        </div>
+        <a class="nav-item soon">◈ Cognite <span class="nav-soon-tag">Soon</span></a>
+        <a class="nav-item soon">⇄ Azure Data Factory <span class="nav-soon-tag">Soon</span></a>
+        <a class="nav-item">🗂 Talk to your Data</a>
+      </nav>
+    </div>
+    <div class="sidebar-footer">
+      <div class="nav-group">
+        <a class="nav-item">⚙ Administration</a>
+        <div class="nav-sub"><a class="nav-item">Notification Settings</a></div>
+      </div>
+      <div class="user-chip"><span class="avatar">ML</span> Maher Lezhari</div>
+    </div>
+  </aside>
+
+  <div class="app-main">
+    <div class="app-topbar">
+      <div class="topbar-left">
+        <div class="breadcrumb">DCM · Data Connect Monitoring</div>
+        <div class="page-title">Home</div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-guide">◎ Guide</button>
+        <button class="icon-btn" aria-label="Notifications">🔔</button>
+      </div>
+    </div>
+
+    <div class="app-content">
+
+      <!-- Bandeau de bienvenue -->
+      <div class="welcome-banner">
+        <div>
+          <h1>Bonjour Maher 👋</h1>
+          <p>Voici l'état de vos environnements data connectés à date. Retrouvez ci-dessous les indicateurs clés de chaque module.</p>
+        </div>
+        <div class="welcome-meta">
+          <span>Dernière synchronisation : il y a 8 min</span>
+          <span>3 alertes actives à traiter</span>
+        </div>
+      </div>
+
+      <!-- Databricks -->
+      <div>
+        <div class="section-label">Databricks</div>
+        <div class="module-grid">
+
+          <div class="module-card">
+            <div class="module-head">
+              <span class="module-name">Jobs &amp; Pipelines</span>
+              <span class="module-icon amber">⛓</span>
+            </div>
+            <div class="module-value danger">7</div>
+            <div class="module-sub">Jobs en échec — dernières 24h</div>
+            <div class="module-link">Voir Jobs &amp; Pipelines →</div>
+            <div class="module-footnote">Source : system.lakeflow.job_run_timeline <em>[NEEDS DECISION PO] table à confirmer</em></div>
+          </div>
+
+          <div class="module-card">
+            <div class="module-head">
+              <span class="module-name">Compute</span>
+              <span class="module-icon blue">🖥</span>
+            </div>
+            <div class="module-value default">42</div>
+            <div class="module-sub">Clusters &amp; SQL Warehouses actifs</div>
+            <div class="module-link">Voir Compute →</div>
+            <div class="module-footnote">Source : compute_clusters, compute_warehouses</div>
+          </div>
+
+          <div class="module-card">
+            <div class="module-head">
+              <span class="module-name">Tracking d'usage</span>
+              <span class="module-icon purple">◫</span>
+            </div>
+            <p class="module-summary">Suivi de l'usage par table : requêtes, consommateurs, gouvernance et coûts associés. Sélectionnez vos tables dans le module pour afficher vos indicateurs.</p>
+            <div class="module-link">Voir Tracking d'usage →</div>
+            <div class="module-footnote">Source : query_history, access_audit</div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Coût & consommation (FinOps) -->
+      <div>
+        <div class="section-label">FinOps — Coût &amp; consommation</div>
+        <div class="card cost-card">
+          <div class="cost-figure">
+            <span class="label">Coût global Databricks</span>
+            <span class="value">184,6 k€</span>
+            <span class="delta up">▲ 12 % vs période équivalente</span>
+            <span class="period">Depuis le 01/01/2026</span>
+            <div class="module-link">Voir FinOps →</div>
+          </div>
+          <div class="cost-chart-wrap">
+            <svg viewBox="0 0 560 170" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="costFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="var(--primary)" stop-opacity="0.28"/>
+                  <stop offset="100%" stop-color="var(--primary)" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <line x1="0" y1="30" x2="560" y2="30" stroke="var(--border)" stroke-width="1"/>
+              <line x1="0" y1="80" x2="560" y2="80" stroke="var(--border)" stroke-width="1"/>
+              <line x1="0" y1="130" x2="560" y2="130" stroke="var(--border)" stroke-width="1"/>
+              <path d="M0,130 L70,120 L140,108 L210,112 L280,92 L350,78 L420,58 L490,42 L560,20 L560,170 L0,170 Z" fill="url(#costFill)"/>
+              <polyline points="0,130 70,120 140,108 210,112 280,92 350,78 420,58 490,42 560,20" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="560" cy="20" r="4" fill="var(--primary)"/>
+            </svg>
+            <div class="chart-legend"><span>Jan</span><span>Fév</span><span>Mar</span><span>Avr</span><span>Mai</span><span>Jun</span><span>Jul</span><span>Aoû</span><span>Sep</span></div>
+          </div>
+        </div>
+        <div class="module-footnote" style="margin-top:.5rem;padding-top:0;border-top:none;">Source : billing_usage, billing_list_prices</div>
+      </div>
+
+      <!-- Anomalies -->
+      <div>
+        <div class="section-label">Anomalies &amp; Alertes</div>
+        <div class="module-grid">
+          <div class="module-card">
+            <div class="module-head">
+              <span class="module-name">Alertes actives</span>
+              <span class="module-icon amber">🛎</span>
+            </div>
+            <div class="module-value danger">3</div>
+            <div class="module-sub">
+              <span class="badge badge-danger">1 Critical</span>
+              <span class="badge badge-warning">2 Medium</span>
+            </div>
+            <div class="module-link">Voir Anomaly Reports →</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Roadmap -->
+      <div>
+        <div class="section-label">Autres sources — à venir</div>
+        <div class="module-grid">
+          <div class="roadmap-card">
+            <span class="roadmap-icon">◈</span>
+            <div class="roadmap-body">
+              <div class="roadmap-name">Cognite <span class="tag-soon">Bientôt disponible</span></div>
+              <div class="roadmap-sub">Monitoring des environnements Cognite Data Fusion</div>
+            </div>
+          </div>
+          <div class="roadmap-card">
+            <span class="roadmap-icon">⇄</span>
+            <div class="roadmap-body">
+              <div class="roadmap-name">Azure Data Factory <span class="tag-soon">Bientôt disponible</span></div>
+              <div class="roadmap-sub">Suivi des pipelines et de la consommation ADF</div>
+            </div>
+          </div>
+          <div class="roadmap-card">
+            <span class="roadmap-icon">🔓</span>
+            <div class="roadmap-body">
+              <div class="roadmap-name">Anomalies ouvertes <span class="tag-soon">Bientôt disponible</span></div>
+              <div class="roadmap-sub">Compteur consolidé du nombre total d'anomalies ouvertes, tous modules confondus</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</body>
+</html>

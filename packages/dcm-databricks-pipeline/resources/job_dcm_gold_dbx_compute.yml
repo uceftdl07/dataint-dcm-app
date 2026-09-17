@@ -1,0 +1,561 @@
+resources:
+
+  # Job Databricks PySpark — Agregations gold Compute (clusters + SQL
+  # Warehouses) — no DLT.
+  #
+  # Contrairement au job `dcm_system_tables` (tables independantes, boucle
+  # `for_each` parallele), les agregations gold clusters ont une DEPENDANCE
+  # SEQUENTIELLE reelle : `cluster_efficiency_daily` lit `cluster_cost_daily`
+  # (pour `estimated_savings_usd`) et `cluster_governance` lit
+  # `cluster_efficiency_daily` (pour `node_oversized`). Un `for_each_task`
+  # parallele introduirait une course (lecture d'une table gold pas encore a
+  # jour) : chaque agregation est donc une tache explicite, chainee par
+  # `depends_on` (cf. `pipelines.gold_dbx_compute.specs.GOLD_SPECS[*].source_tables`).
+  # `cluster_reliability_daily` est independante (clusters + access_audit
+  # uniquement) : aucune dependance, peut s'executer en parallele du chainage
+  # cout -> efficience -> gouvernance.
+  #
+  # `job_cluster_cost_daily` : rollup par job_id (stable), BILLING-DIRECT depuis
+  # T001b. Il agregeait `cluster_cost_daily` et dependait donc de
+  # `gold_cluster_cost_daily` ; il lit maintenant `curated_dbx_billing_usage`
+  # filtre sur `usage_metadata.job_id` -- ce qui fait entrer le cout des jobs
+  # SERVERLESS, qui n'ont aucun cluster et etaient donc exclus en amont. Plus
+  # aucune table gold en source : le `depends_on` a ete retire, la tache demarre
+  # en parallele du chainage cout -> efficience -> gouvernance (cf.
+  # `pipelines.gold_dbx_compute.specs.JOB_CLUSTER_COST_DAILY_SPEC.source_tables`).
+  #
+  # T004 (efficacite job/pipeline) : 4 agregations derivant de
+  # `cluster_efficiency_daily` (et non de la facturation), chainees derriere elle
+  # - detail et piege du filtre ALL_PURPOSE dans le commentaire de ces taches.
+  #
+  # T001d (spec 025, depense serverless) : `serverless_cost_daily` est le
+  # troisieme rollup billing-direct, et il couvre l'angle mort des deux autres --
+  # ni `cluster_id`, ni `cluster_source`, ni ligne dans
+  # `curated_dbx_compute_clusters` pour le serverless. Aucun `depends_on` non
+  # plus. ATTENTION en revanche a l'anti-double-comptage : cette table agrege les
+  # MEMES lignes de facturation que les rollups ci-dessus sous un autre axe, elle
+  # ne s'additionne pas a eux (cf. son `table_comment`).
+  #
+  # T003 (SQL Warehouses) : les 3 agregations warehouses ne lisent QUE des
+  # tables curated (+ leur propre `warehouse_cost_daily` pour
+  # `utilization_daily`, jamais le resultat d'une AUTRE table warehouse) :
+  # aucune n'est chainee entre elles ni vis-a-vis du chainage cluster
+  # ci-dessus (cf. `pipelines.gold_dbx_compute.specs.WAREHOUSE_*_SPEC
+  # .source_tables`).
+  #
+  jobs:
+    dcm_gold_dbx_compute:
+      name: "[${bundle.target}] DCM Gold Compute"
+      max_concurrent_runs: 1
+
+      # 4 h et non 2 h : a 7200 s, le levier de reparation que ce job documente
+      # lui-meme (`full_refresh` ci-dessous) ne pouvait PAS aboutir. Mesure en
+      # dev : un backfill complet demande ~167 min, et le run 563218448954827
+      # du 2026-09-05 est mort en `TIMEDOUT` a 120,2 min. Un run incremental
+      # normal prend 6 a 25 min (fenetre de 10 jours : ~15 a 45 min attendues),
+      # donc le timeout ne sert qu'a couper un run bloque — le plafonner sous la
+      # duree d'un full refresh legitime ne protegeait de rien et cassait la
+      # reparation.
+      timeout_seconds: 14400
+
+      # Planification quotidienne, apres le job system tables (03h). Le decalage
+      # de 2 h ne suffit PAS a garantir une source complete, contrairement a ce
+      # que supposait la version precedente de ce commentaire : une journee de
+      # `curated_dbx_billing_usage` / `_access_audit` / `_compute_node_timeline`
+      # n'arrive en curated que 3 a 8 jours apres le jour concerne (mesure dev
+      # via `collected_at`). Ce qui fait converger l'agregation est la fenetre de
+      # rafraichissement (`INCREMENTAL_LOOKBACK_DAYS`) elargie automatiquement
+      # par `compute_gap_aware_lower_bound`, pas l'heure de declenchement.
+      schedule:
+        quartz_cron_expression: "0 0 5 * * ?"
+        timezone_id: "Europe/Paris"
+        pause_status: UNPAUSED
+
+      # `full_refresh` : parametre de job optionnel pour forcer un recalcul
+      # complet (ex. reparation manuelle) sans attendre l'absence de la table
+      # cible. Vide par defaut (fenetre normale : full au 1er run, puis
+      # incrementale sur `INCREMENTAL_LOOKBACK_DAYS` = 10 jours, ELARGIE
+      # automatiquement par `compute_gap_aware_lower_bound` des que la table
+      # cible presente un trou, un jour non stabilise ou un retard de queue —
+      # cf. `pipelines.gold_dbx_compute.entrypoint`). Un `full_refresh` ne reste
+      # necessaire que pour un trou plus ancien que la fenetre de detection
+      # (`DEFAULT_GAP_DETECTION_WINDOW_DAYS` = 90 jours).
+      parameters:
+        - name: full_refresh
+          default: ""
+
+      # Compute serverless : pas de job cluster a provisionner/dimensionner.
+      environments:
+        - environment_key: gold_compute_env
+          spec:
+            environment_version: "3"
+            dependencies:
+              - ../dist/*.whl
+
+      tasks:
+        - task_key: gold_cluster_cost_daily
+          description: "FinOps clusters : cout $, DBU, delta J-1, classement (gold_dbx_compute_cluster_cost_daily)"
+          environment_key: gold_compute_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-compute
+            named_parameters:
+              table:        "cluster_cost_daily"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        - task_key: gold_cluster_cost_rolling
+          description: "FinOps clusters, fenetres 1/7/30/90 j : rollup de cluster_cost_daily (gold_dbx_compute_cluster_cost_rolling)"
+          depends_on:
+            - task_key: gold_cluster_cost_daily
+          environment_key: gold_compute_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-compute
+            named_parameters:
+              table:        "cluster_cost_rolling"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        - task_key: gold_cluster_efficiency_daily
+          description: "Utilisation CPU/memoire, rightsizing (gold_dbx_compute_cluster_efficiency_daily)"
+          depends_on:
+            - task_key: gold_cluster_cost_daily
+          environment_key: gold_compute_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-compute
+            named_parameters:
+              table:        "cluster_efficiency_daily"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        - task_key: gold_cluster_efficiency_rolling
+          description: "Efficacite clusters, fenetres 1/7/30/90 j : rollup de cluster_efficiency_daily (gold_dbx_compute_cluster_efficiency_rolling)"
+          depends_on:
+            - task_key: gold_cluster_efficiency_daily
+          environment_key: gold_compute_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-compute
+            named_parameters:
+              table:        "cluster_efficiency_rolling"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        - task_key: gold_cluster_reliability_daily
+          description: "Demarrages, terminaisons, auto-stop (gold_dbx_compute_cluster_reliability_daily)"
+          environment_key: gold_compute_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-compute
+            named_parameters:
+              table:        "cluster_reliability_daily"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        - task_key: gold_cluster_reliability_rolling
+          description: "Fiabilite clusters, fenetres 1/7/30/90 j : rollup de cluster_reliability_daily (gold_dbx_compute_cluster_reliability_rolling)"
+          depends_on:
+            - task_key: gold_cluster_reliability_daily
+          environment_key: gold_compute_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-compute
+            named_parameters:
+              table:        "cluster_reliability_rolling"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        - task_key: gold_cluster_governance
+          description: "Snapshot conformite (dernier etat connu) (gold_dbx_compute_cluster_governance)"
+          depends_on:
+            - task_key: gold_cluster_efficiency_daily
+          environment_key: gold_compute_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-compute
+            named_parameters:
+              table:        "cluster_governance"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        - task_key: gold_job_cluster_cost_daily
+          description: "FinOps jobs : rollup billing-direct par job_id, classique ET serverless (gold_dbx_compute_job_cluster_cost_daily)"
+          environment_key: gold_compute_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-compute
+            named_parameters:
+              table:        "job_cluster_cost_daily"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        - task_key: gold_job_cluster_cost_rolling
+          description: "FinOps job clusters, fenetres 1/7/30/90 j : rollup de job_cluster_cost_daily (gold_dbx_compute_job_cluster_cost_rolling)"
+          depends_on:
+            - task_key: gold_job_cluster_cost_daily
+          environment_key: gold_compute_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-compute
+            named_parameters:
+              table:        "job_cluster_cost_rolling"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        # Pipelines DLT (rollup billing-direct par dlt_pipeline_id). Comme
+        # `gold_job_cluster_cost_daily` depuis T001b,
+        # `pipeline_cost_daily` lit DIRECTEMENT la facturation curated
+        # (`curated_dbx_billing_usage` filtre sur `usage_metadata.dlt_pipeline_id`)
+        # + `_billing_list_prices` + `_lakeflow_pipelines` : aucune dependance a une
+        # table gold, donc AUCUN `depends_on` (comme les taches warehouses,
+        # independantes du chainage cluster - cf.
+        # `pipelines.gold_dbx_compute.specs.PIPELINE_COST_DAILY_SPEC.source_tables`).
+        - task_key: gold_pipeline_cost_daily
+          description: "FinOps pipelines DLT : rollup billing-direct par dlt_pipeline_id (gold_dbx_compute_pipeline_cost_daily)"
+          environment_key: gold_compute_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-compute
+            named_parameters:
+              table:        "pipeline_cost_daily"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        - task_key: gold_pipeline_cost_rolling
+          description: "FinOps pipelines DLT, fenetres 1/7/30/90 j : rollup de pipeline_cost_daily (gold_dbx_compute_pipeline_cost_rolling)"
+          depends_on:
+            - task_key: gold_pipeline_cost_daily
+          environment_key: gold_compute_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-compute
+            named_parameters:
+              table:        "pipeline_cost_rolling"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        # Depense SERVERLESS (T001d, spec 025). Meme mecanique billing-direct que
+        # les deux taches ci-dessus, donc AUCUN `depends_on` sur le chainage
+        # cluster : le serverless n'a par definition ni cluster_id ni ligne dans
+        # `curated_dbx_compute_clusters`, il n'y a rien a attendre. La tache
+        # `_rolling` depend de la seule `_daily` (sa source unique, cf.
+        # `pipelines.gold_dbx_compute.specs.SERVERLESS_COST_ROLLING_SPEC.source_tables`).
+        - task_key: gold_serverless_cost_daily
+          description: "FinOps serverless : cout $ par surface d'usage et par objet, rollup billing-direct (gold_dbx_compute_serverless_cost_daily)"
+          environment_key: gold_compute_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-compute
+            named_parameters:
+              table:        "serverless_cost_daily"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        - task_key: gold_serverless_cost_rolling
+          description: "FinOps serverless, fenetres 1/7/30/90 j : rollup de serverless_cost_daily, percentiles $/execution (gold_dbx_compute_serverless_cost_rolling)"
+          depends_on:
+            - task_key: gold_serverless_cost_daily
+          environment_key: gold_compute_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-compute
+            named_parameters:
+              table:        "serverless_cost_rolling"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        # Gouvernance SERVERLESS (T001e, spec 025). AUCUN `depends_on`, y compris
+        # sur `gold_serverless_cost_daily` : ce snapshot relit LA FACTURATION et
+        # non la table quotidienne, dont le grain jour-objet sous-estime les
+        # dollars sans proprietaire (8 605,66 $ au lieu de 8 704,20 $ sur une
+        # meme fenetre de 31 jours -- des lignes sans identite y fusionnent avec
+        # des lignes qui en portent une). Le chainer sur la `_daily` serait donc
+        # trompeur : cette table n'en lit rien.
+        - task_key: gold_serverless_governance
+          description: "Gouvernance serverless : couverture tags / budget policy / identite, $ orphelins, inventaire des policies, snapshot 90 j (gold_dbx_compute_serverless_governance)"
+          environment_key: gold_compute_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-compute
+            named_parameters:
+              table:        "serverless_governance"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        # Statistiques d'EXECUTION de pipeline (T001f, spec 025). AUCUN
+        # `depends_on` : cette table ne lit qu'UNE source curated
+        # (`curated_dbx_lakeflow_pipeline_update_timeline`) et aucune table gold,
+        # a la difference des taches T004 ci-dessous qui derivent de
+        # `gold_cluster_efficiency_daily`. La chainer sur une autre tache gold
+        # n'apporterait qu'un retard et un mode d'echec en cascade.
+        #
+        # DEPENDANCE TEMPORELLE REELLE, non exprimable ici : la source curated est
+        # produite par le job `dcm_system_tables` (03:00), ce job tourne a 05:00.
+        # Les deux jobs sont independants, rien ne garantit que l'ingestion soit
+        # terminee -- un retard de l'ingestion se traduit par une fenetre gold
+        # calculee sur une curated de la veille, sans aucune erreur levee. La
+        # fenetre glissante du run suivant rattrape (cf.
+        # `compute_gap_aware_lower_bound`), mais la marge de 2 h est a verifier
+        # sur les durees de run reelles avant de la considerer comme acquise.
+        - task_key: gold_pipeline_update_stats
+          description: "Statistiques par execution de pipeline DLT/Lakeflow : compute serverless/classique, etat terminal, duree horloge, retentatives via request_id (gold_dbx_compute_pipeline_update_stats)"
+          environment_key: gold_compute_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-compute
+            named_parameters:
+              table:        "pipeline_update_stats"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        # T004 : efficacite par job / pipeline. Contrairement aux rollups de COUT
+        # ci-dessus (`pipeline_cost_daily` lit la facturation directement, sans
+        # `depends_on`), ces 4 taches derivent de `gold_cluster_efficiency_daily`
+        # (source `node_timeline`) : elles DOIVENT etre chainees derriere elle,
+        # sinon elles agregeraient la version de la veille de cette table.
+        #
+        # `gold_cluster_efficiency_daily` reste NON filtree sur ALL_PURPOSE (seule
+        # `cluster_efficiency_rolling` porte ce filtre, cf. SC-001) : ces 4 taches
+        # se videraient silencieusement, sans echouer.
+        - task_key: gold_job_efficiency_daily
+          description: "Efficacite jobs : rollup par job_id de cluster_efficiency_daily, clusters JOB (gold_dbx_compute_job_efficiency_daily)"
+          depends_on:
+            - task_key: gold_cluster_efficiency_daily
+          environment_key: gold_compute_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-compute
+            named_parameters:
+              table:        "job_efficiency_daily"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        - task_key: gold_job_efficiency_rolling
+          description: "Efficacite jobs, fenetres 1/7/30/90 j : rollup de job_efficiency_daily (gold_dbx_compute_job_efficiency_rolling)"
+          depends_on:
+            - task_key: gold_job_efficiency_daily
+          environment_key: gold_compute_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-compute
+            named_parameters:
+              table:        "job_efficiency_rolling"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        - task_key: gold_pipeline_efficiency_daily
+          description: "Efficacite pipelines DLT : rollup par dlt_pipeline_id de cluster_efficiency_daily, clusters PIPELINE (gold_dbx_compute_pipeline_efficiency_daily)"
+          depends_on:
+            - task_key: gold_cluster_efficiency_daily
+          environment_key: gold_compute_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-compute
+            named_parameters:
+              table:        "pipeline_efficiency_daily"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        - task_key: gold_pipeline_efficiency_rolling
+          description: "Efficacite pipelines DLT, fenetres 1/7/30/90 j : rollup de pipeline_efficiency_daily (gold_dbx_compute_pipeline_efficiency_rolling)"
+          depends_on:
+            - task_key: gold_pipeline_efficiency_daily
+          environment_key: gold_compute_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-compute
+            named_parameters:
+              table:        "pipeline_efficiency_rolling"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        # T003 : SQL Warehouses. Contrairement aux clusters, aucune des 3
+        # agregations warehouses ne lit le resultat gold d'une autre (chacune
+        # ne lit QUE des tables curated + au plus sa propre table de cout,
+        # cf. `pipelines.gold_dbx_compute.specs.WAREHOUSE_*_SPEC.source_tables`) :
+        # les 3 taches sont donc independantes entre elles ET vis-a-vis du
+        # chainage cluster ci-dessus, sans `depends_on`.
+        - task_key: gold_warehouse_cost_daily
+          description: "FinOps SQL Warehouses : cout $, DBU, delta J-1, cout/requete (gold_dbx_compute_warehouse_cost_daily)"
+          environment_key: gold_compute_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-compute
+            named_parameters:
+              table:        "warehouse_cost_daily"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        - task_key: gold_warehouse_cost_rolling
+          description: "FinOps SQL Warehouses, fenetres 1/7/30/90 j : rollup de warehouse_cost_daily (gold_dbx_compute_warehouse_cost_rolling)"
+          depends_on:
+            - task_key: gold_warehouse_cost_daily
+          environment_key: gold_compute_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-compute
+            named_parameters:
+              table:        "warehouse_cost_rolling"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        - task_key: gold_warehouse_utilization_daily
+          description: "Idle %, scaling, rightsizing SQL Warehouses (gold_dbx_compute_warehouse_utilization_daily)"
+          environment_key: gold_compute_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-compute
+            named_parameters:
+              table:        "warehouse_utilization_daily"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        - task_key: gold_warehouse_utilization_rolling
+          description: "Utilisation SQL Warehouses, fenetres 1/7/30/90 j : rollup de warehouse_utilization_daily (gold_dbx_compute_warehouse_utilization_rolling)"
+          depends_on:
+            - task_key: gold_warehouse_utilization_daily
+          environment_key: gold_compute_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-compute
+            named_parameters:
+              table:        "warehouse_utilization_rolling"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        - task_key: gold_warehouse_query_performance_daily
+          description: "Latences, echecs, spill, cache des requetes SQL Warehouses (gold_dbx_compute_warehouse_query_performance_daily)"
+          environment_key: gold_compute_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-compute
+            named_parameters:
+              table:        "warehouse_query_performance_daily"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        - task_key: gold_warehouse_query_performance_rolling
+          description: "Performance requetes warehouses, fenetres 1/7/30/90 j : rollup de warehouse_query_performance_daily (gold_dbx_compute_warehouse_query_performance_rolling)"
+          depends_on:
+            - task_key: gold_warehouse_query_performance_daily
+          environment_key: gold_compute_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-compute
+            named_parameters:
+              table:        "warehouse_query_performance_rolling"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        # Socle reactif transverse (T004, clusters + warehouses, cf.
+        # `pipelines.gold_dbx_compute.recommendations`). Depuis le repoint sur
+        # les tables `*_rolling` (fenetre 30 j), depend des 6 taches rolling
+        # sources lues par le rule engine + `gold_cluster_governance` (snapshot,
+        # aucune variante rolling). Chaque tache rolling depend elle-meme de sa
+        # `*_daily`, qui couvre transitivement la chaine bronze/silver.
+        - task_key: gold_recommendations
+          description: "Rule engine reactif, clusters + warehouses (gold_dbx_compute_recommendations)"
+          depends_on:
+            - task_key: gold_cluster_governance
+            - task_key: gold_cluster_efficiency_rolling
+            - task_key: gold_cluster_reliability_rolling
+            - task_key: gold_cluster_cost_rolling
+            - task_key: gold_warehouse_utilization_rolling
+            - task_key: gold_warehouse_query_performance_rolling
+            - task_key: gold_warehouse_cost_rolling
+          environment_key: gold_compute_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-compute
+            named_parameters:
+              table:        "recommendations"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        # Cout total deduplique (DCINT-335, cf.
+        # `pipelines.gold_dbx_compute.total_cost_daily`). Lit les 5 tables gold
+        # `*_cost_daily`, AUCUNE relecture de la facturation curated : depend
+        # des 5 taches `*_cost_daily` sources, pas de leurs `*_rolling`/
+        # gouvernance (hors perimetre de ce total).
+        - task_key: gold_total_cost_daily
+          description: "FinOps cout total deduplique par workspace/jour (gold_dbx_compute_total_cost_daily)"
+          depends_on:
+            - task_key: gold_cluster_cost_daily
+            - task_key: gold_warehouse_cost_daily
+            - task_key: gold_job_cluster_cost_daily
+            - task_key: gold_pipeline_cost_daily
+            - task_key: gold_serverless_cost_daily
+          environment_key: gold_compute_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-compute
+            named_parameters:
+              table:        "total_cost_daily"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+      email_notifications:
+        on_failure:
+          - ${var.notification_email}
+        no_alert_for_skipped_runs: true
+
+      tags:
+        project: dcm-databricks-pipeline
+        managed_by: databricks-asset-bundle
+        domain: gold-compute

@@ -1,0 +1,14 @@
+{
+  "spec": "020-dbx-workspace-dim",
+  "epic": { "key": "DCINT-299", "url": "https://tdf.atlassian.net/browse/DCINT-299" },
+  "stories": [
+    {
+      "task_id": "T001",
+      "key": "DCINT-300",
+      "url": "https://tdf.atlassian.net/browse/DCINT-300",
+      "domain": "dataeng",
+      "branch": "dataeng/020-ingestion-system-access-workspaces",
+      "sub_spec": "stories/T001-dbx-workspace-dim.md"
+    }
+  ]
+}

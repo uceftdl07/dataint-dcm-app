@@ -1,0 +1,13 @@
+{
+  "feature": "014-dcm-ux-mockup-agent",
+  "selection_mode": "manual",
+  "domains": {
+    "frontend": {"in_scope": false, "ticket": false, "packages": []},
+    "backend": {"in_scope": false, "ticket": false, "packages": []},
+    "dataeng": {"in_scope": false, "ticket": false, "packages": []},
+    "devops": {"in_scope": false, "ticket": false, "packages": []},
+    "qa": {"in_scope": false, "ticket": false, "packages": []},
+    "misc": {"in_scope": true, "ticket": true, "packages": ["spec-kit-dcm-workflow/agents/dcm-ux-agent"]}
+  },
+  "notes": "misc is an administrative workflow bucket; this feature is UX/design tooling, not application frontend work."
+}

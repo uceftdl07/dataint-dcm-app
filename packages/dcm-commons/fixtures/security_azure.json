@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.1",
+  "collection_run_id": "dc2462ca-5cdb-4b8a-a07d-98b0e6659588",
+  "source_lz_id": "lz-azure-prod",
+  "subscription_or_account_id": "fa5abbc4-02eb-416f-a75f-f8f6c5cc7d8a",
+  "cloud_provider": "azure",
+  "domain": "security",
+  "collected_at": "2026-04-14T07:16:42.437246Z",
+  "metrics": [
+    {
+      "alert_id": "2517346abc12ef34-a56b-78cd-90ef-1234567890ab",
+      "title": "Suspicious login from unfamiliar location",
+      "description": "A successful sign-in was detected from an IP address that has not been seen before for this user. This could indicate a compromised account.",
+      "severity": "high",
+      "status": "active",
+      "detected_at": "2026-04-14T06:15:00Z",
+      "resource_id": "/subscriptions/fa5abbc4/resourceGroups/rg-data/providers/Microsoft.Sql/servers/sql-prod-dcm",
+      "resource_name": "sql-prod-dcm",
+      "resource_type": "Microsoft.Sql/servers",
+      "remediation": "Review the sign-in activity in Azure Active Directory. If the sign-in is not recognized, revoke the user's session and reset credentials.",
+      "compromised_entity": "yahia.zerdoumi@company.com",
+      "tags": {
+        "env": "prod",
+        "source": "defender-for-cloud"
+      }
+    }
+  ],
+  "metadata": {
+    "collector_version": "1.4.0",
+    "defender_plan": "Defender for SQL"
+  },
+  "metric_count": 1,
+  "is_empty": false
+}

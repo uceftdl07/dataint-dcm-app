@@ -1,0 +1,19 @@
+{
+  "work_type": "feature",
+  "domains": ["dataeng"],
+  "ticket_plan": {
+    "mode": "standard",
+    "ticket_domains": ["dataeng"],
+    "expected_story_count": 1,
+    "single_branch": true,
+    "branch": "dataeng/027-usage-table-deleted-flag",
+    "note": "Convention DCM standard : 1 domaine = 1 Story = 1 branche. US1 (signal gold), US3 (forecast) et US4 (gouvernance/recommandations) sont portees par la meme task T001 : elles modifient les memes fichiers (specs.py, entrypoint.py) et US3/US4 sont bloquees par US1 -- trois branches paralleles produiraient des conflits pour aucun gain. US2 (filtre API include_deleted + toggle UI) est hors perimetre : le code concerne vit sur la branche dataeng/024-usage-tracking-governance, non mergee sur develop."
+  },
+  "dependency_gaps": [],
+  "packages": ["packages/dcm-databricks-pipeline"],
+  "priority": "P1",
+  "preset": null,
+  "selection_mode": "manual",
+  "summary": "Ajouter l'etat de cycle de vie (lifecycle_state ACTIVE/DELETED/UNKNOWN, is_deleted, deleted_at) a gold_dbx_usage_table_catalog et le propager a gold_dbx_usage_table_governance, pour exclure les tables Unity Catalog supprimees du forecast et des recommandations. Detection par corroboration : absence de curated_dbx_uc_tables (full load purge) ET derniere operation d'audit deleteTable. Aucune denormalisation sur les 4 tables de fait quotidiennes (merge incremental 3 jours). Le filtre applicatif include_deleted est porte par la feature 024.",
+  "created_at": "2026-09-16T00:00:00Z"
+}

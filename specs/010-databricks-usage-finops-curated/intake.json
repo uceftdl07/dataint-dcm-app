@@ -1,0 +1,27 @@
+{
+  "work_type": "feature",
+  "domains": ["dataeng"],
+  "packages": ["packages/dcm-databricks-pipeline"],
+  "priority": "P2",
+  "preset": "manual",
+  "selection_mode": "manual",
+  "ticket_plan": {
+    "mode": "custom",
+    "ticket_domains": ["dataeng"],
+    "expected_story_count": 2,
+    "stories": [
+      { "slug": "usage-metrics", "title": "Usage Databricks (compute, tables, node timeline) → curated cross-cloud" },
+      { "slug": "finops-metrics", "title": "FinOps Databricks (system.billing.usage + list_prices) → curated cross-cloud" }
+    ]
+  },
+  "dependency_gaps": [
+    "Workflow + Service Principal avec droits SELECT sur system tables Databricks Azure (cross-tenant) — remplace Delta Sharing (abandonné)",
+    "Table de correspondance workspace_id -> (source_lz_id, cloud_provider, account/subscription)",
+    "Contrat tables curated cibles dans it.ba_data_connect_monitoring__d (naming layer_source_domain_metric)"
+  ],
+  "target_schema": "it.ba_data_connect_monitoring__d",
+  "naming_convention": "layer_source_domain_metric",
+  "source_access": "workflow_service_principal_azure_system_tables",
+  "created_at": "2026-07-27T00:00:00Z",
+  "task_dispatch_mode": "one_per_domain"
+}

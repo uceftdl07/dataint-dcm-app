@@ -1,0 +1,14 @@
+{
+  "stories": [
+    {
+      "task_id": "T001",
+      "key": "DCINT-255",
+      "summary": "T001: Create DCM UX Mockup Agent Bundle",
+      "url": "https://tdf.atlassian.net/browse/DCINT-255",
+      "sub_spec_path": "specs/014-dcm-ux-mockup-agent/stories/T001-mockup-agent-bundle.md",
+      "branch": "misc/014-dcm-ux-mockup-agent",
+      "status": "pending"
+    }
+  ],
+  "last_run_at": "2026-08-20T00:00:00Z"
+}

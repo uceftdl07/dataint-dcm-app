@@ -1,0 +1,77 @@
+resources:
+
+  # Job Databricks PySpark — Ingestion des tables referentiel Landing Zone
+  # (dim_reference_landing_zone_dbx_workspace / dim_reference_landing_zone_
+  # business_application) vers curated (no DLT).
+  #
+  # Meme socle que `dcm_system_tables` (lecture native AWS + connecteur SQL
+  # cross-tenant Azure, staging + `MERGE INTO` idempotent), mais orchestration
+  # BESPOKE (pas de generique `IngestionSpec`/`ingest_system_table()`) : les 2
+  # sources `workspace_inventory` divergent sur le nom de colonne d'identifiant
+  # de compte, et `ref_ba_lz` n'a pas d'equivalent AWS (cf. research.md §3).
+  #
+  # Une seule tache `for_each` boucle sur le registre de 3 tables : chaque
+  # table est une iteration INDEPENDANTE qui execute le meme wheel avec
+  # `--table {{input}}`. Isolation d'echec par table/source native a
+  # `for_each_task` (FR-010) : un echec Azure sur une table n'affecte pas
+  # l'autre. Ajouter/retirer une table = editer `inputs` (aligne sur
+  # `pipelines.reference_lz.specs.TABLE_KEYS`), sans toucher la structure.
+  jobs:
+    dcm_reference_lz:
+      name: "[${bundle.target}] DCM Reference Landing Zone Ingestion"
+      max_concurrent_runs: 1
+      timeout_seconds: 3600
+
+      # Planification quotidienne, apres `dcm_system_tables` (03:00).
+      schedule:
+        quartz_cron_expression: "0 30 4 * * ?"
+        timezone_id: "Europe/Paris"
+        pause_status: UNPAUSED
+
+      # Compute serverless : pas de job cluster à provisionner/dimensionner.
+      environments:
+        - environment_key: reference_lz_env
+          spec:
+            environment_version: "3"
+            dependencies:
+              - ../dist/*.whl
+
+      tasks:
+        - task_key: ingest_reference_lz
+          description: "Ingestion parallèle des 3 tables référentiel LZ (workspace Databricks + Business Application ↔ LZ + catalogue Business Application) → curated (fidèle source, MERGE idempotent)"
+          # Boucle sur le registre de tables : une itération = une table = une
+          # task parallèle. `inputs` doit rester aligné sur
+          # `specs.TABLE_KEYS` (garde-fou côté entrypoint : une clé inconnue
+          # lève une erreur explicite).
+          for_each_task:
+            inputs: '["dbx_workspace","business_application","business_application_dim"]'
+            concurrency: 3
+            task:
+              task_key: ingest_one_reference_table
+              environment_key: reference_lz_env
+              python_wheel_task:
+                package_name: dcm_databricks_pipeline
+                entry_point: dcm-reference-lz
+                named_parameters:
+                  table:               "{{input}}"
+                  catalog:             ${var.catalog}
+                  schema:              ${var.schema}
+                  collection_run_id:   "{{job.run_id}}"
+                  collected_at:        "{{job.start_time.iso_datetime}}"
+                  azure_host:          ${var.azure_host}
+                  azure_http_path:     ${var.azure_http_path}
+                  azure_secret_scope:  ${var.azure_secret_scope}
+                  azure_tenant_id_key: ${var.azure_tenant_id_key}
+                  azure_client_id_key: ${var.azure_client_id_key}
+                  azure_secret_key:    ${var.azure_secret_key}
+              max_retries: 0
+
+      email_notifications:
+        on_failure:
+          - ${var.notification_email}
+        no_alert_for_skipped_runs: true
+
+      tags:
+        project: dcm-databricks-pipeline
+        managed_by: databricks-asset-bundle
+        domain: reference-lz

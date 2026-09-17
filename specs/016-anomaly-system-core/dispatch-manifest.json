@@ -1,0 +1,29 @@
+{
+  "spec": "016-anomaly-system-core",
+  "epic": {
+    "key": "DCINT-313",
+    "url": "https://tdf.atlassian.net/browse/DCINT-313"
+  },
+  "stories": {
+    "T001": {
+      "jira_key": "DCINT-317",
+      "branch": "dataeng/016-implement-anomaly-rule-report-delta",
+      "sub_spec": "stories/T001-dataeng-anomaly-evaluator.md"
+    },
+    "T002": {
+      "jira_key": "DCINT-319",
+      "branch": "backend/016-implement-versioned-anomaly-rules",
+      "sub_spec": "stories/T002-backend-anomaly-api.md"
+    },
+    "T003": {
+      "jira_key": "DCINT-318",
+      "branch": "frontend/016-implement-anomaly-rules-page-custom-rule",
+      "sub_spec": "stories/T003-frontend-anomaly-rules.md"
+    },
+    "T004": {
+      "jira_key": "DCINT-316",
+      "branch": "frontend/016-implement-anomaly-reports-page-filters",
+      "sub_spec": "stories/T004-frontend-anomaly-reports.md"
+    }
+  }
+}

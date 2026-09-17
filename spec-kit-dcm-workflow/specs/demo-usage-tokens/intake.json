@@ -1,0 +1,11 @@
+{
+  "work_type": "technique",
+  "domains": ["misc"],
+  "packages": ["spec-kit-dcm-workflow"],
+  "priority": "P2",
+  "ticket_plan": {
+    "mode": "single_domain",
+    "ticket_domains": ["misc"],
+    "expected_story_count": 1
+  }
+}

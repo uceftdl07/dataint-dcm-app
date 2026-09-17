@@ -1,0 +1,34 @@
+{
+  "spec": "015-project-access-governance",
+  "cloud_id": "23cadbe4-5ee9-46f7-8a55-f7ac9c44041a",
+  "project_key": "DCINT",
+  "updated_at": "2026-08-21T00:00:00Z",
+  "epic": {
+    "key": "DCINT-257",
+    "url": "https://tdf.atlassian.net/browse/DCINT-257",
+    "summary": "[015] Gouvernance des accès DCM — modèle projet (V2)"
+  },
+  "stories": [
+    {
+      "task_id": "T001",
+      "domain": "dataeng",
+      "key": "DCINT-259",
+      "url": "https://tdf.atlassian.net/browse/DCINT-259",
+      "branch": "dataeng/015-project-access-governance"
+    },
+    {
+      "task_id": "T002",
+      "domain": "backend",
+      "key": "DCINT-260",
+      "url": "https://tdf.atlassian.net/browse/DCINT-260",
+      "branch": "backend/015-project-access-governance"
+    },
+    {
+      "task_id": "T003",
+      "domain": "frontend",
+      "key": "DCINT-258",
+      "url": "https://tdf.atlassian.net/browse/DCINT-258",
+      "branch": "frontend/015-project-access-governance"
+    }
+  ]
+}

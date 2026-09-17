@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.1",
+  "collection_run_id": "77f0f699-768f-4e70-b272-7317b619abd0",
+  "source_lz_id": "lz-azure-prod",
+  "subscription_or_account_id": "fa5abbc4-02eb-416f-a75f-f8f6c5cc7d8a",
+  "cloud_provider": "azure",
+  "domain": "standard_check",
+  "collected_at": "2026-04-14T07:16:42.438634Z",
+  "metrics": [
+    {
+      "check_id": "/subscriptions/fa5abbc4/providers/Microsoft.Authorization/policyDefinitions/a4af4a39-4135-47fb-b175-47fbdf85311d",
+      "check_name": "Require HTTPS on Storage Accounts",
+      "check_state": "non_compliant",
+      "resource_id": "/subscriptions/fa5abbc4/resourceGroups/rg-data/providers/Microsoft.Storage/storageAccounts/stdatarawprod",
+      "resource_name": "stdatarawprod",
+      "resource_type": "Microsoft.Storage/storageAccounts",
+      "check_effect": "audit",
+      "non_check_reasons": [
+        "Storage account does not enforce HTTPS-only traffic."
+      ],
+      "evaluated_at": "2026-04-14T00:00:00Z",
+      "tags": {
+        "scope": "non_compliant_only",
+        "policy_initiative": "ISO-27001"
+      }
+    },
+    {
+      "check_id": "/subscriptions/fa5abbc4/providers/Microsoft.Authorization/policyDefinitions/c95c74d9-38fe-4f0d-af86-0c7d626a315c",
+      "check_name": "Enable Defender for SQL on SQL Servers",
+      "check_state": "compliant",
+      "resource_id": "/subscriptions/fa5abbc4/resourceGroups/rg-data/providers/Microsoft.Sql/servers/sql-prod-dcm",
+      "resource_name": "sql-prod-dcm",
+      "resource_type": "Microsoft.Sql/servers",
+      "check_effect": "deployifnotexists",
+      "non_check_reasons": [],
+      "evaluated_at": "2026-04-14T00:00:00Z",
+      "tags": {
+        "scope": "full_evaluation",
+        "policy_initiative": "Defender-for-Cloud"
+      }
+    }
+  ],
+  "metadata": {
+    "collector_version": "1.4.0",
+    "policy_initiative": "ISO-27001"
+  },
+  "metric_count": 2,
+  "is_empty": false
+}

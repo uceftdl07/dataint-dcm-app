@@ -1,0 +1,43 @@
+{
+  "work_type": "feature",
+  "domains": ["dataeng", "backend", "frontend"],
+  "ticket_plan": {
+    "mode": "one_per_domain",
+    "ticket_domains": ["dataeng", "backend", "frontend"],
+    "expected_story_count": 3
+  },
+  "dependency_gaps": [
+    {
+      "need": "warehouse_name sur les tables gold d'utilisation et de performance des requetes",
+      "required_domain": "dataeng",
+      "ticket_planned": true,
+      "resolution": "add_dataeng_ticket",
+      "evidence": "packages/dcm-databricks-pipeline/pipelines/gold_dbx_compute/warehouse_query_performance_daily.py ne joint pas curated_dbx_compute_warehouses ; warehouse_utilization_daily.py la joint (CTE warehouses_as_of) mais ne selectionne que auto_stop_minutes et max_clusters. Seules les 2 tables de cout portent warehouse_name.",
+      "spec_note": "Le backend ne lit AUCUNE table curated (verifie : 0 occurrence de curated_dbx dans app/api/services/), la resolution du nom doit donc se faire en gold. Joindre la table de cout cote backend a ete mesure et rejete : 281/353 lignes utilization sans nom en fenetre 1 j, 597/733 en 90 j, soit ~80 % de lignes anonymes. curated_dbx_compute_warehouses porte 463 warehouses nommes a 100 %."
+    },
+    {
+      "need": "Valeurs distinctes par colonne pour alimenter les listes des combos de filtre",
+      "required_domain": "backend",
+      "ticket_planned": true,
+      "resolution": "add_backend_ticket",
+      "evidence": "Les 5 vues qui utilisent ComputeDataTable filtrent, trient et paginent cote serveur (compute_metrics_clusters.py _overview_filters, compute_metrics_warehouses.py _overview_filters, lakeflow_jobs.py:170). Un filtre de colonne construit dans le navigateur ne verrait que les 25 a 50 lignes de la page.",
+      "spec_note": "Un filtre par colonne cote client reproduirait exactement le defaut deja signale par l'utilisateur sur ces memes pages (« je ne vois que 50 cluster ou warehouse »). Les combos ont donc besoin d'une source de valeurs distinctes calculee sur tout le perimetre, et chaque colonne filtrable d'un parametre de requete."
+    }
+  ],
+  "packages": [
+    "packages/dcm-databricks-pipeline",
+    "packages/dcm-backend",
+    "packages/dcm-frontend"
+  ],
+  "priority": "P2",
+  "preset": null,
+  "selection_mode": "manual",
+  "summary": "Fenetres glissantes 1/7/30/90 jours sur les pages SQL Warehouses avec le nom du warehouse au lieu de son id et l'ordre Workspace puis Warehouse aligne sur les clusters, puis sur les 5 tables pilotees par ComputeDataTable : largeur de colonne fixe par defaut et redimensionnable par l'utilisateur, et un filtre par colonne en combo liste + recherche applique cote serveur",
+  "created_at": "2026-09-06T09:00:00Z",
+  "architecture_decisions": {
+    "scope_tous_les_modules": "Arbitre par l'utilisateur : les 5 pages pilotees par ComputeDataTable (ComputeClusters, ComputeSqlWarehouses, LakeflowJobs, LakeflowJobDetail, recommendations-table). Les 7 pages a markup <TableHead> manuel (Admin, Users, CollectionStatus, MonitoringReports, ProjectDetail, UnityCatalogExplorer, AdminEmbeddedDashboardsTab) NE sont pas migrees, et les pages a accordeons (Databricks, Databases, DataFactory, Costs) n'ont pas de colonne a redimensionner.",
+    "warehouse_name": "Arbitre par l'utilisateur : ajouter la colonne en gold plutot que de n'afficher le nom que sur l'onglet Cout.",
+    "filtres_serveur": "Non arbitre par l'utilisateur, tranche par la mesure : les 5 vues paginent cote serveur, un filtre client serait faux. Aucune option client n'est retenue.",
+    "fenetre_warehouse": "Repointer les 3 vues warehouse sur les tables *_rolling, comme la spec 022 l'a fait pour les clusters. Les 4 fenetres y sont deja peuplees ; aucun travail dataeng n'est necessaire pour les fenetres elles-memes."
+  }
+}

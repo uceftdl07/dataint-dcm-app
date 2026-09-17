@@ -1,0 +1,14 @@
+{
+  "in_scope_domains": ["dataeng", "backend", "frontend"],
+  "ticket_domains": ["dataeng", "backend", "frontend"],
+  "out_of_ticket_domains": [],
+  "packages_by_domain": {
+    "dataeng": [
+      "packages/dcm-databricks-pipeline",
+      "packages/dcm-azure-collector",
+      "packages/dcm-commons"
+    ],
+    "backend": ["packages/dcm-backend", "packages/dcm-commons"],
+    "frontend": ["packages/dcm-frontend"]
+  }
+}

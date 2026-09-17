@@ -1,0 +1,162 @@
+name: 🚀 Deploy to databricks (main wf v3 — Entra OIDC federation, secretless)
+run-name: "🚀 Deploy to databricks (v3 OIDC) -- ${{ github.event.head_commit.message }} - [${{ github.ref_name }}] "
+
+# Variante SANS SECRET du workflow de deploiement.
+#
+# Principe (Workload Identity Federation, "auth federee de l'app reg") :
+#   1. GitHub Actions emet son propre jeton OIDC (id-token: write), audience
+#      "api://AzureADTokenExchange".
+#   2. L'app registration Entra possede un "federated credential" qui fait
+#      CONFIANCE a l'issuer GitHub (token.actions.githubusercontent.com) pour un
+#      subject donne (ex. repo:<org>/<repo>:environment:dev). Aucun client secret.
+#   3. On presente ce jeton GitHub a Entra comme `client_assertion`
+#      (grant client_credentials + jwt-bearer) -> Entra renvoie un jeton AAD pour
+#      la ressource Azure Databricks (2ff814a6-...).
+#   4. Le workspace Databricks AWS accepte ce jeton AAD comme bearer
+#      (DATABRICKS_TOKEN) via sa federation policy. Le host est deja defini
+#      par target dans databricks.yml (workspace.host).
+#
+# Difference vs v2 : v2 utilise un client_secret (DBX_SP_CLIENT_SECRET) ; v3
+# n'utilise AUCUN secret — l'identite GitHub est federee directement sur l'app reg.
+#
+# Pre-requis cote Azure (une fois, par un admin de l'app reg) :
+#   App registration a8dfd603-... > Certificates & secrets > Federated credentials
+#   > Add credential (scenario "GitHub Actions deploying Azure resources") :
+#     - Issuer  : https://token.actions.githubusercontent.com
+#     - Subject : repo:<org>/<repo>:environment:dev
+#                 (doit MATCHER `environment: dev` ci-dessous ; adapter par env)
+#     - Audience: api://AzureADTokenExchange
+
+on:
+  workflow_dispatch:
+    inputs:
+      Dev:
+        type: boolean
+        description: Deploy to dev environemnt?
+        required: true
+        default: true
+      Prod:
+        type: boolean
+        description: Deploy to prod environemnt?
+        required: true
+        default: true
+  push:
+    branches:
+      - "*"
+    tags-ignore:
+      - "v*" # this tag type is used for release pipelines
+  pull_request:
+    types: [opened, synchronize]
+
+# id-token: write est OBLIGATOIRE pour que GitHub emette un jeton OIDC.
+permissions:
+  id-token: write
+  contents: read
+
+defaults:
+  run:
+    working-directory: packages/dcm-databricks-pipeline
+
+jobs:
+  quality:
+    name: 🧬 Lint and unit test
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🌱 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔥 Install dependencies
+        uses: ./.github/actions/install-dbx-dependencies
+
+      # - name: 🖌️ Linter
+      #   run: |
+      #     uv run ruff check .
+      #     uv run mypy . --disable-error-code annotation-unchecked
+
+      - name: Run unit tests with coverage
+        shell: bash
+        run: |
+          echo "Launching unit tests"
+          uv run pytest tests --cov=. --cov-report xml:coverage.xml
+
+      - name: Upload report coverage.xml
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ github.sha }}
+          path: packages/dcm-databricks-pipeline/coverage.xml
+          if-no-files-found: error
+
+  security:
+    name: 🦺 Security
+    runs-on: ubuntu-latest
+    needs:
+      - quality
+    steps:
+      - name: 🌱 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🦺 Run security scans
+        uses: ./.github/actions/security
+        with:
+          SONARQUBE_SCAN_TOKEN: ${{ secrets.SONARQUBE_SCAN_TOKEN }}
+          SONAR_URL: ${{ secrets.SONAR_URL }}
+
+  deploy:
+    name: 🚀 Deploy to databricks (v3 OIDC)
+    runs-on: ubuntu-latest
+    concurrency:
+      group: dbx-bundle-deploy-${{ matrix.context.dbx_env }}
+      cancel-in-progress: false
+    needs:
+      - security
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      startsWith(github.ref, 'refs/heads/develop') ||
+      startsWith(github.ref, 'refs/heads/main')
+    strategy:
+      matrix:
+        context:
+          [
+            { env: "dev", dbx_env: "dev" },
+            { env: "prod", dbx_env: "prod" },
+          ]
+        deploy_dev:
+          - ${{ startsWith(github.ref, 'refs/heads/develop') || (github.event.inputs.Dev == 'true' && github.event_name == 'workflow_dispatch') }}
+        deploy_prod:
+          - ${{ startsWith(github.ref, 'refs/heads/main') || (github.event.inputs.Prod == 'true' && github.event_name == 'workflow_dispatch') }}
+        exclude:
+          - deploy_dev: false
+            context: { env: "dev", dbx_env: "dev" }
+          - deploy_prod: false
+            context: { env: "prod", dbx_env: "prod" }
+    environment: ${{ matrix.context.env }}
+    steps:
+      - name: 🌱 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔑 Acquire Entra token via GitHub OIDC (secretless)
+        id: entra-token
+        uses: ./.github/actions/acquire-entra-token-oidc
+        with:
+          tenant_id: ${{ secrets.AZURE_SP_TENANT_ID }}
+          client_id: ${{ secrets.AZURE_SP_CLIENT_ID }}
+
+      - name: 🔥 Install dependencies
+        uses: ./.github/actions/install-dbx-dependencies
+
+      - name: 🛰️ Validate to ${{ matrix.context.env }}
+        uses: ./.github/actions/validate-dbx-bundle
+        with:
+          DATABRICKS_ENVIRONMENT: ${{ matrix.context.dbx_env }}
+
+      - name: 🛰️ Deploy to ${{ matrix.context.env }}
+        uses: ./.github/actions/deploy-dbx-bundle
+        with:
+          DATABRICKS_ENVIRONMENT: ${{ matrix.context.dbx_env }}
+
+      - name: 🛰️ Run pipeline (dev only — smoke test)
+        if: ${{ matrix.context.env == 'dev' }}
+        uses: ./.github/actions/run-dbx-bundle
+        with:
+          WORKFLOW_NAME: "dcm_orchestrator"
+          DATABRICKS_ENVIRONMENT: ${{ matrix.context.dbx_env }}

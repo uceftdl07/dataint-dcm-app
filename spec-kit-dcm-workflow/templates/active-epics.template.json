@@ -1,0 +1,17 @@
+{
+  "updated_at": null,
+  "epics": [
+    {
+      "spec": "009-widget-inactive-cluster",
+      "spec_num": "009",
+      "title": "Widget inactive cluster",
+      "domains": ["frontend"],
+      "packages": ["packages/dcm-frontend"],
+      "branches": ["frontend/009-inactive-cluster-widget"],
+      "epic_key": "DCINT-XXX",
+      "status": "in_progress",
+      "dispatched_at": "2026-07-01T12:00:00Z",
+      "updated_at": "2026-07-01T12:00:00Z"
+    }
+  ]
+}

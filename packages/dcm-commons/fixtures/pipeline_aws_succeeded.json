@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.1",
+  "collection_run_id": "11ae9537-d815-4d34-a0d9-c445c5fdd1ef",
+  "source_lz_id": "lz-aws-prod",
+  "subscription_or_account_id": "123456789012",
+  "cloud_provider": "aws",
+  "domain": "pipeline",
+  "collected_at": "2026-04-14T07:16:42.433250Z",
+  "metrics": [
+    {
+      "pipeline_id": "glue-job-ingest-s3-to-delta",
+      "pipeline_name": "glue-job-ingest-s3-to-delta",
+      "run_id": "jr_abc123def456",
+      "status": "succeeded",
+      "trigger_type": "scheduled",
+      "start_time": "2026-04-14T04:00:00Z",
+      "end_time": "2026-04-14T04:12:18Z",
+      "duration_seconds": 738.0,
+      "error_message": null,
+      "factory_name": null,
+      "resource_group": null,
+      "glue_job_name": "glue-job-ingest-s3-to-delta",
+      "tags": {
+        "env": "prod",
+        "cost-center": "data-platform"
+      }
+    }
+  ],
+  "metadata": {
+    "collector_version": "1.4.0",
+    "region": "eu-west-1"
+  },
+  "metric_count": 1,
+  "is_empty": false
+}

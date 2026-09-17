@@ -1,0 +1,18 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    open-pull-requests-limit: 21
+    schedule:
+      interval: "weekly"
+    groups:
+      totalenergies-actions:
+        patterns:
+          - "TotalEnergiesCode/cicd-shared-workflows-continuous-ai/*"
+      all-other-actions:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "TotalEnergiesCode/cicd-shared-workflows-continuous-ai/*"
+    commit-message:
+      prefix: "chore"

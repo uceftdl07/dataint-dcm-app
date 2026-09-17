@@ -1,0 +1,21 @@
+{
+  "work_type": "feature",
+  "domains": {
+    "frontend": true,
+    "backend": true,
+    "dataeng": false,
+    "devops": false,
+    "qa": false
+  },
+  "packages": [
+    "packages/dcm-frontend",
+    "packages/dcm-backend",
+    "packages/dcm-commons"
+  ],
+  "priority": "P1",
+  "ticket_plan": {
+    "mode": "custom",
+    "ticket_domains": ["backend", "frontend"],
+    "expected_story_count": 4
+  }
+}

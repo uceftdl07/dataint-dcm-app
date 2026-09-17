@@ -1,0 +1,12 @@
+[
+  {
+    "at": "2026-09-10T00:00:00Z",
+    "task_id": "T004",
+    "domain": "frontend",
+    "package": "packages/dcm-frontend",
+    "reason": "Les 4 gates de packages/dcm-frontend sortent non-zero sur develop (61 problemes eslint dont 39 erreurs, 101 erreurs tsc --noEmit, 4 tests rouges dans App/Dashboard x2/Databricks), a l'identique avec et sans les fichiers de T003 : aucune des 101 erreurs n'est dans un fichier cree ou modifie par T003. Comme dcm-review.sh lit ces gates et que review.before_commit_require_pass vaut true, aucun commit du package ne peut obtenir de stamp de review tant qu'ils sont rouges. Task dediee ouverte au checkpoint de T003 pour payer le cout une fois, plutot que de contourner le gate a chaque commit. T003 reste [~] : ses deux dernieres cases (gates verts, verification navigateur) ne dependent plus de son code.",
+    "by": "checkpoint T003 — decision utilisateur du 2026-09-10 (option « Ouvrir une task remise au vert »)",
+    "dispatch_delta_required": true,
+    "dispatch_note": "Le dispatch n'a jamais ete execute sur cette spec : aucune Story Jira, aucune branche fille. Un delta n'a donc rien a completer — c'est un premier dispatch, a lancer explicitement par l'utilisateur."
+  }
+]

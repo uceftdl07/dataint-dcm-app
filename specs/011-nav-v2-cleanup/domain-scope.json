@@ -1,0 +1,27 @@
+{
+  "in_scope_domains": ["frontend"],
+  "packages_touched": {
+    "frontend": ["packages/dcm-frontend/src/config/navigation.ts", "packages/dcm-frontend/src/components/Sidebar.tsx", "packages/dcm-frontend/src/app-routes.ts"]
+  },
+  "out_of_scope": ["dcm-commons", "dcm-aws-collector", "dcm-azure-collector", "dcm-databricks-pipeline", "dcm-lambda-ingestion"],
+  "hidden_pages_routes": [
+    "/datafactory", "/pipelines", "/datafactoryalerts", "/datafactoryfinops", "/datafactorygovernance",
+    "/databases", "/databasealerts", "/databasefinops", "/databasegovernance",
+    "/clusters", "/costs", "/alerts", "/security", "/governance",
+    "/users", "/status", "/settings",
+    "/databricks", "/databricks/alerts", "/databricks/finops", "/databricks/governance", "/databricks/insights",
+    "/unitycatalogexplorer", "/data-product-usage", "/monitoringreports"
+  ],
+  "new_routes": [
+    "/databricks/pipelines",
+    "/databricks/workflows",
+    "/databricks/cluster",
+    "/databricks/sql-warehouse",
+    "/databricks/finops-v2",
+    "/databricks/data-product-usage"
+  ],
+  "settings_section_items": [
+    { "label": "Administration", "path": "/admin", "requiresAdmin": true },
+    { "label": "My Landing Zones", "path": "/my-access" }
+  ]
+}

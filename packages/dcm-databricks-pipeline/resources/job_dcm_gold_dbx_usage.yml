@@ -1,0 +1,180 @@
+resources:
+
+  # Job Databricks PySpark — Agregations gold Usage Data Product (fait de
+  # consommation + agregats) — no DLT. Symetrique a `dcm_gold_dbx_compute`,
+  # job dedie plutot qu'extension de ce dernier (cf. research.md R1).
+  #
+  # Chainage : `table_daily` (fait) est la seule tache lisant les tables
+  # curated ; `table_popularity_daily` et `consumer_daily` agregent son
+  # resultat -> chainees par `depends_on` (course de lecture sinon, cf.
+  # research.md R2). `table_query_performance_daily` ne lit QUE des tables
+  # curated (lineage + query.history) : independante, peut s'executer en
+  # parallele.
+  #
+  jobs:
+    dcm_gold_dbx_usage:
+      name: "[${bundle.target}] DCM Gold Usage Data Product"
+      max_concurrent_runs: 1
+      timeout_seconds: 7200
+
+      # Planification quotidienne, apres le job system tables (03h) et apres
+      # le job gold compute (05h) : laisse le temps aux tables curated de
+      # finir de s'ecrire avant de les agreger.
+      schedule:
+        quartz_cron_expression: "0 0 6 * * ?"
+        timezone_id: "Europe/Paris"
+        pause_status: UNPAUSED
+
+      # `full_refresh` : parametre de job optionnel pour forcer un recalcul
+      # complet (ex. reparation manuelle) sans attendre l'absence de la table
+      # cible. Vide par defaut (fenetre normale : full au 1er run, incrementale
+      # 3 jours ensuite, cf. `pipelines.gold_dbx_usage.entrypoint`).
+      parameters:
+        - name: full_refresh
+          default: ""
+
+      # Compute serverless : pas de job cluster a provisionner/dimensionner.
+      environments:
+        - environment_key: gold_usage_env
+          spec:
+            environment_version: "3"
+            dependencies:
+              - ../dist/*.whl
+
+      tasks:
+        - task_key: gold_usage_table_daily
+          description: "Fait de consommation quotidien par data product/consommateur (gold_dbx_usage_table_daily)"
+          environment_key: gold_usage_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-usage
+            named_parameters:
+              table:        "table_daily"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        - task_key: gold_usage_table_popularity_daily
+          description: "Popularite par data product, classement, delta J-1 (gold_dbx_usage_table_popularity_daily)"
+          depends_on:
+            - task_key: gold_usage_table_daily
+          environment_key: gold_usage_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-usage
+            named_parameters:
+              table:        "table_popularity_daily"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        - task_key: gold_usage_consumer_daily
+          description: "Agregat par consommateur, classement par cout (gold_dbx_usage_consumer_daily)"
+          depends_on:
+            - task_key: gold_usage_table_daily
+          environment_key: gold_usage_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-usage
+            named_parameters:
+              table:        "consumer_daily"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        - task_key: gold_usage_table_query_performance_daily
+          description: "Latences/echecs des requetes par data product (gold_dbx_usage_table_query_performance_daily)"
+          environment_key: gold_usage_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-usage
+            named_parameters:
+              table:        "table_query_performance_daily"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        # T003 : registre/fraicheur/derniere operation par data product. Lit
+        # gold_dbx_usage_table_daily (last_read_at) -> chainee apres
+        # gold_usage_table_daily (course de lecture sinon, meme raison que
+        # table_popularity_daily/consumer_daily ci-dessus).
+        #
+        # T016 : le registre est purge EN DERNIER, d'ou les deux dependances qui ne
+        # correspondent a aucune lecture. Sa ligne `is_deleted` est le SEUL signal par
+        # lequel l'API cache une table ephemere (elle lit une presence, pas une absence) ;
+        # les taches de fait retirent les lignes correspondantes. Purger le registre avant
+        # elles ouvrirait, a chaque run, une fenetre ou l'ephemere est visible comme une
+        # table VIVANTE -- et avec `max_retries: 0`, une tache de fait en echec laisserait
+        # cette fenetre ouverte jusqu'au prochain run reussi.
+        - task_key: gold_usage_table_catalog
+          description: "Registre/fraicheur/derniere operation par data product (gold_dbx_usage_table_catalog)"
+          depends_on:
+            - task_key: gold_usage_table_daily
+            - task_key: gold_usage_table_popularity_daily
+            - task_key: gold_usage_table_query_performance_daily
+          environment_key: gold_usage_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-usage
+            named_parameters:
+              table:        "table_catalog"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        # T003 : snapshot de gouvernance/cycle de vie. Lit gold_dbx_usage_table_catalog
+        # (last_read_at/tags/freshness_lag_hours) ET gold_dbx_usage_table_popularity_daily
+        # (downstream_fanout) -> chainee apres les deux.
+        - task_key: gold_usage_table_governance
+          description: "Snapshot de gouvernance/cycle de vie par data product (gold_dbx_usage_table_governance)"
+          depends_on:
+            - task_key: gold_usage_table_catalog
+            - task_key: gold_usage_table_popularity_daily
+          environment_key: gold_usage_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-usage
+            named_parameters:
+              table:        "table_governance"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        # T004 : rule engine reactif (LIFECYCLE/FRESHNESS/GOVERNANCE/RELIABILITY/
+        # FINOPS). Lit gold_usage_table_governance + gold_usage_table_catalog +
+        # gold_usage_table_popularity_daily + gold_usage_table_query_performance_daily +
+        # gold_usage_consumer_daily -> chainee apres toutes.
+        - task_key: gold_usage_recommendations
+          description: "Rule engine reactif, recommandations unifiees (gold_dbx_usage_recommendations)"
+          depends_on:
+            - task_key: gold_usage_table_governance
+            - task_key: gold_usage_table_catalog
+            - task_key: gold_usage_table_popularity_daily
+            - task_key: gold_usage_table_query_performance_daily
+            - task_key: gold_usage_consumer_daily
+          environment_key: gold_usage_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-usage
+            named_parameters:
+              table:        "recommendations"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+      email_notifications:
+        on_failure:
+          - ${var.notification_email}
+        no_alert_for_skipped_runs: true
+
+      tags:
+        project: dcm-databricks-pipeline
+        managed_by: databricks-asset-bundle
+        domain: gold-usage

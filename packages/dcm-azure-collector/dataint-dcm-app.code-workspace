@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "../.."
+		},
+		{
+			"path": "../../../../BA-NOVADATAHUB-Infrastructure"
+		}
+	],
+	"settings": {
+		"chat.tools.terminal.autoApprove": {
+			".specify/scripts/bash/": true,
+			".specify/scripts/powershell/": true
+		}
+	}
+}

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCMP - Design System &amp; Master Page</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+/* DCMP design tokens and master page. This style block is canonical for generated mockups. */
+:root {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --background: oklch(100% 0 0);
+  --foreground: oklch(14.1% .005 285.823);
+  --card: oklch(98.5% 0 0);
+  --card-foreground: oklch(14.1% .005 285.823);
+  --card-background: oklch(99.5% 0 0);
+  --card-radius: 1.375rem;
+  --card-padding-x: 1.25rem;
+  --card-padding-y: 1rem;
+  --card-shadow: 0 10px 30px #0f172a12;
+  --card-hover-shadow: 0 18px 42px #0f172a1f;
+  --card-title-size: .9375rem;
+  --card-subtitle-size: .8125rem;
+  --card-value-size: 1.5rem;
+  --primary: oklch(60% .25 264.376);
+  --primary-foreground: oklch(100% 0 0);
+  --secondary: oklch(96.7% .001 286.375);
+  --secondary-foreground: oklch(21% .006 285.885);
+  --muted: oklch(96.7% .001 286.375);
+  --muted-foreground: oklch(55.2% .016 285.938);
+  --accent: oklch(96.7% .001 286.375);
+  --accent-foreground: oklch(21% .006 285.885);
+  --destructive: oklch(57.7% .245 27.325);
+  --destructive-foreground: oklch(100% 0 0);
+  --success: oklch(52% .1483 133.57);
+  --success-foreground: oklch(100% 0 0);
+  --success-subtle: oklch(96.5% .035 145);
+  --success-border: oklch(84% .09 145);
+  --warning: oklch(46% .13 70);
+  --warning-foreground: oklch(100% 0 0);
+  --warning-subtle: oklch(97.5% .045 85);
+  --warning-border: oklch(86% .12 80);
+  --danger: oklch(57.7% .245 27.325);
+  --danger-foreground: oklch(100% 0 0);
+  --danger-subtle: oklch(96% .035 25);
+  --danger-border: oklch(86% .105 25);
+  --info: oklch(60% .25 264.376);
+  --info-foreground: oklch(100% 0 0);
+  --info-subtle: oklch(95.5% .035 265);
+  --info-border: oklch(82% .09 265);
+  --purple: oklch(56% .22 300);
+  --purple-foreground: oklch(100% 0 0);
+  --purple-subtle: oklch(95.5% .035 300);
+  --purple-border: oklch(82% .09 300);
+  --border: oklch(92% .004 286.32);
+  --input: oklch(98.5% 0 0);
+  --ring: oklch(87.1% .006 286.286);
+  --radius: .625rem;
+  --sidebar: oklch(98.5% 0 0);
+  --sidebar-foreground: oklch(14.1% .005 285.823);
+  --sidebar-primary: oklch(21% .006 285.885);
+  --sidebar-primary-foreground: oklch(98.5% 0 0);
+  --sidebar-accent: oklch(96.7% .001 286.375);
+  --sidebar-accent-foreground: oklch(21% .006 285.885);
+  --sidebar-border: oklch(92% .004 286.32);
+  --sidebar-ring: oklch(87.1% .006 286.286);
+  --tdf-blue: oklch(47.42% .215 265.21);
+  --tdf-blue-subtle: oklch(94.58% .0242 269.89);
+  --tdf-blue-border: oklch(70.2% .14481 269.614);
+  --tdf-grey: oklch(54.29% .0225 260.15);
+  --tdf-red: oklch(48.15% .1976 29.23);
+  --tdf-green: oklch(52.07% .1483 133.57);
+  --tdf-pink: oklch(47.88% .1744 8.12);
+  --tdf-purple: oklch(48.06% .193 298.52);
+  --tdf-teal: oklch(45.82% .081 176.28);
+  --tdf-gradient-brand: linear-gradient(135deg, var(--tdf-blue), var(--tdf-teal));
+  --cat-blue-bright: #38bdf8;
+  --cat-blue-main: #0055a4;
+  --cat-blue-night: #0c2340;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: var(--font-sans); background: var(--background); color: var(--foreground); font-size: 16px; -webkit-font-smoothing: antialiased; }
+h1, h2, h3, h4 { margin: 0 0 .5rem; font-weight: 700; }
+.btn { font-family: inherit; cursor: pointer; border: 1px solid var(--border); background: var(--background); color: var(--foreground); border-radius: 999px; padding: .4rem .9rem; font-size: .8125rem; font-weight: 600; display: inline-flex; align-items: center; gap: .4rem; }
+.btn-guide { background: var(--info-subtle); color: var(--info); border-color: var(--info-border); }
+.icon-btn { width: 2rem; height: 2rem; border-radius: 999px; border: 1px solid var(--border); background: var(--background); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.dropdown-btn { border: 1px solid var(--border); border-radius: 999px; padding: .4rem .9rem; font-size: .8125rem; background: var(--background); display: inline-flex; align-items: center; gap: .5rem; color: var(--foreground); cursor: pointer; }
+.date-field { font-size: .8125rem; color: var(--muted-foreground); padding: .4rem .75rem; }
+.date-field b { color: var(--foreground); font-weight: 600; }
+.segmented { display: inline-flex; background: var(--muted); border-radius: 999px; padding: 3px; gap: 2px; }
+.segmented button { font-family: inherit; border: none; background: transparent; padding: .4rem .8rem; border-radius: 999px; font-size: .8125rem; font-weight: 700; color: var(--muted-foreground); cursor: pointer; }
+.segmented button.active { background: var(--primary); color: var(--primary-foreground); }
+.pill { font-family: inherit; border: 1px solid var(--border); border-radius: 999px; padding: .4rem .9rem; font-size: .8125rem; font-weight: 600; background: var(--background); color: var(--foreground); cursor: pointer; }
+.pill.active { background: var(--primary); color: var(--primary-foreground); border-color: var(--primary); }
+.search { display: inline-flex; align-items: center; gap: .5rem; border: 1px solid var(--border); border-radius: 999px; padding: .5rem 1rem; color: var(--muted-foreground); font-size: .875rem; min-width: 220px; }
+.badge { display: inline-flex; align-items: center; padding: .15rem .55rem; border-radius: 999px; font-size: .72rem; font-weight: 700; border: 1px solid transparent; }
+.badge-danger { background: var(--danger-subtle); color: var(--danger); border-color: var(--danger-border); }
+.badge-success { background: var(--success-subtle); color: var(--success); border-color: var(--success-border); }
+.badge-warning { background: var(--warning-subtle); color: var(--warning); border-color: var(--warning-border); }
+.badge-info { background: var(--info-subtle); color: var(--info); border-color: var(--info-border); }
+.badge-purple { background: var(--purple-subtle); color: var(--purple); border-color: var(--purple-border); }
+.badge-solid-danger { background: var(--danger); color: var(--danger-foreground); border-radius: 999px; padding: .1rem .55rem; font-size: .72rem; font-weight: 700; }
+.status-dot { width: .55rem; height: .55rem; border-radius: 999px; display: inline-block; }
+.status-dot.red { background: var(--tdf-red); }
+.status-dot.blue { background: var(--primary); }
+.status-dot.green { background: var(--tdf-green); }
+.card { background: var(--card-background); border: 1px solid var(--border); border-radius: var(--card-radius); padding: var(--card-padding-y) var(--card-padding-x); box-shadow: var(--card-shadow); }
+.kpi-card { border: 1px solid var(--border); border-radius: var(--card-radius); overflow: hidden; background: var(--card-background); }
+.kpi-card-header { padding: .75rem 1rem; display: flex; justify-content: space-between; align-items: center; font-size: .7rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.kpi-card.blue .kpi-card-header { background: var(--info-subtle); color: var(--foreground); }
+.kpi-card.green .kpi-card-header { background: var(--success-subtle); color: var(--foreground); }
+.kpi-card.amber .kpi-card-header { background: var(--warning-subtle); color: var(--foreground); }
+.kpi-icon { width: 2rem; height: 2rem; border-radius: 999px; background: var(--background); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: .9rem; }
+.kpi-card-body { padding: 1rem; }
+.kpi-value { font-size: 1.5rem; font-weight: 700; }
+.kpi-value.blue { color: var(--primary); }
+.kpi-value.amber { color: var(--warning); }
+.kpi-value.green { color: var(--success); }
+.kpi-sub { font-size: .8125rem; color: var(--muted-foreground); }
+ table.data-table { width: 100%; border-collapse: collapse; font-size: .8125rem; }
+.data-table thead th { text-align: left; text-transform: uppercase; font-size: .68rem; letter-spacing: .05em; color: var(--muted-foreground); padding: .7rem .5rem; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.data-table tbody td { padding: .7rem .5rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.data-table tbody tr:hover { background: var(--muted); }
+.mono-id { display: block; font-size: .7rem; color: var(--muted-foreground); }
+.app-shell { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; border: 1px solid var(--border); }
+.app-sidebar { background: var(--sidebar); color: var(--sidebar-foreground); border-right: 1px solid var(--sidebar-border); padding: 1rem .75rem; display: flex; flex-direction: column; justify-content: space-between; }
+.app-logo { display: flex; align-items: center; gap: .5rem; padding: .5rem; margin-bottom: 1rem; }
+.app-logo .mark { width: 28px; height: 28px; border-radius: 8px; background: var(--tdf-gradient-brand); }
+.app-logo .word b { display: block; line-height: 1.1; font-size: .95rem; }
+.app-logo .word .accent { color: var(--primary); }
+.nav-group { margin-bottom: .25rem; }
+.nav-item { display: flex; align-items: center; gap: .6rem; padding: .5rem .6rem; border-radius: var(--radius); font-size: .85rem; font-weight: 500; color: var(--sidebar-foreground); cursor: pointer; text-decoration: none; }
+.nav-item:hover { background: var(--sidebar-accent); }
+.nav-item.current { background: var(--sidebar-accent); font-weight: 700; }
+.nav-sub { margin-left: 1.5rem; display: flex; flex-direction: column; }
+.nav-sub .nav-item { font-size: .82rem; padding: .4rem .6rem; }
+.sidebar-footer { border-top: 1px solid var(--sidebar-border); padding-top: .75rem; }
+.user-chip { display: flex; align-items: center; gap: .5rem; padding: .4rem; font-size: .75rem; }
+.avatar { width: 28px; height: 28px; border-radius: 999px; background: var(--secondary); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .7rem; }
+.app-main { display: flex; flex-direction: column; }
+.app-topbar { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: .75rem; }
+.topbar-left .breadcrumb { font-size: .75rem; color: var(--muted-foreground); margin-bottom: .15rem; }
+.topbar-left .page-title { font-size: 1.15rem; font-weight: 700; }
+.topbar-right { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.app-content { padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem; }
+.content-toolbar { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+.section-label { font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted-foreground); margin: .5rem 0; }
+</style>
+</head>
+<body>
+<!-- Canonical CSS source. The full master-page examples supplied by the PO are preserved in this file's source input. -->
+<div class="app-shell">
+  <aside class="app-sidebar">
+    <div>
+      <div class="app-logo"><span class="mark"></span><span class="word"><b>Data</b><b class="accent">connect</b></span></div>
+      <nav>
+        <a class="nav-item current">Home</a>
+        <div class="nav-group"><a class="nav-item">Databricks</a><div class="nav-sub"><a class="nav-item">Overview</a><a class="nav-item">Jobs &amp; Pipelines</a><a class="nav-item">Compute</a><a class="nav-item">FinOps</a><a class="nav-item">Usage Data Product</a></div></div>
+        <a class="nav-item">Talk to your Data</a>
+      </nav>
+    </div>
+    <div class="sidebar-footer"><a class="nav-item">Administration</a><div class="user-chip"><span class="avatar">ML</span> Maher Lezhari</div></div>
+  </aside>
+  <main class="app-main">
+    <header class="app-topbar"><div class="topbar-left"><div class="breadcrumb">DCM · Data Connect Monitoring</div><div class="page-title">Master page</div></div><div class="topbar-right"><button class="btn btn-guide">Guide</button><button class="icon-btn">Info</button><button class="dropdown-btn">All landing zones</button><span class="date-field">From <b>14/07/2026</b></span><div class="segmented"><button class="active">30d</button><button>90d</button><button>6m</button><button>1y</button></div></div></header>
+    <section class="app-content"><div class="content-toolbar"><span class="search">Search</span><button class="pill active">All</button><button class="pill">Failed</button><button class="pill">Succeeded</button></div><div class="section-label">Activity</div><div class="kpi-grid"><div class="kpi-card blue"><div class="kpi-card-header">Metric <span class="kpi-icon">i</span></div><div class="kpi-card-body"><div class="kpi-value blue">1 234</div><div class="kpi-sub">Illustrative value</div></div></div></div><table class="data-table"><thead><tr><th>Status</th><th>Name</th><th>Runs</th></tr></thead><tbody><tr><td><span class="status-dot green"></span></td><td>Example workflow</td><td>12</td></tr></tbody></table></section>
+  </main>
+</div>
+</body>
+</html>

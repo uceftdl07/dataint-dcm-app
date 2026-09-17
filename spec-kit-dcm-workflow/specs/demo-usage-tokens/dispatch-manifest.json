@@ -1,0 +1,14 @@
+{
+  "spec": "demo-usage-tokens",
+  "epic": {
+    "key": "DCINT-200",
+    "url": "https://tdf.atlassian.net/browse/DCINT-200"
+  },
+  "dispatch": [
+    {
+      "task_id": "T001",
+      "jira_key": "DCINT-213",
+      "branch": "feat/dcm-workflow-usage-report"
+    }
+  ]
+}

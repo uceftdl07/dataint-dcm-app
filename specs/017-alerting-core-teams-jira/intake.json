@@ -1,0 +1,39 @@
+{
+  "work_type": "feature",
+  "domains": ["dataeng", "backend", "frontend"],
+  "selection_mode": "manual",
+  "packages": {
+    "dataeng": ["packages/dcm-databricks-pipeline"],
+    "backend": ["packages/dcm-backend", "packages/dcm-commons"],
+    "frontend": ["packages/dcm-frontend"]
+  },
+  "priority": "P1",
+  "ticket_plan": {
+    "mode": "custom",
+    "count": 3,
+    "tickets": [
+      {
+        "task": "DataEng-alert-tables-job",
+        "domain": "dataeng",
+        "scope": "UC tables notification_channels, alert_configs (DDL) + anomaly_reports new columns (jira_ticket_url, alert_sent_at, resolution_sent_at) + reminder/resend Databricks job"
+      },
+      {
+        "task": "Backend-alerting-core",
+        "domain": "backend",
+        "scope": "AlertingService orchestrator, NotificationChannel ABC, Teams channel, Jira channel (MailJet/Email excluded - Spec B2)"
+      },
+      {
+        "task": "Frontend-alerting-config-ui",
+        "domain": "frontend",
+        "scope": "Notification Settings page (channel CRUD, test button) + Alert Config Dialog (rule<->channel association, resend_frequency); email channel type hidden/disabled until B2"
+      }
+    ]
+  },
+  "dependency_notes": "Depends on Spec A (016-anomaly-system-core) for AnomalyRule/AnomalyReport contract and anomaly_reports table. Email/MailJet channel is a separate follow-up spec (Spec B2), isolated due to PO account-activation blocker.",
+  "prerequisites": [
+    "Spec A (016-anomaly-system-core) merged/available: anomaly_rules, anomaly_reports tables and internal ingestion contract exist",
+    "Teams webhook and Jira API token secret naming convention confirmed (AWS Secrets Manager: dcm-teams-webhook-{name}, dcm-jira-api-token)"
+  ],
+  "contracts_note": "spec.md includes a Contracts section (NotificationChannel / AlertConfig schema shape, fan-out sequence) referenced read-only by all 3 tickets.",
+  "summary": "Module d'alerting DCM - canaux Teams + Jira, fan-out asynchrone, config par regle"
+}

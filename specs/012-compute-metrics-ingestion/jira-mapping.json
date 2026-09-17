@@ -1,0 +1,57 @@
+{
+  "updated_at": "2026-08-27T00:00:00Z",
+  "spec": "012-compute-metrics-ingestion",
+  "project": "DCINT",
+  "epic": {
+    "key": "DCINT-222",
+    "url": "https://tdf.atlassian.net/browse/DCINT-222",
+    "summary": "[012] Ingestion Compute Metrics (Curated + Gold)"
+  },
+  "stories": [
+    {
+      "task_id": "T001",
+      "key": "DCINT-223",
+      "url": "https://tdf.atlassian.net/browse/DCINT-223",
+      "domain": "dataeng",
+      "summary": "T001: Curated system tables compute (warehouses, warehouse_events, node_types)",
+      "branch": "dataeng/012-curated-compute-system-tables",
+      "sub_spec_path": "stories/T001-curated-compute-system-tables.md"
+    },
+    {
+      "task_id": "T002",
+      "key": "DCINT-225",
+      "url": "https://tdf.atlassian.net/browse/DCINT-225",
+      "domain": "dataeng",
+      "summary": "T002: Gold clusters — cost, efficiency/rightsizing, reliability, governance",
+      "branch": "dataeng/012-gold-compute-clusters",
+      "sub_spec_path": "stories/T002-gold-compute-clusters.md"
+    },
+    {
+      "task_id": "T003",
+      "key": "DCINT-226",
+      "url": "https://tdf.atlassian.net/browse/DCINT-226",
+      "domain": "dataeng",
+      "summary": "T003: Gold SQL warehouses — cost, utilization/rightsizing, query performance",
+      "branch": "dataeng/012-gold-warehouses",
+      "sub_spec_path": "stories/T003-gold-warehouses.md"
+    },
+    {
+      "task_id": "T004",
+      "key": "DCINT-224",
+      "url": "https://tdf.atlassian.net/browse/DCINT-224",
+      "domain": "dataeng",
+      "summary": "T004: Gold transverse réactif — recommendations",
+      "branch": "dataeng/012-gold-compute-transverse",
+      "sub_spec_path": "stories/T004-gold-compute-transverse.md"
+    },
+    {
+      "task_id": "T005",
+      "key": "DCINT-273",
+      "url": "https://tdf.atlassian.net/browse/DCINT-273",
+      "domain": "dataeng",
+      "summary": "T005: Gold transverse prédictif — forecast_daily (SQL Warehouse natif)",
+      "branch": "dataeng/012-gold-compute-forecast",
+      "sub_spec_path": "stories/T005-gold-compute-forecast.md"
+    }
+  ]
+}

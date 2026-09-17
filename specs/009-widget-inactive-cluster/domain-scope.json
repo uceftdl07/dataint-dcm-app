@@ -1,0 +1,10 @@
+{
+  "domains_in_scope": ["frontend"],
+  "ticket_domains": ["frontend"],
+  "non_ticket_domains": [],
+  "packages_in_scope": {
+    "frontend": ["packages/dcm-frontend"]
+  },
+  "read_scope": ["packages/dcm-frontend"],
+  "write_scope": ["packages/dcm-frontend"]
+}

@@ -1,0 +1,45 @@
+{
+  "updated_at": "2026-09-09T00:00:00Z",
+  "spec": "024-job-dlt-cluster-split",
+  "branch_strategy": "direct_to_base",
+  "child_branch_base": "develop",
+  "pr_target": "develop",
+  "integration_branch": null,
+  "epic": {
+    "key": "DCINT-325",
+    "url": "https://tdf.atlassian.net/browse/DCINT-325"
+  },
+  "dispatch": [
+    {
+      "task_id": "T001",
+      "jira_key": "DCINT-326",
+      "branch": "dataeng/024-purge-liste-all-purpose-rollup-dlt",
+      "domain": "dataeng",
+      "sub_spec": "stories/T001-purge-cluster-liste-et-rollup-dlt.md",
+      "status": "pending"
+    },
+    {
+      "task_id": "T002",
+      "jira_key": "DCINT-328",
+      "branch": "backend/024-filtre-dur-all-purpose-endpoints-schemas",
+      "domain": "backend",
+      "sub_spec": "stories/T002-filtre-all-purpose-et-endpoints-job-pipeline.md",
+      "status": "pending"
+    },
+    {
+      "task_id": "T003",
+      "jira_key": "DCINT-327",
+      "branch": "frontend/024-nav-compute-3-onglets-all-purpose-jobs",
+      "domain": "frontend",
+      "sub_spec": "stories/T003-nav-compute-3-onglets.md",
+      "status": "pending"
+    }
+  ],
+  "summary": {
+    "jira_stories_done": 3,
+    "jira_stories_total": 3,
+    "branches_done": 3,
+    "branches_total": 3,
+    "status": "complete"
+  }
+}

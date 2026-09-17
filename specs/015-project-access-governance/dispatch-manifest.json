@@ -1,0 +1,21 @@
+{
+  "updated_at": "2026-08-21T00:00:00Z",
+  "spec": "015-project-access-governance",
+  "branch_strategy": "direct_to_base",
+  "child_branch_base": "develop",
+  "pr_target": "develop",
+  "integration_branch": null,
+  "epic": { "key": "DCINT-257", "url": "https://tdf.atlassian.net/browse/DCINT-257" },
+  "dispatch": [
+    { "task_id": "T001", "domain": "dataeng", "jira_key": "DCINT-259", "branch": "dataeng/015-project-access-governance", "branch_created": false },
+    { "task_id": "T002", "domain": "backend", "jira_key": "DCINT-260", "branch": "backend/015-project-access-governance", "branch_created": false },
+    { "task_id": "T003", "domain": "frontend", "jira_key": "DCINT-258", "branch": "frontend/015-project-access-governance", "branch_created": false }
+  ],
+  "summary": {
+    "jira_stories_done": 3,
+    "jira_stories_total": 3,
+    "branches_done": 0,
+    "branches_total": 3,
+    "status": "jira_only"
+  }
+}

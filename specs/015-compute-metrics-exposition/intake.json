@@ -1,0 +1,72 @@
+{
+  "work_type": "feature",
+  "domains": ["frontend", "backend"],
+  "packages": ["packages/dcm-frontend", "packages/dcm-backend", "packages/dcm-commons"],
+  "priority": "P1",
+  "preset": "fullstack",
+  "selection_mode": "manual",
+  "summary": "Exposer dans DCM l'interface Compute Metrics (Clusters, SQL Warehouses, Recommandations & Forecast) alimentée par les tables gold de 012-compute-metrics-ingestion, conformément aux maquettes maquette/compute-metrics-exposition/",
+  "ticket_plan": {
+    "mode": "custom",
+    "ticket_domains": ["backend", "frontend"],
+    "expected_story_count": 4,
+    "stories": [
+      {
+        "id": "T001",
+        "domain": "backend",
+        "slug": "compute-metrics-api",
+        "title": "API backend — exposition gold compute (clusters, warehouses, recommendations, forecast)"
+      },
+      {
+        "id": "T002",
+        "domain": "frontend",
+        "slug": "compute-clusters-ui",
+        "title": "Frontend — page Compute Clusters"
+      },
+      {
+        "id": "T003",
+        "domain": "frontend",
+        "slug": "compute-warehouses-ui",
+        "title": "Frontend — page Compute SQL Warehouses"
+      },
+      {
+        "id": "T004",
+        "domain": "frontend",
+        "slug": "compute-reco-forecast-ui",
+        "title": "Frontend — page Recommendations & Forecast"
+      }
+    ]
+  },
+  "dependency_gaps": [
+    {
+      "need": "Tables gold compute peuplées (012-compute-metrics-ingestion)",
+      "required_domain": "dataeng",
+      "ticket_planned": false,
+      "resolution": "deferred",
+      "user_label": "Prérequis DataEng — soft-fail + empty-state si tables vides",
+      "evidence": "specs/012-compute-metrics-ingestion/spec.md — Backend/Frontend explicitement différés",
+      "spec_note": "API et UI doivent gérer l'absence de données (empty-state) sans crash ; pas de données DEMO"
+    },
+    {
+      "need": "Table warehouse_slow_queries pour sous-vue Requêtes à investiguer",
+      "required_domain": "dataeng",
+      "ticket_planned": false,
+      "resolution": "deferred",
+      "user_label": "Hors contrat 012 actuel — sous-vue conditionnelle ou chantier DataEng séparé",
+      "evidence": "maquette/compute-metrics-exposition/Compute_Warehouses_Spec.md §2 ; absent de specs/012-compute-metrics-ingestion/contracts/gold-tables-contract.md",
+      "spec_note": "Si table indisponible au merge T002, masquer sous-vue Requêtes à investiguer (pas de placeholder grisé V2)"
+    },
+    {
+      "need": "Routes API REST sur gold_dbx_compute_*",
+      "required_domain": "backend",
+      "ticket_planned": true,
+      "resolution": "add_backend_ticket",
+      "user_label": "Ticket T001 Backend — aucune route existante",
+      "evidence": "packages/dcm-backend/app/api/routes/clusters.py — GET /api/v1/compute (legacy curated_compute_metrics, pas gold_dbx_compute_*)",
+      "spec_note": "Nouvelles routes dédiées ; ne pas réutiliser l'API legacy /compute pour les métriques gold"
+    }
+  ],
+  "maquette_ref": "maquette/compute-metrics-exposition/",
+  "prerequisite_spec": "specs/012-compute-metrics-ingestion",
+  "created_at": "2026-08-25T07:33:00Z"
+}

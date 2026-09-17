@@ -1,0 +1,25 @@
+{
+  "feature": "014-dcm-ux-mockup-agent",
+  "work_type": "technique",
+  "priority": "P2",
+  "domains": ["misc"],
+  "ticket_domains": ["misc"],
+  "ticket_plan": {
+    "mode": "single_domain",
+    "expected_story_count": 1
+  },
+  "packages": ["spec-kit-dcm-workflow/agents/dcm-ux-agent"],
+  "summary": "Build a reusable portable UX agent for validated DCM HTML mockups and per-page specifications.",
+  "dependency_gaps": [
+    {
+      "need": "Confirmed gold-table reference",
+      "domain": "misc",
+      "resolution": "Require reference/gold-tables-confirmed.md as a precondition; stop when absent or incomplete."
+    },
+    {
+      "need": "DCM mockup design-system reference",
+      "domain": "misc",
+      "resolution": "Use the repository's DCM mockup tokens and component conventions as the input contract."
+    }
+  ]
+}

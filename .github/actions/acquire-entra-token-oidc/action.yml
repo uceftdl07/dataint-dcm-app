@@ -1,0 +1,77 @@
+name: 'Acquire Entra token via GitHub OIDC (secretless)'
+description: >-
+  Echange le jeton OIDC GitHub Actions contre un jeton Entra ID pour la
+  ressource Azure Databricks, via federated credential (Workload Identity
+  Federation) sur l'app registration. Aucun client secret requis.
+
+inputs:
+  tenant_id:
+    description: 'Azure AD tenant ID'
+    required: true
+  client_id:
+    description: 'Client ID de l''app registration Entra (federated credential configure)'
+    required: true
+  dbx_aad_resource:
+    description: 'Resource ID Azure AD de Databricks (constant, tous tenants)'
+    required: false
+    default: '2ff814a6-3304-4ab8-85cb-cd0e6f879c1d'
+  oidc_audience:
+    description: 'Audience attendue par le federated credential de l''app reg'
+    required: false
+    default: 'api://AzureADTokenExchange'
+
+outputs:
+  databricks_token:
+    description: 'Jeton Entra ID a utiliser comme DATABRICKS_TOKEN'
+    value: ${{ steps.acquire-token.outputs.databricks_token }}
+
+runs:
+  using: "composite"
+  steps:
+    - id: acquire-token
+      shell: bash
+      env:
+        TENANT_ID: ${{ inputs.tenant_id }}
+        CLIENT_ID: ${{ inputs.client_id }}
+        DBX_AAD_RESOURCE: ${{ inputs.dbx_aad_resource }}
+        OIDC_AUDIENCE: ${{ inputs.oidc_audience }}
+      run: |
+        set -euo pipefail
+        if [ -z "${TENANT_ID:-}" ] || [ -z "${CLIENT_ID:-}" ]; then
+          echo "::error::Missing tenant_id / client_id"
+          exit 1
+        fi
+
+        # 1. Recuperer le jeton OIDC emis par GitHub pour l'audience Entra.
+        #    ACTIONS_ID_TOKEN_REQUEST_URL/TOKEN sont fournis quand id-token: write.
+        GH_OIDC_TOKEN="$(curl -sS \
+          -H "Authorization: Bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+          "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=${OIDC_AUDIENCE}" \
+          | jq -r '.value // empty')"
+        if [ -z "${GH_OIDC_TOKEN}" ]; then
+          echo "::error::Failed to obtain GitHub OIDC token (check permissions id-token: write)"
+          exit 1
+        fi
+        echo "::add-mask::${GH_OIDC_TOKEN}"
+
+        # 2. Echanger le jeton GitHub contre un jeton AAD via client_assertion
+        #    (jwt-bearer). Aucun client_secret : c'est le federated credential de
+        #    l'app reg qui autorise cet issuer/subject.
+        TOKEN="$(curl -sS -X POST \
+          "https://login.microsoftonline.com/${TENANT_ID}/oauth2/v2.0/token" \
+          -d "grant_type=client_credentials" \
+          -d "client_id=${CLIENT_ID}" \
+          -d "client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer" \
+          --data-urlencode "client_assertion=${GH_OIDC_TOKEN}" \
+          -d "scope=${DBX_AAD_RESOURCE}/.default" \
+          | jq -r '.access_token // empty')"
+        if [ -z "${TOKEN}" ]; then
+          echo "::error::Failed to exchange GitHub OIDC for Entra token (check federated credential subject/issuer/audience)"
+          exit 1
+        fi
+        echo "::add-mask::${TOKEN}"
+        echo "databricks_token=${TOKEN}" >> "${GITHUB_OUTPUT}"
+        # Expose aussi en variable d'env de job pour compat avec les steps
+        # suivants (databricks CLI lit DATABRICKS_TOKEN automatiquement).
+        echo "DATABRICKS_TOKEN=${TOKEN}" >> "${GITHUB_ENV}"
+        echo "✅ Entra token acquired via OIDC federation (len=${#TOKEN})"

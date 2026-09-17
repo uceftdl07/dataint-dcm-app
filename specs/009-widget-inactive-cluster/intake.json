@@ -1,0 +1,21 @@
+{
+  "feature_summary": "Ajouter un widget sur le dashboard qui affiche les clusters Databricks inactifs",
+  "work_type": "feature",
+  "domains": ["frontend"],
+  "packages": ["packages/dcm-frontend"],
+  "priority": "P2",
+  "ticket_plan": {
+    "mode": "single_domain",
+    "stories_count": 1,
+    "ticket_domains": ["frontend"],
+    "non_ticket_domains": []
+  },
+  "dependency_analysis": {
+    "gaps_found": false,
+    "notes": "Backend GET /api/v1/clusters?state=terminated already exists. listComputes({state:'terminated'}) typed. Frontend-only."
+  },
+  "task_dispatch_mode": "one_per_domain",
+  "spec_number": "009",
+  "spec_directory": "specs/009-widget-inactive-cluster",
+  "created_at": "2026-07-01"
+}

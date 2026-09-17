@@ -1,0 +1,61 @@
+{
+  "updated_at": "2026-09-01T15:10:26+02:00",
+  "spec": "019-usage-data-product-gold",
+  "branch_strategy": "direct_to_base",
+  "child_branch_base": "develop",
+  "pr_target": "develop",
+  "integration_branch": null,
+  "epic": {
+    "key": "DCINT-288",
+    "url": "https://tdf.atlassian.net/browse/DCINT-288"
+  },
+  "dispatch": [
+    {
+      "task_id": "T001",
+      "title": "Curated : registre UC (uc_tables, uc_table_tags, uc_table_operations)",
+      "domain": "dataeng",
+      "package": "packages/dcm-databricks-pipeline",
+      "branch": "dataeng/019-usage-curated-uc-registry",
+      "branch_status": "created_and_pushed",
+      "jira_story": "DCINT-289",
+      "jira_status": "created"
+    },
+    {
+      "task_id": "T002",
+      "title": "Gold fait usage : usage_table_daily, popularity_daily, consumer_daily, query_performance_daily",
+      "domain": "dataeng",
+      "package": "packages/dcm-databricks-pipeline",
+      "branch": "dataeng/019-usage-gold-fact",
+      "branch_status": "created_and_pushed",
+      "jira_story": "DCINT-290",
+      "jira_status": "created"
+    },
+    {
+      "task_id": "T003",
+      "title": "Gold registre/état : usage_table_catalog, dim_workspace, usage_table_governance",
+      "domain": "dataeng",
+      "package": "packages/dcm-databricks-pipeline",
+      "branch": "dataeng/019-usage-gold-catalog-governance",
+      "branch_status": "created_and_pushed",
+      "jira_story": "DCINT-291",
+      "jira_status": "created"
+    },
+    {
+      "task_id": "T004",
+      "title": "Gold transverse : usage_recommendations, usage_forecast_daily",
+      "domain": "dataeng",
+      "package": "packages/dcm-databricks-pipeline",
+      "branch": "dataeng/019-usage-gold-transverse",
+      "branch_status": "created_and_pushed",
+      "jira_story": "DCINT-292",
+      "jira_status": "created"
+    }
+  ],
+  "summary": {
+    "jira_stories_done": 4,
+    "jira_stories_total": 4,
+    "branches_done": 4,
+    "branches_total": 4,
+    "status": "complete"
+  }
+}

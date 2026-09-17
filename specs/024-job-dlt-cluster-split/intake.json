@@ -1,0 +1,21 @@
+{
+  "work_type": "feature",
+  "domains": ["frontend", "backend", "dataeng"],
+  "ticket_plan": {
+    "mode": "one_per_domain",
+    "ticket_domains": ["frontend", "backend", "dataeng"],
+    "expected_story_count": 3
+  },
+  "dependency_gaps": [],
+  "packages": [
+    "packages/dcm-frontend",
+    "packages/dcm-backend",
+    "packages/dcm-commons",
+    "packages/dcm-databricks-pipeline"
+  ],
+  "priority": "P2",
+  "preset": "full_platform",
+  "selection_mode": "manual",
+  "summary": "Separer les compute ephemeres (Job cluster + DLT/pipeline) des All-purpose : purger les pages Clusters (filtre ALL_PURPOSE), agreger le cout DLT a la maille dlt_pipeline_id (miroir du rollup job_id existant), et etendre forecast/reco au type PIPELINE.",
+  "created_at": "2026-09-09T00:00:00Z"
+}

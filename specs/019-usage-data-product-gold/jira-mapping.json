@@ -1,0 +1,16 @@
+{
+  "updated_at": "2026-09-01T00:00:00+02:00",
+  "spec": "019-usage-data-product-gold",
+  "project": "DCINT",
+  "epic": {
+    "key": "DCINT-288",
+    "url": "https://tdf.atlassian.net/browse/DCINT-288",
+    "summary": "[019] Usage Data Product — couche curated + gold"
+  },
+  "stories": [
+    { "task_id": "T001", "key": "DCINT-289", "url": "https://tdf.atlassian.net/browse/DCINT-289", "domain": "dataeng", "branch": "dataeng/019-usage-curated-uc-registry" },
+    { "task_id": "T002", "key": "DCINT-290", "url": "https://tdf.atlassian.net/browse/DCINT-290", "domain": "dataeng", "branch": "dataeng/019-usage-gold-fact" },
+    { "task_id": "T003", "key": "DCINT-291", "url": "https://tdf.atlassian.net/browse/DCINT-291", "domain": "dataeng", "branch": "dataeng/019-usage-gold-catalog-governance" },
+    { "task_id": "T004", "key": "DCINT-292", "url": "https://tdf.atlassian.net/browse/DCINT-292", "domain": "dataeng", "branch": "dataeng/019-usage-gold-transverse" }
+  ]
+}

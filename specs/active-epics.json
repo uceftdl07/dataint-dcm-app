@@ -1,0 +1,180 @@
+{
+  "epics": [
+    {
+      "spec": "020-dbx-workspace-dim",
+      "spec_num": "020",
+      "title": "Dimension dim_dbx_workspace (workspaces_latest curated + vue r\u00e9f\u00e9rentiel)",
+      "domains": [
+        "dataeng"
+      ],
+      "packages": [
+        "packages/dcm-databricks-pipeline"
+      ],
+      "branches": [
+        "dataeng/020-ingestion-system-access-workspaces"
+      ],
+      "status": "completed",
+      "updated_at": "2026-09-02T16:12:33Z",
+      "epic_key": "DCINT-299",
+      "dispatched_at": "2026-09-02T15:43:39Z"
+    },
+    {
+      "spec": "021-dim-landing-zone-view",
+      "spec_num": "021",
+      "title": "Remplacer dim_landing_zone par une vue union",
+      "domains": [
+        "dataeng"
+      ],
+      "packages": [
+        "packages/dcm-databricks-pipeline"
+      ],
+      "branches": [
+        "dataeng/021-rename-collector-vue-union-dim-landing"
+      ],
+      "status": "in_progress",
+      "updated_at": "2026-09-02T20:12:24Z",
+      "epic_key": "DCINT-301",
+      "dispatched_at": "2026-09-02T20:12:24Z"
+    },
+    {
+      "spec": "016-anomaly-system-core",
+      "spec_num": "016",
+      "title": "Anomaly System Core",
+      "domains": [
+        "dataeng",
+        "backend",
+        "frontend"
+      ],
+      "packages": [
+        "packages/dcm-databricks-pipeline",
+        "packages/dcm-backend",
+        "packages/dcm-commons",
+        "packages/dcm-frontend"
+      ],
+      "branches": [
+        "dataeng/016-implement-anomaly-rule-report-delta",
+        "backend/016-implement-versioned-anomaly-rules",
+        "frontend/016-implement-anomaly-rules-page-custom-rule",
+        "frontend/016-implement-anomaly-reports-page-filters"
+      ],
+      "status": "in_progress",
+      "updated_at": "2026-09-08T13:48:11Z",
+      "epic_key": "DCINT-313",
+      "dispatched_at": "2026-09-08T13:48:11Z"
+    },
+    {
+      "spec": "017-alerting-core-teams-jira",
+      "spec_num": "017",
+      "title": "Alerting Module Core - Teams and Jira",
+      "domains": [
+        "dataeng",
+        "backend",
+        "frontend"
+      ],
+      "packages": [
+        "packages/dcm-databricks-pipeline",
+        "packages/dcm-backend",
+        "packages/dcm-commons",
+        "packages/dcm-frontend"
+      ],
+      "branches": [
+        "dataeng/017-implement-notification-tables-anomaly",
+        "backend/017-implement-direct-alert-dispatch-teams",
+        "frontend/017-implement-notification-settings-and"
+      ],
+      "status": "in_progress",
+      "updated_at": "2026-09-08T13:48:11Z",
+      "epic_key": "DCINT-314",
+      "dispatched_at": "2026-09-08T13:48:11Z"
+    },
+    {
+      "spec": "018-alerting-email-mailjet",
+      "spec_num": "018",
+      "title": "Alerting Module - Email/MailJet",
+      "domains": [
+        "backend",
+        "frontend"
+      ],
+      "packages": [
+        "packages/dcm-backend",
+        "packages/dcm-commons",
+        "packages/dcm-frontend"
+      ],
+      "branches": [
+        "backend/018-implement-emailchannel-mailjet-templates",
+        "frontend/018-enable-email-channel-creation-and"
+      ],
+      "status": "in_progress",
+      "updated_at": "2026-09-08T13:48:11Z",
+      "epic_key": "DCINT-315",
+      "dispatched_at": "2026-09-08T13:48:11Z"
+    },
+    {
+      "spec": "024-job-dlt-cluster-split",
+      "spec_num": "024",
+      "title": "S\u00e9paration compute Job cluster / DLT vs All-purpose",
+      "domains": [
+        "dataeng",
+        "backend",
+        "frontend"
+      ],
+      "packages": [
+        "packages/dcm-databricks-pipeline",
+        "packages/dcm-backend",
+        "packages/dcm-commons",
+        "packages/dcm-frontend"
+      ],
+      "branches": [
+        "dataeng/024-purge-liste-all-purpose-rollup-dlt",
+        "backend/024-filtre-dur-all-purpose-endpoints-schemas",
+        "frontend/024-nav-compute-3-onglets-all-purpose-jobs"
+      ],
+      "status": "in_progress",
+      "updated_at": "2026-09-09T08:42:45Z",
+      "epic_key": "DCINT-325",
+      "dispatched_at": "2026-09-09T08:42:45Z"
+    },
+    {
+      "spec": "024-usage-tracking-governance",
+      "spec_num": "024",
+      "title": "Tracking d'usage \u2014 Usage des tables UC & Gouvernance",
+      "domains": [
+        "dataeng",
+        "backend",
+        "frontend"
+      ],
+      "packages": [
+        "packages/dcm-databricks-pipeline",
+        "packages/dcm-backend",
+        "packages/dcm-commons",
+        "packages/dcm-frontend"
+      ],
+      "branches": [
+        "dataeng/024-usage-tracking-governance"
+      ],
+      "status": "in_progress",
+      "updated_at": "2026-09-10T13:18:28Z",
+      "epic_key": "DCINT-333",
+      "dispatched_at": "2026-09-10T13:18:28Z"
+    },
+    {
+      "spec": "027-usage-table-deleted-flag",
+      "spec_num": "027",
+      "title": "Marquage des tables supprim\u00e9es dans le Data Product Usage",
+      "domains": [
+        "dataeng"
+      ],
+      "packages": [
+        "packages/dcm-databricks-pipeline"
+      ],
+      "branches": [
+        "dataeng/027-usage-table-deleted-flag"
+      ],
+      "status": "in_progress",
+      "updated_at": "2026-09-16T06:07:42Z",
+      "epic_key": "DCINT-355",
+      "dispatched_at": "2026-09-16T06:07:42Z"
+    }
+  ],
+  "updated_at": "2026-09-16T06:07:42Z"
+}

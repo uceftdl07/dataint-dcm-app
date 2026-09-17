@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<!-- saved from url=(0067)file:///Users/maherlezhari/Downloads/dcm-notification-settings.html -->
+<html lang="fr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCM — Notification Settings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link href="./DCM — Notification Settings_files/css2" rel="stylesheet">
+<style>
+:root{
+  --font-sans:"Inter",ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --background:oklch(100% 0 0); --foreground:oklch(14.1% .005 285.823);
+  --card-background:oklch(99.5% 0 0); --card-radius:1.375rem; --card-padding-x:1.25rem; --card-padding-y:1rem;
+  --card-shadow:0 10px 30px #0f172a12;
+  --primary:oklch(60% .25 264.376); --primary-foreground:oklch(100% 0 0);
+  --secondary:oklch(96.7% .001 286.375); --secondary-foreground:oklch(21% .006 285.885);
+  --muted:oklch(96.7% .001 286.375); --muted-foreground:oklch(55.2% .016 285.938);
+  --success:oklch(52% .1483 133.57); --success-subtle:oklch(96.5% .035 145); --success-border:oklch(84% .09 145);
+  --warning:oklch(46% .13 70); --warning-subtle:oklch(97.5% .045 85); --warning-border:oklch(86% .12 80);
+  --info:oklch(60% .25 264.376); --info-subtle:oklch(95.5% .035 265); --info-border:oklch(82% .09 265);
+  --purple:oklch(56% .22 300); --purple-subtle:oklch(95.5% .035 300); --purple-border:oklch(82% .09 300);
+  --border:oklch(92% .004 286.32); --radius:.625rem;
+  --sidebar:oklch(98.5% 0 0); --sidebar-foreground:oklch(14.1% .005 285.823);
+  --sidebar-accent:oklch(96.7% .001 286.375); --sidebar-accent-foreground:oklch(21% .006 285.885); --sidebar-border:oklch(92% .004 286.32);
+  --tdf-gradient-brand:linear-gradient(135deg,oklch(47.42% .215 265.21),oklch(45.82% .081 176.28));
+}
+*{box-sizing:border-box;} body{margin:0;font-family:var(--font-sans);background:var(--background);color:var(--foreground);font-size:16px;-webkit-font-smoothing:antialiased;}
+.btn{font-family:inherit;cursor:pointer;border:1px solid var(--border);background:var(--background);color:var(--foreground);border-radius:999px;padding:.4rem .9rem;font-size:.8125rem;font-weight:600;display:inline-flex;align-items:center;gap:.4rem;}
+.btn-guide{background:var(--info-subtle);color:var(--info);border-color:var(--info-border);}
+.btn-primary{background:var(--primary);color:var(--primary-foreground);border-color:var(--primary);}
+.icon-btn{width:2rem;height:2rem;border-radius:999px;border:1px solid var(--border);background:var(--background);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:.9rem;}
+.badge{display:inline-flex;align-items:center;gap:.3rem;padding:.15rem .55rem;border-radius:999px;font-size:.72rem;font-weight:700;border:1px solid transparent;}
+.badge-info{background:var(--info-subtle);color:var(--info);border-color:var(--info-border);}
+.badge-purple{background:var(--purple-subtle);color:var(--purple);border-color:var(--purple-border);}
+.badge-warning{background:var(--warning-subtle);color:var(--warning);border-color:var(--warning-border);}
+.card{background:var(--card-background);border:1px solid var(--border);border-radius:var(--card-radius);padding:var(--card-padding-y) var(--card-padding-x);box-shadow:var(--card-shadow);}
+table.data-table{width:100%;border-collapse:collapse;font-size:.8125rem;}
+.data-table thead th{text-align:left;text-transform:uppercase;font-size:.68rem;letter-spacing:.05em;color:var(--muted-foreground);padding:.7rem .5rem;border-bottom:1px solid var(--border);white-space:nowrap;}
+.data-table tbody td{padding:.7rem .5rem;border-bottom:1px solid var(--border);vertical-align:middle;}
+.data-table tbody tr:hover{background:var(--muted);} .data-table tbody tr:last-child td{border-bottom:none;}
+.muted{color:var(--muted-foreground);} .mono-id{font-size:.72rem;color:var(--muted-foreground);}
+.toggle{position:relative;display:inline-block;width:34px;height:20px;vertical-align:middle;}
+.toggle input{opacity:0;width:0;height:0;position:absolute;}
+.toggle .track{position:absolute;inset:0;background:var(--border);border-radius:999px;cursor:pointer;transition:.15s;}
+.toggle .track:before{content:"";position:absolute;width:16px;height:16px;left:2px;top:2px;background:#fff;border-radius:50%;transition:.15s;box-shadow:0 1px 2px rgba(0,0,0,.15);}
+.toggle input:checked+.track{background:var(--primary);}
+.toggle input:checked+.track:before{transform:translateX(14px);}
+.section-label{font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-foreground);margin:.5rem 0;}
+.app-shell{display:grid;grid-template-columns:220px 1fr;min-height:100vh;border:1px solid var(--border);}
+.app-sidebar{background:var(--sidebar);color:var(--sidebar-foreground);border-right:1px solid var(--sidebar-border);padding:1rem .75rem;display:flex;flex-direction:column;justify-content:space-between;}
+.app-logo{display:flex;align-items:center;gap:.5rem;padding:.5rem;margin-bottom:1rem;}
+.app-logo .mark{width:28px;height:28px;border-radius:8px;background:var(--tdf-gradient-brand);}
+.app-logo .word b{display:block;line-height:1.1;font-size:.95rem;} .app-logo .word .accent{color:var(--primary);}
+.nav-group{margin-bottom:.25rem;}
+.nav-item{display:flex;align-items:center;gap:.6rem;padding:.5rem .6rem;border-radius:var(--radius);font-size:.85rem;font-weight:500;color:var(--sidebar-foreground);cursor:pointer;text-decoration:none;}
+.nav-item:hover{background:var(--sidebar-accent);} .nav-item.current{background:var(--sidebar-accent);font-weight:700;}
+.nav-sub{margin-left:1.5rem;display:flex;flex-direction:column;} .nav-sub .nav-item{font-size:.82rem;padding:.4rem .6rem;}
+.sidebar-footer{border-top:1px solid var(--sidebar-border);padding-top:.75rem;}
+.user-chip{display:flex;align-items:center;gap:.5rem;padding:.4rem;font-size:.75rem;}
+.avatar{width:28px;height:28px;border-radius:999px;background:var(--secondary);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.7rem;}
+.app-main{display:flex;flex-direction:column;}
+.app-topbar{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:.75rem;}
+.topbar-left .breadcrumb{font-size:.75rem;color:var(--muted-foreground);margin-bottom:.15rem;}
+.topbar-left .page-title{font-size:1.15rem;font-weight:700;}
+.topbar-right{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;}
+.app-content{padding:1.5rem;display:flex;flex-direction:column;gap:1.5rem;}
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="app-sidebar">
+    <div>
+      <div class="app-logo"><span class="mark"></span><span class="word"><b>Data</b><b class="accent">connect</b></span></div>
+      <nav>
+        <a class="nav-item">▦ Home</a>
+        <div class="nav-group"><a class="nav-item">⛓ Databricks</a>
+          <div class="nav-sub"><a class="nav-item">Overview</a><a class="nav-item">Jobs &amp; Pipelines</a><a class="nav-item">Compute</a><a class="nav-item">FinOps</a><a class="nav-item">Usage Data Product</a></div>
+        </div>
+        <div class="nav-group"><a class="nav-item">🛎 Anomalies</a>
+          <div class="nav-sub"><a class="nav-item">Rules</a><a class="nav-item">Reports</a></div>
+        </div>
+        <a class="nav-item">🗂 Talk to your Data</a>
+      </nav>
+    </div>
+    <div class="sidebar-footer">
+      <div class="nav-group"><a class="nav-item">⚙ Administration</a><div class="nav-sub"><a class="nav-item current">Notification Settings</a></div></div>
+      <div class="user-chip"><span class="avatar">ML</span> Maher Lezhari</div>
+    </div>
+  </aside>
+  <div class="app-main">
+    <div class="app-topbar">
+      <div class="topbar-left"><div class="breadcrumb">DCM · Administration</div><div class="page-title">Notification settings</div></div>
+      <div class="topbar-right">
+        <button class="btn btn-guide">◎ Guide</button>
+        <button class="icon-btn" aria-label="Notifications">🔔</button>
+        <button class="btn btn-primary">＋ Créer un canal</button>
+      </div>
+    </div>
+    <div class="app-content">
+      <div>
+        <div class="section-label">Canaux configurés</div>
+        <div class="card">
+          <table class="data-table">
+            <thead><tr><th>Nom</th><th>Type</th><th>Détail</th><th>Statut</th><th></th></tr></thead>
+            <tbody>
+              <tr>
+                <td>Canal Teams DataOps</td><td><span class="badge badge-purple">Teams</span></td>
+                <td class="mono-id">dcm-teams-webhook-dataops</td>
+                <td><label class="toggle"><input type="checkbox" checked=""><span class="track"></span></label></td>
+                <td><button class="icon-btn" aria-label="Tester">▶</button><button class="icon-btn" aria-label="Modifier">✎</button><button class="icon-btn" aria-label="Supprimer">🗑</button></td>
+              </tr>
+              <tr>
+                <td>Email DBA Team</td><td><span class="badge badge-info">Email</span></td>
+                <td class="mono-id">team@totalenergies.com</td>
+                <td><label class="toggle"><input type="checkbox" checked=""><span class="track"></span></label></td>
+                <td><button class="icon-btn" aria-label="Tester">▶</button><button class="icon-btn" aria-label="Modifier">✎</button><button class="icon-btn" aria-label="Supprimer">🗑</button></td>
+              </tr>
+              <tr>
+                <td>Jira Incidents DCINT</td><td><span class="badge badge-warning">Jira</span></td>
+                <td class="mono-id">Projet DCINT · Bug</td>
+                <td><label class="toggle"><input type="checkbox" checked=""><span class="track"></span></label></td>
+                <td><button class="icon-btn" aria-label="Tester">▶</button><button class="icon-btn" aria-label="Modifier">✎</button><button class="icon-btn" aria-label="Supprimer">🗑</button></td>
+              </tr>
+              <tr>
+                <td>Canal Teams Silent (archivé)</td><td><span class="badge badge-purple">Teams</span></td>
+                <td class="mono-id">dcm-teams-webhook-silent</td>
+                <td><label class="toggle"><input type="checkbox"><span class="track"></span></label></td>
+                <td><button class="icon-btn" aria-label="Tester">▶</button><button class="icon-btn" aria-label="Modifier">✎</button><button class="icon-btn" aria-label="Supprimer">🗑</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+</body></html>

@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCM — Tracking d'usage · Gouvernance &amp; Recommandations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --font-sans:"Inter",ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --background:oklch(100% 0 0);
+  --foreground:oklch(14.1% .005 285.823);
+  --card:oklch(98.5% 0 0);
+  --card-foreground:oklch(14.1% .005 285.823);
+  --card-background:oklch(99.5% 0 0);
+  --card-radius:1.375rem;
+  --card-padding-x:1.25rem;
+  --card-padding-y:1rem;
+  --card-shadow:0 10px 30px #0f172a12;
+  --primary:oklch(60% .25 264.376);
+  --primary-foreground:oklch(100% 0 0);
+  --secondary:oklch(96.7% .001 286.375);
+  --secondary-foreground:oklch(21% .006 285.885);
+  --muted:oklch(96.7% .001 286.375);
+  --muted-foreground:oklch(55.2% .016 285.938);
+  --destructive:oklch(57.7% .245 27.325);
+  --destructive-foreground:oklch(100% 0 0);
+  --success:oklch(52% .1483 133.57);
+  --success-foreground:oklch(100% 0 0);
+  --success-subtle:oklch(96.5% .035 145);
+  --success-border:oklch(84% .09 145);
+  --warning:oklch(46% .13 70);
+  --warning-foreground:oklch(100% 0 0);
+  --warning-subtle:oklch(97.5% .045 85);
+  --warning-border:oklch(86% .12 80);
+  --danger:oklch(57.7% .245 27.325);
+  --danger-foreground:oklch(100% 0 0);
+  --danger-subtle:oklch(96% .035 25);
+  --danger-border:oklch(86% .105 25);
+  --info:oklch(60% .25 264.376);
+  --info-foreground:oklch(100% 0 0);
+  --info-subtle:oklch(95.5% .035 265);
+  --info-border:oklch(82% .09 265);
+  --purple:oklch(56% .22 300);
+  --purple-foreground:oklch(100% 0 0);
+  --purple-subtle:oklch(95.5% .035 300);
+  --purple-border:oklch(82% .09 300);
+  --border:oklch(92% .004 286.32);
+  --input:oklch(98.5% 0 0);
+  --ring:oklch(87.1% .006 286.286);
+  --radius:.625rem;
+  --sidebar:oklch(98.5% 0 0);
+  --sidebar-foreground:oklch(14.1% .005 285.823);
+  --sidebar-accent:oklch(96.7% .001 286.375);
+  --sidebar-accent-foreground:oklch(21% .006 285.885);
+  --sidebar-border:oklch(92% .004 286.32);
+  --tdf-gradient-brand:linear-gradient(135deg,oklch(47.42% .215 265.21),oklch(45.82% .081 176.28));
+}
+*{box-sizing:border-box;}
+body{margin:0;font-family:var(--font-sans);background:var(--background);color:var(--foreground);font-size:16px;-webkit-font-smoothing:antialiased;}
+
+.btn{font-family:inherit;cursor:pointer;border:1px solid var(--border);background:var(--background);color:var(--foreground);border-radius:999px;padding:.4rem .9rem;font-size:.8125rem;font-weight:600;display:inline-flex;align-items:center;gap:.4rem;}
+.btn-guide{background:var(--info-subtle);color:var(--info);border-color:var(--info-border);}
+.icon-btn{width:2rem;height:2rem;border-radius:999px;border:1px solid var(--border);background:var(--background);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:.9rem;}
+.dropdown-btn{border:1px solid var(--border);border-radius:999px;padding:.4rem .9rem;font-size:.8125rem;background:var(--background);display:inline-flex;align-items:center;gap:.5rem;color:var(--foreground);cursor:pointer;}
+.segmented{display:inline-flex;background:var(--muted);border-radius:999px;padding:3px;gap:2px;}
+.segmented button{font-family:inherit;border:none;background:transparent;padding:.4rem .8rem;border-radius:999px;font-size:.8125rem;font-weight:700;color:var(--muted-foreground);cursor:pointer;}
+.segmented button.active{background:var(--primary);color:var(--primary-foreground);}
+.tabbar{display:inline-flex;background:var(--muted);border-radius:999px;padding:4px;gap:2px;}
+.tabbar button{font-family:inherit;border:none;background:transparent;padding:.5rem 1.1rem;border-radius:999px;font-size:.85rem;font-weight:700;color:var(--muted-foreground);cursor:pointer;display:inline-flex;align-items:center;gap:.4rem;}
+.tabbar button.active{background:var(--background);color:var(--foreground);box-shadow:0 1px 4px #0f172a1a;}
+.pill{font-family:inherit;border:1px solid var(--border);border-radius:999px;padding:.4rem .9rem;font-size:.8125rem;font-weight:600;background:var(--background);color:var(--foreground);cursor:pointer;}
+.pill.active{background:var(--primary);color:var(--primary-foreground);border-color:var(--primary);}
+.search{display:inline-flex;align-items:center;gap:.5rem;border:1px solid var(--border);border-radius:999px;padding:.5rem 1rem;color:var(--muted-foreground);font-size:.875rem;min-width:220px;}
+.search input{border:none;outline:none;background:transparent;font-family:inherit;font-size:.875rem;color:var(--foreground);width:100%;}
+
+.badge{display:inline-flex;align-items:center;gap:.3rem;padding:.15rem .55rem;border-radius:999px;font-size:.72rem;font-weight:700;border:1px solid transparent;white-space:nowrap;}
+.badge-danger{background:var(--danger-subtle);color:var(--danger);border-color:var(--danger-border);}
+.badge-success{background:var(--success-subtle);color:var(--success);border-color:var(--success-border);}
+.badge-warning{background:var(--warning-subtle);color:var(--warning);border-color:var(--warning-border);}
+.badge-info{background:var(--info-subtle);color:var(--info);border-color:var(--info-border);}
+.badge-neutral{background:var(--secondary);color:var(--secondary-foreground);border-color:var(--border);}
+
+.card{background:var(--card-background);border:1px solid var(--border);border-radius:var(--card-radius);padding:var(--card-padding-y) var(--card-padding-x);box-shadow:var(--card-shadow);}
+.kpi-card{border:1px solid var(--border);border-radius:var(--card-radius);overflow:hidden;background:var(--card-background);}
+.kpi-card-header{padding:.75rem 1rem;display:flex;justify-content:space-between;align-items:center;font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;}
+.kpi-card.blue .kpi-card-header{background:var(--info-subtle);color:var(--foreground);}
+.kpi-card.green .kpi-card-header{background:var(--success-subtle);color:var(--foreground);}
+.kpi-card.amber .kpi-card-header{background:var(--warning-subtle);color:var(--foreground);}
+.kpi-card.red .kpi-card-header{background:var(--danger-subtle);color:var(--foreground);}
+.kpi-icon{width:2rem;height:2rem;border-radius:999px;background:var(--background);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.9rem;}
+.kpi-card-body{padding:1rem;}
+.kpi-value{font-size:1.5rem;font-weight:700;}
+.kpi-value.blue{color:var(--primary);}
+.kpi-value.green{color:var(--success);}
+.kpi-value.amber{color:var(--warning);}
+.kpi-value.red{color:var(--danger);}
+.kpi-sub{font-size:.8125rem;color:var(--muted-foreground);}
+.section-label{font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-foreground);margin:.5rem 0;}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:1rem;}
+
+table.data-table{width:100%;border-collapse:collapse;font-size:.8125rem;}
+.data-table thead th{text-align:left;text-transform:uppercase;font-size:.66rem;letter-spacing:.05em;color:var(--muted-foreground);padding:.7rem .5rem;border-bottom:1px solid var(--border);white-space:nowrap;position:relative;}
+.th-adv-inner{display:flex;align-items:center;gap:.3rem;}
+.th-adv-inner.th-num{justify-content:flex-end;}
+.th-label-btn{display:inline-flex;align-items:center;gap:.3rem;min-width:0;background:none;border:none;cursor:pointer;color:inherit;font:inherit;padding:0;font-size:.66rem;text-transform:uppercase;letter-spacing:.05em;font-weight:700;}
+.th-label-btn .lbl{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.th-label-btn:hover{color:var(--foreground);}
+.th-sort-icon{width:11px;height:11px;flex:none;opacity:.45;transition:.15s;}
+.th-adv[aria-sort="ascending"] .th-sort-icon{opacity:1;color:var(--primary);transform:rotate(180deg);}
+.th-adv[aria-sort="descending"] .th-sort-icon{opacity:1;color:var(--primary);}
+.th-filter-btn{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:4px;color:var(--muted-foreground);cursor:pointer;border:none;background:none;flex:none;}
+.th-filter-btn svg{width:10px;height:10px;}
+.th-filter-btn:hover{color:var(--foreground);}
+.th-filter-btn.active{color:var(--primary);}
+.th-resizer{position:absolute;top:0;bottom:0;right:0;width:6px;cursor:col-resize;}
+.th-resizer::after{content:"";position:absolute;top:6px;bottom:6px;right:2px;width:1px;background:var(--border);}
+.th-resizer:hover::after,.th-resizer.active::after{background:var(--primary);}
+.th-filter-panel{position:absolute;top:calc(100% + 4px);left:0;z-index:40;background:var(--background);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--card-shadow);padding:.4rem;width:190px;max-height:220px;overflow:auto;display:none;flex-direction:column;gap:.15rem;text-transform:none;letter-spacing:normal;font-weight:400;}
+.th-filter-panel.open{display:flex;}
+.th-filter-opt{display:flex;align-items:center;gap:.4rem;padding:.3rem .35rem;border-radius:6px;font-size:.75rem;cursor:pointer;}
+.th-filter-opt:hover{background:var(--muted);}
+.th-filter-opt input{margin:0;}
+.th-filter-actions{display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:.3rem;margin-top:.15rem;}
+.th-filter-actions button{background:none;border:none;font-family:inherit;font-size:.68rem;font-weight:700;color:var(--primary);cursor:pointer;padding:.1rem;}
+.data-table tbody td{padding:.65rem .5rem;border-bottom:1px solid var(--border);vertical-align:middle;}
+.data-table tbody tr:hover{background:var(--muted);}
+.data-table tbody tr:last-child td{border-bottom:none;}
+.muted{color:var(--muted-foreground);}
+.mono-id{display:block;font-size:.7rem;color:var(--muted-foreground);margin-top:.1rem;}
+.cell-num{text-align:right;font-variant-numeric:tabular-nums;}
+th.cell-num{text-align:right;}
+.table-name{font-weight:600;}
+.card-footnote{font-size:.72rem;color:var(--muted-foreground);margin-top:.75rem;padding-top:.75rem;border-top:1px dashed var(--border);}
+.card-head-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;flex-wrap:wrap;gap:.5rem;}
+.card-head-row h3{margin:0;font-size:.95rem;}
+.empty-state{text-align:center;color:var(--muted-foreground);font-size:.8125rem;padding:2rem 0;}
+
+/* ===== Recommendation cards ===== */
+.reco-list{display:flex;flex-direction:column;gap:.6rem;}
+.reco-card{display:flex;gap:.85rem;align-items:flex-start;border:1px solid var(--border);border-radius:var(--radius);padding:.9rem 1rem;background:var(--card-background);}
+.reco-card .reco-icon{width:2rem;height:2rem;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex:none;}
+.reco-card.high .reco-icon{background:var(--danger-subtle);color:var(--danger);}
+.reco-card.medium .reco-icon{background:var(--warning-subtle);color:var(--warning);}
+.reco-card.low .reco-icon{background:var(--info-subtle);color:var(--info);}
+.reco-title{font-weight:700;font-size:.875rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;}
+.reco-detail{font-size:.8125rem;color:var(--muted-foreground);margin-top:.2rem;}
+.reco-action{font-size:.8125rem;margin-top:.35rem;}
+.reco-action b{font-weight:700;}
+.reco-savings{font-size:.75rem;margin-top:.3rem;color:var(--success);font-weight:700;}
+.reco-meta{font-size:.7rem;color:var(--muted-foreground);margin-top:.4rem;display:flex;gap:.75rem;flex-wrap:wrap;}
+
+.content-toolbar{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;}
+.msel{position:relative;}
+.msel-btn{border:1px solid var(--border);border-radius:999px;padding:.4rem .9rem;font-size:.8125rem;background:var(--background);display:inline-flex;align-items:center;gap:.45rem;color:var(--foreground);cursor:pointer;font-family:inherit;}
+.msel-count{background:var(--primary);color:var(--primary-foreground);border-radius:999px;font-size:.68rem;font-weight:700;padding:.05rem .4rem;min-width:1.1rem;text-align:center;}
+.msel-panel{position:absolute;top:calc(100% + 6px);left:0;z-index:30;background:var(--background);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--card-shadow);padding:.5rem;width:300px;max-height:300px;display:none;flex-direction:column;gap:.4rem;}
+.msel-panel.open{display:flex;}
+.msel-search{display:flex;align-items:center;gap:.4rem;border:1px solid var(--border);border-radius:999px;padding:.3rem .7rem;}
+.msel-search input{border:none;outline:none;background:transparent;font-family:inherit;font-size:.8125rem;width:100%;}
+select.select-pill{appearance:none;border:1px solid var(--border);border-radius:999px;padding:.4rem 1.75rem .4rem .9rem;font-size:.8125rem;font-family:inherit;background:var(--background) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><path d="M1 3l4 4 4-4" stroke="%2355544f" fill="none" stroke-width="1.4"/></svg>') no-repeat right .75rem center;color:var(--foreground);cursor:pointer;}
+.msel-options{overflow:auto;max-height:190px;display:flex;flex-direction:column;gap:.1rem;}
+.msel-option{display:flex;align-items:center;gap:.5rem;padding:.4rem .45rem;border-radius:6px;font-size:.8125rem;cursor:pointer;}
+.msel-option:hover{background:var(--muted);}
+.msel-option input{margin:0;}
+.msel-option .o-cat{display:block;font-size:.68rem;color:var(--muted-foreground);}
+.msel-actions{display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:.4rem;}
+.msel-actions button{background:none;border:none;font-family:inherit;font-size:.75rem;font-weight:700;color:var(--primary);cursor:pointer;padding:.2rem;}
+.chip-row{display:flex;gap:.4rem;flex-wrap:wrap;}
+.chip-row:empty{display:none;}
+.chip{display:inline-flex;align-items:center;gap:.35rem;background:var(--secondary);color:var(--secondary-foreground);border-radius:999px;padding:.25rem .6rem .25rem .75rem;font-size:.72rem;font-weight:600;}
+.chip button{border:none;background:transparent;cursor:pointer;font-size:.85rem;color:var(--muted-foreground);line-height:1;padding:0;}
+.chip button:hover{color:var(--danger);}
+
+.app-shell{display:grid;grid-template-columns:220px 1fr;min-height:100vh;border:1px solid var(--border);}
+.app-sidebar{background:var(--sidebar);color:var(--sidebar-foreground);border-right:1px solid var(--sidebar-border);padding:1rem .75rem;display:flex;flex-direction:column;justify-content:space-between;}
+.app-logo{display:flex;align-items:center;gap:.5rem;padding:.5rem;margin-bottom:1rem;}
+.app-logo .mark{width:28px;height:28px;border-radius:8px;background:var(--tdf-gradient-brand);}
+.app-logo .word b{display:block;line-height:1.1;font-size:.95rem;}
+.app-logo .word .accent{color:var(--primary);}
+.nav-group{margin-bottom:.25rem;}
+.nav-item{display:flex;align-items:center;gap:.6rem;padding:.5rem .6rem;border-radius:var(--radius);font-size:.85rem;font-weight:500;color:var(--sidebar-foreground);cursor:pointer;text-decoration:none;}
+.nav-item:hover{background:var(--sidebar-accent);}
+.nav-item.current{background:var(--sidebar-accent);font-weight:700;}
+.nav-sub{margin-left:1.5rem;display:flex;flex-direction:column;}
+.nav-sub .nav-item{font-size:.82rem;padding:.4rem .6rem;}
+.sidebar-footer{border-top:1px solid var(--sidebar-border);padding-top:.75rem;}
+.user-chip{display:flex;align-items:center;gap:.5rem;padding:.4rem;font-size:.75rem;}
+.avatar{width:28px;height:28px;border-radius:999px;background:var(--secondary);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.7rem;}
+.app-main{display:flex;flex-direction:column;}
+.app-topbar{padding:0;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:0;}
+
+/* ===== Nouveau bandeau (sticky, style Jobs & Pipelines) ===== */
+.tb-wrap{position:sticky;top:0;z-index:40;background:color-mix(in oklch, var(--background) 90%, transparent);backdrop-filter:blur(16px);padding:.75rem 1.5rem;display:flex;flex-direction:column;gap:.5rem;width:100%;}
+.tb-title-row{display:flex;align-items:center;gap:.6rem;}
+.tb-title{font-size:1.125rem;font-weight:700;letter-spacing:-.02em;}
+.tb-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;background:var(--muted);border-radius:1.25rem;padding:.4rem;box-shadow:0 1px 2px #0000000d;}
+.tb-guide{position:relative;display:inline-flex;align-items:center;gap:.5rem;height:2.5rem;padding:0 .75rem;border-radius:1rem;border:1px solid var(--info-border);background:var(--background);color:var(--info);font-size:.75rem;font-weight:700;cursor:pointer;overflow:visible;}
+.tb-guide-icon{width:1.75rem;height:1.75rem;border-radius:.7rem;background:var(--info-subtle);display:flex;align-items:center;justify-content:center;font-size:.85rem;}
+.tb-guide-dot{width:.45rem;height:.45rem;border-radius:999px;background:var(--success);box-shadow:0 0 6px color-mix(in oklch, var(--success) 70%, transparent);}
+.tb-icon-btn{width:2.5rem;height:2.5rem;flex:none;border-radius:1rem;border:1px solid var(--border);background:var(--background);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--info);font-size:1rem;}
+.tb-filter{min-width:9.5rem;flex:1 1 9.5rem;}
+.tb-select-btn{height:2.5rem;width:100%;border-radius:1rem;border:1px solid var(--border);background:var(--background);padding:0 .75rem;font-size:.8125rem;font-weight:500;display:flex;align-items:center;justify-content:space-between;gap:.4rem;cursor:pointer;color:var(--foreground);font-family:inherit;}
+.tb-select-btn .ic{color:var(--info);font-size:.85rem;}
+.tb-select-btn .chev{color:var(--info);font-size:.7rem;}
+.tb-date{height:2.5rem;border-radius:1rem;border:1px solid var(--border);background:var(--background);padding:0 .75rem;display:flex;align-items:center;gap:.4rem;font-size:.8125rem;min-width:8.5rem;flex:1 1 8.5rem;cursor:pointer;}
+.tb-date .lbl{color:var(--muted-foreground);flex:none;}
+.tb-date .val{color:var(--foreground);font-weight:500;}
+.tb-range{display:flex;align-items:center;gap:.3rem;margin-left:auto;}
+.tb-range button{height:2rem;min-width:2.35rem;border-radius:999px;border:1px solid var(--border);background:var(--background);font-size:.72rem;font-weight:700;color:var(--muted-foreground);cursor:pointer;transition:.2s;font-family:inherit;}
+.tb-range button:hover{transform:translateY(-1px);border-color:var(--info-border);background:var(--info-subtle);color:var(--info);}
+.tb-range button.active{background:var(--primary);color:var(--primary-foreground);border-color:var(--primary);}
+.topbar-left .breadcrumb{font-size:.75rem;color:var(--muted-foreground);margin-bottom:.15rem;}
+.topbar-left .page-title{font-size:1.15rem;font-weight:700;}
+.topbar-right{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;}
+.app-content{padding:1.5rem;display:flex;flex-direction:column;gap:1.5rem;}
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+  <aside class="app-sidebar">
+    <div>
+      <div class="app-logo"><span class="mark"></span><span class="word"><b>Data</b><b class="accent">connect</b></span></div>
+      <nav>
+        <a class="nav-item">▦ Home</a>
+        <div class="nav-group">
+          <a class="nav-item">⛓ Databricks</a>
+          <div class="nav-sub">
+            <a class="nav-item">Overview</a>
+            <a class="nav-item">Jobs &amp; Pipelines</a>
+            <a class="nav-item">Compute</a>
+            <a class="nav-item">FinOps</a>
+            <div class="nav-group" style="margin-bottom:0;">
+              <a class="nav-item">📈 Usage</a>
+              <div class="nav-sub">
+                <a class="nav-item">Usage des tables UC</a>
+                <a class="nav-item current">Gouvernance &amp; Recommandations</a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="nav-group">
+          <a class="nav-item">🛎 Anomalies</a>
+          <div class="nav-sub">
+            <a class="nav-item">Rules</a>
+            <a class="nav-item">Reports</a>
+          </div>
+        </div>
+        <a class="nav-item">🗂 Talk to your Data</a>
+      </nav>
+    </div>
+    <div class="sidebar-footer">
+      <div class="nav-group">
+        <a class="nav-item">⚙ Administration</a>
+        <div class="nav-sub"><a class="nav-item">Notification Settings</a></div>
+      </div>
+      <div class="user-chip"><span class="avatar">ML</span> Maher Lezhari</div>
+    </div>
+  </aside>
+
+  <div class="app-main">
+    <div class="app-topbar">
+      <div class="tb-wrap">
+        <div class="tb-title-row">
+          <div class="tb-title">Gouvernance &amp; Recommandations</div>
+        </div>
+        <div class="tb-toolbar">
+          <button class="tb-guide" type="button">
+            <span class="tb-guide-icon">◎</span>
+            <span>Guide</span>
+            <span class="tb-guide-dot"></span>
+          </button>
+          <button class="tb-icon-btn" aria-label="Notifications">🔔</button>
+          <div class="tb-filter">
+            <button class="tb-select-btn" type="button"><span><span class="ic">☁</span> Tous les clouds</span><span class="chev">▾</span></button>
+          </div>
+          <div class="tb-date"><span class="lbl">From</span><span class="val">01/06/2026</span></div>
+          <div class="tb-date"><span class="lbl">To</span><span class="val">08/09/2026</span></div>
+          <div class="tb-range">
+            <button type="button">30d</button>
+            <button type="button" class="active">90d</button>
+            <button type="button">6m</button>
+            <button type="button">1y</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="app-content">
+
+      <!-- ===================== SWITCH VUE ===================== -->
+      <div class="content-toolbar">
+        <div class="tabbar">
+          <button class="active" data-view="gov">🏛 Gouvernance</button>
+          <button data-view="reco">💡 Recommandations</button>
+        </div>
+        <span class="search"><span>🔍</span><input type="text" id="q" placeholder="Rechercher…"></span>
+      </div>
+
+      <!-- ===================== FILTRES COMMUNS ===================== -->
+      <div class="content-toolbar">
+        <select class="select-pill" id="f-catalog">
+          <option value="all">Tous les catalogues</option>
+          <option value="it_ba_dcm">it.ba_data_connect_monitoring</option>
+          <option value="it_ba_finance">it.ba_finance</option>
+          <option value="it_ba_supply">it.ba_supply_chain</option>
+        </select>
+        <select class="select-pill" id="f-schema">
+          <option value="all">Tous les schémas</option>
+          <option value="gold">gold</option>
+          <option value="curated">curated</option>
+          <option value="raw">raw</option>
+        </select>
+        <div class="msel" id="msel-tables">
+          <button class="msel-btn" id="msel-btn-tables" type="button">
+            🗄 Tables <span class="msel-count" id="msel-count-tables" style="display:none;">0</span> ▾
+          </button>
+          <div class="msel-panel" id="msel-panel-tables">
+            <div class="msel-search"><span>🔍</span><input type="text" id="msel-search-tables" placeholder="Filtrer les tables…"></div>
+            <div class="msel-options" id="msel-options-tables">
+              <label class="msel-option" data-name="gold_dbx_usage_table_daily"><input type="checkbox" value="gold_dbx_usage_table_daily"><span>gold_dbx_usage_table_daily<span class="o-cat">it.ba_data_connect_monitoring · gold</span></span></label>
+              <label class="msel-option" data-name="gold_cost_summary"><input type="checkbox" value="gold_cost_summary"><span>gold_cost_summary<span class="o-cat">it.ba_finance · gold</span></span></label>
+              <label class="msel-option" data-name="curated_inventory_snapshot"><input type="checkbox" value="curated_inventory_snapshot"><span>curated_inventory_snapshot<span class="o-cat">it.ba_supply_chain · curated</span></span></label>
+              <label class="msel-option" data-name="curated_dbx_query_history"><input type="checkbox" value="curated_dbx_query_history"><span>curated_dbx_query_history<span class="o-cat">it.ba_data_connect_monitoring · curated</span></span></label>
+              <label class="msel-option" data-name="gold_compute_utilization"><input type="checkbox" value="gold_compute_utilization"><span>gold_compute_utilization<span class="o-cat">it.ba_data_connect_monitoring · gold</span></span></label>
+              <label class="msel-option" data-name="raw_legacy_billing_2023"><input type="checkbox" value="raw_legacy_billing_2023"><span>raw_legacy_billing_2023<span class="o-cat">it.ba_finance · raw</span></span></label>
+            </div>
+            <div class="msel-actions">
+              <button type="button" id="msel-clear-tables">Tout effacer</button>
+              <button type="button" id="msel-apply-tables">Appliquer</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="chip-row" id="chip-row-tables"></div>
+
+      <!-- ===================== VUE GOUVERNANCE ===================== -->
+      <div id="view-gov">
+
+        <div style="margin-bottom:1.5rem;">
+          <div class="section-label">Cycle de vie — vue d'ensemble</div>
+          <div class="kpi-grid">
+            <div class="kpi-card amber">
+              <div class="kpi-card-header">Tables inutilisées <span class="kpi-icon">🧊</span></div>
+              <div class="kpi-card-body"><div class="kpi-value amber">96</div><div class="kpi-sub">0 lecture sur 90 jours</div></div>
+            </div>
+            <div class="kpi-card red">
+              <div class="kpi-card-header">Périmées mais lues <span class="kpi-icon">⏳</span></div>
+              <div class="kpi-card-body"><div class="kpi-value red">14</div><div class="kpi-sub">Fraîcheur &gt; SLA, lues &lt; 7j</div></div>
+            </div>
+            <div class="kpi-card blue">
+              <div class="kpi-card-header">Tables critiques <span class="kpi-icon">🛡</span></div>
+              <div class="kpi-card-body"><div class="kpi-value blue">31</div><div class="kpi-sub">Fort fan-out downstream</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head-row">
+            <h3>Registre des tables — état courant</h3>
+            <span class="muted" style="font-size:.75rem;">Dernier état connu (snapshot)</span>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr><th>Table</th><th>Type</th><th>Owner</th><th>Dernière opération</th><th class="cell-num">Fan-out aval</th><th>Statut</th></tr>
+            </thead>
+            <tbody id="rows-gov">
+              <tr data-catalog="it_ba_dcm" data-schema="gold" data-name="gold_dbx_usage_table_daily">
+                <td><span class="table-name">gold_dbx_usage_table_daily</span><span class="mono-id">it.ba_data_connect_monitoring__p.gold</span></td>
+                <td class="muted">MANAGED</td>
+                <td class="muted">squad-dcm</td>
+                <td class="muted">MERGE · il y a 4h · pipeline_gold</td>
+                <td class="cell-num">12</td>
+                <td><span class="badge badge-success">OK</span></td>
+              </tr>
+              <tr data-catalog="it_ba_supply" data-schema="curated" data-name="curated_inventory_snapshot">
+                <td><span class="table-name">curated_inventory_snapshot</span><span class="mono-id">it.ba_supply_chain__p.curated</span></td>
+                <td class="muted">MANAGED</td>
+                <td class="muted">squad-supply</td>
+                <td class="muted">WRITE · il y a 6j · pipeline_inventory</td>
+                <td class="cell-num">6</td>
+                <td><span class="badge badge-warning">Périmée mais lue</span></td>
+              </tr>
+              <tr data-catalog="it_ba_finance" data-schema="raw" data-name="raw_legacy_billing_2023">
+                <td><span class="table-name">raw_legacy_billing_2023</span><span class="mono-id">it.ba_finance__p.raw</span></td>
+                <td class="muted">MANAGED</td>
+                <td class="muted">—</td>
+                <td class="muted">CREATE · il y a 214j</td>
+                <td class="cell-num">0</td>
+                <td><span class="badge badge-neutral">Inutilisée</span></td>
+              </tr>
+              <tr data-catalog="it_ba_supply" data-schema="curated" data-name="curated_supplier_scorecard_v1">
+                <td><span class="table-name">curated_supplier_scorecard_v1</span><span class="mono-id">it.ba_supply_chain__p.curated</span></td>
+                <td class="muted">VIEW</td>
+                <td class="muted">—</td>
+                <td class="muted">CREATE · il y a 128j</td>
+                <td class="cell-num">0</td>
+                <td><span class="badge badge-neutral">Inutilisée</span></td>
+              </tr>
+              <tr data-catalog="it_ba_dcm" data-schema="gold" data-name="gold_compute_utilization">
+                <td><span class="table-name">gold_compute_utilization</span><span class="mono-id">it.ba_data_connect_monitoring__p.gold</span></td>
+                <td class="muted">MANAGED</td>
+                <td class="muted">squad-dcm</td>
+                <td class="muted">MERGE · il y a 2h · pipeline_gold</td>
+                <td class="cell-num">27</td>
+                <td><span class="badge badge-info">Critique</span></td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="empty-state" id="empty-gov" style="display:none;">Aucune table ne correspond aux filtres.</p>
+          <div class="card-footnote">Source : gold_dbx_usage_table_catalog (registre : owner, dernière opération) · gold_dbx_usage_table_governance (statut, fan-out, criticité). Fraîcheur (dernière écriture) disponible sur la page Usage des tables UC, onglet Par table.</div>
+        </div>
+      </div>
+
+      <!-- ===================== VUE RECOMMANDATIONS ===================== -->
+      <div id="view-reco" style="display:none;">
+
+        <div style="margin-bottom:1.5rem;">
+          <div class="section-label">Recommandations ouvertes</div>
+          <div class="kpi-grid">
+            <div class="kpi-card red">
+              <div class="kpi-card-header">High <span class="kpi-icon">⚠</span></div>
+              <div class="kpi-card-body"><div class="kpi-value red">2</div><div class="kpi-sub">Action immédiate recommandée</div></div>
+            </div>
+            <div class="kpi-card amber">
+              <div class="kpi-card-header">Medium <span class="kpi-icon">◔</span></div>
+              <div class="kpi-card-body"><div class="kpi-value amber">1</div><div class="kpi-sub">À planifier</div></div>
+            </div>
+            <div class="kpi-card blue">
+              <div class="kpi-card-header">Total ouvertes <span class="kpi-icon">💡</span></div>
+              <div class="kpi-card-body"><div class="kpi-value blue">3</div><div class="kpi-sub">status = OPEN</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="content-toolbar" style="margin-bottom:1rem;">
+          <button class="pill active" data-cat="all">Toutes catégories</button>
+          <button class="pill" data-cat="FRESHNESS">Fraîcheur</button>
+          <button class="pill" data-cat="RELIABILITY">Fiabilité</button>
+          <button class="pill" data-cat="LIFECYCLE">Cycle de vie</button>
+          <button class="pill" data-cat="GOVERNANCE">Gouvernance</button>
+          <button class="pill" data-cat="FINOPS">FinOps</button>
+        </div>
+
+        <div class="reco-list" id="reco-list">
+
+          <div class="reco-card high" data-cat="FRESHNESS" data-catalog="it_ba_supply" data-schema="curated" data-name="curated_inventory_snapshot">
+            <div class="reco-icon">⏳</div>
+            <div style="flex:1;">
+              <div class="reco-title">curated_inventory_snapshot est périmée mais encore lue
+                <span class="badge badge-danger">High</span>
+                <span class="badge badge-neutral">FRESHNESS</span>
+              </div>
+              <div class="reco-detail">Dernière écriture il y a 6 jours (SLA dépassé), 17 consommateurs distincts ont lu la table dans les dernières 24h.</div>
+              <div class="reco-action">Action : <b>corriger le pipeline amont</b> ; prévenir les consommateurs identifiés.</div>
+              <div class="reco-meta"><span>it.ba_supply_chain.curated</span><span>Détecté depuis le 12/08/2026</span><span>Persona : DE, OWN</span></div>
+            </div>
+          </div>
+
+          <div class="reco-card high" data-cat="RELIABILITY" data-catalog="it_ba_dcm" data-schema="curated" data-name="curated_dbx_query_history">
+            <div class="reco-icon">⛔</div>
+            <div style="flex:1;">
+              <div class="reco-title">curated_dbx_query_history — taux d'échec d'accès anormal
+                <span class="badge badge-danger">High</span>
+                <span class="badge badge-neutral">RELIABILITY</span>
+              </div>
+              <div class="reco-detail">7,6 % des accès en échec sur la période, contre 0,3 % en moyenne sur le catalogue.</div>
+              <div class="reco-action">Action : <b>investiguer les droits / le schéma</b> pour les identités en échec.</div>
+              <div class="reco-meta"><span>it.ba_data_connect_monitoring.curated</span><span>Détecté depuis le 17/08/2026</span><span>Persona : DE, AN</span></div>
+            </div>
+          </div>
+
+          <div class="reco-card medium" data-cat="LIFECYCLE" data-catalog="it_ba_finance" data-schema="raw" data-name="raw_legacy_billing_2023">
+            <div class="reco-icon">🧊</div>
+            <div style="flex:1;">
+              <div class="reco-title">2 tables inutilisées depuis plus de 90 jours
+                <span class="badge badge-warning">Medium</span>
+                <span class="badge badge-neutral">LIFECYCLE</span>
+              </div>
+              <div class="reco-detail">raw_legacy_billing_2023, curated_supplier_scorecard_v1 — aucune lecture détectée sur la période, aucune dépendance aval connue.</div>
+              <div class="reco-action">Action : <b>proposer une dépréciation</b> auprès des owners identifiés.</div>
+              <div class="reco-savings">💰 Économie estimée : $180/mois de compute maintenance évité</div>
+              <div class="reco-meta"><span>it.ba_finance.raw</span><span>Détecté depuis le 03/08/2026</span><span>Persona : OWN, FIN, GOV</span></div>
+            </div>
+          </div>
+
+        </div>
+        <p class="empty-state" id="empty-reco" style="display:none;">Aucune recommandation ne correspond aux filtres.</p>
+        <div class="card-footnote">Source : gold_dbx_usage_recommendations. status = OPEN par défaut. estimated_savings_usd affiché quand non NULL.</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('.tabbar button').forEach(function(b){
+  b.addEventListener('click',function(){
+    document.querySelectorAll('.tabbar button').forEach(function(x){x.classList.remove('active');});
+    b.classList.add('active');
+    var view=b.dataset.view;
+    document.getElementById('view-gov').style.display = view==='gov' ? '' : 'none';
+    document.getElementById('view-reco').style.display = view==='reco' ? '' : 'none';
+    document.getElementById('q').value='';
+    filterGov();filterReco();
+  });
+});
+
+var selectedTables=new Set();
+var mselBtn=document.getElementById('msel-btn-tables');
+var mselPanel=document.getElementById('msel-panel-tables');
+mselBtn.addEventListener('click',function(e){e.stopPropagation();mselPanel.classList.toggle('open');});
+document.addEventListener('click',function(e){
+  if(!document.getElementById('msel-tables').contains(e.target)) mselPanel.classList.remove('open');
+});
+document.getElementById('msel-search-tables').addEventListener('input',function(e){
+  var v=e.target.value.toLowerCase();
+  document.querySelectorAll('#msel-options-tables .msel-option').forEach(function(o){
+    o.style.display = o.dataset.name.toLowerCase().indexOf(v)!==-1 ? '' : 'none';
+  });
+});
+document.querySelectorAll('#msel-options-tables input[type=checkbox]').forEach(function(cb){
+  cb.addEventListener('change',function(){
+    if(cb.checked) selectedTables.add(cb.value); else selectedTables.delete(cb.value);
+    renderChips();filterGov();filterReco();
+  });
+});
+document.getElementById('msel-clear-tables').addEventListener('click',function(){
+  selectedTables.clear();
+  document.querySelectorAll('#msel-options-tables input[type=checkbox]').forEach(function(cb){cb.checked=false;});
+  renderChips();filterGov();filterReco();
+});
+document.getElementById('msel-apply-tables').addEventListener('click',function(){mselPanel.classList.remove('open');});
+function renderChips(){
+  var row=document.getElementById('chip-row-tables');
+  var count=document.getElementById('msel-count-tables');
+  row.innerHTML='';
+  if(selectedTables.size===0){count.style.display='none';return;}
+  count.style.display='';count.textContent=selectedTables.size;
+  selectedTables.forEach(function(name){
+    var chip=document.createElement('span');
+    chip.className='chip';
+    chip.innerHTML='🗄 '+name+' <button aria-label="Retirer">×</button>';
+    chip.querySelector('button').addEventListener('click',function(){
+      selectedTables.delete(name);
+      var cb=document.querySelector('#msel-options-tables input[value="'+name+'"]');
+      if(cb) cb.checked=false;
+      renderChips();filterGov();filterReco();
+    });
+    row.appendChild(chip);
+  });
+}
+
+var state={cat:'all',catalog:'all',schema:'all',q:''};
+document.querySelectorAll('.pill').forEach(function(p){
+  p.addEventListener('click',function(){
+    document.querySelectorAll('.pill').forEach(function(x){x.classList.remove('active');});
+    p.classList.add('active');
+    state.cat=p.dataset.cat;
+    filterReco();
+  });
+});
+document.getElementById('f-catalog').addEventListener('change',function(e){state.catalog=e.target.value;filterGov();filterReco();});
+document.getElementById('f-schema').addEventListener('change',function(e){state.schema=e.target.value;filterGov();filterReco();});
+document.getElementById('q').addEventListener('input',function(e){state.q=e.target.value.toLowerCase();filterGov();filterReco();});
+
+function matches(r){
+  return (state.catalog==='all'||r.dataset.catalog===state.catalog)
+    &&(state.schema==='all'||r.dataset.schema===state.schema)
+    &&(state.q===''||r.dataset.name.toLowerCase().indexOf(state.q)!==-1)
+    &&(selectedTables.size===0||selectedTables.has(r.dataset.name));
+}
+function filterGov(){
+  var visible=0;
+  document.querySelectorAll('#rows-gov > tr').forEach(function(r){
+    var ok=matches(r);r.style.display=ok?'':'none';if(ok)visible++;
+  });
+  document.getElementById('empty-gov').style.display=visible===0?'block':'none';
+}
+function filterReco(){
+  var visible=0;
+  document.querySelectorAll('#reco-list .reco-card').forEach(function(r){
+    var ok=(state.cat==='all'||r.dataset.cat===state.cat)&&matches(r);
+    r.style.display=ok?'':'none';
+    if(ok)visible++;
+  });
+  document.getElementById('empty-reco').style.display=visible===0?'block':'none';
+}
+
+/* ===== Pattern générique d'en-tête de colonne : tooltip / tri / filtre / redimensionnement ===== */
+(function(){
+  function parseVal(td, isNum){
+    if(!td) return isNum ? -Infinity : '';
+    var txt=(td.querySelector('.table-name')||td).textContent.trim();
+    if(!isNum) return txt.toLowerCase();
+    var n=txt.replace(/[^\d,.\-]/g,'').replace(/\s/g,'').replace(',', '.');
+    var f=parseFloat(n);
+    return isNaN(f) ? -Infinity : f;
+  }
+  function getUnits(tbody){
+    var units=[]; var rows=Array.prototype.slice.call(tbody.children);
+    for(var i=0;i<rows.length;i++){
+      var r=rows[i];
+      if(r.classList.contains('expand-row')) continue;
+      var next=rows[i+1];
+      units.push({lead:r, extra:(next && next.classList.contains('expand-row')) ? next : null});
+    }
+    return units;
+  }
+  function enhanceHeader(th, colIndex, table){
+    if(th.dataset.thAdv) return;
+    var label=th.textContent.trim();
+    if(!label) return;
+    var isNum=th.classList.contains('cell-num');
+    th.dataset.thAdv='1';
+    th.classList.add('th-adv');
+    th.setAttribute('aria-sort','none');
+    var wrap=document.createElement('span');
+    wrap.className='th-adv-inner'+(isNum?' th-num':'');
+    var btn=document.createElement('button');
+    btn.type='button'; btn.className='th-label-btn';
+    btn.innerHTML='<span class="lbl" title="'+label+'">'+label+'</span><svg class="th-sort-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m21 16-4 4-4-4"/><path d="M17 20V4"/><path d="m3 8 4-4 4 4"/><path d="M7 4v16"/></svg>';
+    var fbtn=document.createElement('button');
+    fbtn.type='button'; fbtn.className='th-filter-btn'; fbtn.setAttribute('aria-label','Filtrer '+label);
+    fbtn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>';
+    var panel=document.createElement('div'); panel.className='th-filter-panel';
+    wrap.appendChild(btn); wrap.appendChild(fbtn);
+    th.innerHTML=''; th.appendChild(wrap); th.appendChild(panel);
+    var resizer=document.createElement('span'); resizer.className='th-resizer';
+    th.appendChild(resizer);
+
+    var tbody=table.querySelector('tbody');
+    var activeFilters=new Set();
+
+    function buildPanel(){
+      var units=getUnits(tbody); var seen={}; var vals=[];
+      units.forEach(function(u){
+        var td=u.lead.children[colIndex]; if(!td) return;
+        var raw=(td.querySelector('.table-name, .badge')||td).textContent.trim();
+        if(raw && !seen[raw]){seen[raw]=1; vals.push(raw);}
+      });
+      panel.innerHTML='';
+      vals.slice(0,30).forEach(function(v){
+        var opt=document.createElement('label'); opt.className='th-filter-opt';
+        opt.innerHTML='<input type="checkbox" value="'+v.replace(/"/g,'&quot;')+'"'+(activeFilters.has(v)?' checked':'')+'><span>'+v+'</span>';
+        opt.querySelector('input').addEventListener('change', function(e){
+          if(e.target.checked) activeFilters.add(v); else activeFilters.delete(v);
+          applyFilter(); fbtn.classList.toggle('active', activeFilters.size>0);
+        });
+        panel.appendChild(opt);
+      });
+      var actions=document.createElement('div'); actions.className='th-filter-actions';
+      var clearBtn=document.createElement('button'); clearBtn.type='button'; clearBtn.textContent='Effacer';
+      clearBtn.addEventListener('click', function(){activeFilters.clear(); buildPanel(); applyFilter(); fbtn.classList.remove('active');});
+      actions.appendChild(clearBtn);
+      panel.appendChild(actions);
+    }
+    function applyFilter(){
+      var units=getUnits(tbody);
+      units.forEach(function(u){
+        var td=u.lead.children[colIndex]; if(!td) return;
+        var raw=(td.querySelector('.table-name, .badge')||td).textContent.trim();
+        var ok=activeFilters.size===0 || activeFilters.has(raw);
+        u.lead.style.display=ok?'':'none';
+        if(u.extra) u.extra.style.display = ok ? (u.lead.classList.contains('open') ? '' : 'none') : 'none';
+      });
+    }
+    fbtn.addEventListener('click', function(e){
+      e.stopPropagation();
+      var wasOpen=panel.classList.contains('open');
+      document.querySelectorAll('.th-filter-panel.open').forEach(function(p){p.classList.remove('open');});
+      if(!wasOpen){ buildPanel(); panel.classList.add('open'); }
+    });
+    document.addEventListener('click', function(e){ if(!th.contains(e.target)) panel.classList.remove('open'); });
+
+    btn.addEventListener('click', function(){
+      var cur=th.getAttribute('aria-sort');
+      var next = cur==='none' ? 'ascending' : (cur==='ascending' ? 'descending' : 'none');
+      Array.prototype.forEach.call(table.querySelectorAll('thead th'), function(h){ if(h!==th) h.setAttribute('aria-sort','none'); });
+      th.setAttribute('aria-sort', next);
+      var units=getUnits(tbody);
+      if(next==='none'){
+        units.sort(function(a,b){ return (+a.lead.dataset.origIdx||0) - (+b.lead.dataset.origIdx||0); });
+      } else {
+        units.sort(function(a,b){
+          var va=parseVal(a.lead.children[colIndex], isNum);
+          var vb=parseVal(b.lead.children[colIndex], isNum);
+          if(va<vb) return next==='ascending' ? -1 : 1;
+          if(va>vb) return next==='ascending' ? 1 : -1;
+          return 0;
+        });
+      }
+      units.forEach(function(u){ tbody.appendChild(u.lead); if(u.extra) tbody.appendChild(u.extra); });
+    });
+
+    resizer.addEventListener('mousedown', function(e){
+      e.preventDefault();
+      var startX=e.clientX, startW=th.offsetWidth;
+      resizer.classList.add('active');
+      function onMove(ev){
+        var w=Math.max(64, Math.min(640, startW + (ev.clientX-startX)));
+        th.style.width=w+'px';
+      }
+      function onUp(){
+        resizer.classList.remove('active');
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+      }
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+  }
+  function enhanceTable(table){
+    var tbody=table.querySelector('tbody');
+    if(tbody){ getUnits(tbody).forEach(function(u,i){ u.lead.dataset.origIdx=i; }); }
+    table.querySelectorAll('thead th').forEach(function(th, i){ enhanceHeader(th, i, table); });
+  }
+  document.querySelectorAll('table.data-table, table.mini-table').forEach(enhanceTable);
+})();
+</script>
+</body>
+</html>

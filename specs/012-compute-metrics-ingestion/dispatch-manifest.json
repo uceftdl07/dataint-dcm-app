@@ -1,0 +1,23 @@
+{
+  "updated_at": "2026-08-27T00:00:00Z",
+  "spec": "012-compute-metrics-ingestion",
+  "branch_strategy": "direct_to_base",
+  "child_branch_base": "develop",
+  "pr_target": "develop",
+  "integration_branch": null,
+  "epic": { "key": "DCINT-222", "url": "https://tdf.atlassian.net/browse/DCINT-222" },
+  "dispatch": [
+    { "task_id": "T001", "jira_key": "DCINT-223", "branch": "dataeng/012-curated-compute-system-tables", "status": "done" },
+    { "task_id": "T002", "jira_key": "DCINT-225", "branch": "dataeng/012-gold-compute-clusters", "status": "done" },
+    { "task_id": "T003", "jira_key": "DCINT-226", "branch": "dataeng/012-gold-warehouses", "status": "done" },
+    { "task_id": "T004", "jira_key": "DCINT-224", "branch": "dataeng/012-gold-compute-transverse", "status": "in_progress" },
+    { "task_id": "T005", "jira_key": "DCINT-273", "branch": "dataeng/012-gold-compute-forecast", "status": "in_progress" }
+  ],
+  "summary": {
+    "jira_stories_done": 5,
+    "jira_stories_total": 5,
+    "branches_done": 5,
+    "branches_total": 5,
+    "status": "in_progress"
+  }
+}

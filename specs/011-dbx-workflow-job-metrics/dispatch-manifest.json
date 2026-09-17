@@ -1,0 +1,46 @@
+{
+  "updated_at": "2026-08-04T15:55:00Z",
+  "spec": "011-dbx-workflow-job-metrics",
+  "branch_strategy": "direct_to_base",
+  "child_branch_base": "develop",
+  "pr_target": "develop",
+  "integration_branch": "fullstack/011-dbx-workflow-job-metrics",
+  "hotfix_park": "hotfix/011-dbx-workflow-job-metrics",
+  "parent": {
+    "key": "DCINT-173",
+    "url": "https://tdf.atlassian.net/browse/DCINT-173"
+  },
+  "epic": {
+    "key": "DCINT-168",
+    "url": "https://tdf.atlassian.net/browse/DCINT-168"
+  },
+  "dispatch": [
+    {
+      "task_id": "T001",
+      "jira_key": "DCINT-211",
+      "branch": "feature/DCINT-211-databricks-hub",
+      "sub_spec": "stories/T001-databricks-hub.md"
+    },
+    {
+      "task_id": "T002",
+      "jira_key": "DCINT-212",
+      "branch": "feature/DCINT-212-databricks-overview",
+      "sub_spec": "stories/T002-databricks-overview.md"
+    },
+    {
+      "task_id": "T004",
+      "jira_key": "DCINT-213",
+      "branch": "feature/DCINT-213-lakeflow-jobs",
+      "sub_spec": "stories/T004-lakeflow-jobs.md"
+    }
+  ],
+  "summary": {
+    "jira_subtasks_active": 3,
+    "jira_subtasks_cancelled": ["DCINT-214"],
+    "branches_active": 3,
+    "prs_active": [164, 165, 167],
+    "status": "complete",
+    "no_demo_data": true,
+    "no_lakeflow_overview": true
+  }
+}

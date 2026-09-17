@@ -1,0 +1,20 @@
+{
+  "work_type": "feature",
+  "domains": ["frontend", "backend"],
+  "ticket_plan": {
+    "mode": "one_per_domain",
+    "ticket_domains": ["frontend", "backend"],
+    "expected_story_count": 2
+  },
+  "dependency_gaps": [],
+  "packages": [
+    "packages/dcm-frontend",
+    "packages/dcm-backend",
+    "packages/dcm-commons"
+  ],
+  "priority": "P2",
+  "preset": "fullstack",
+  "selection_mode": "manual",
+  "summary": "Remplacer la registration par landing zone par une registration/join par projet sur la page login, supprimer l'onglet My Landing Zones, et reduire le modele de roles a 3 (project admin, project viewer, platform admin)",
+  "created_at": "2026-08-31T00:00:00Z"
+}

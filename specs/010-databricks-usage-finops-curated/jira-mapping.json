@@ -1,0 +1,26 @@
+{
+  "updated_at": "2026-07-27T00:00:00Z",
+  "spec": "010-databricks-usage-finops-curated",
+  "project": "DCINT",
+  "epic": {
+    "key": "DCINT-191",
+    "url": "https://tdf.atlassian.net/browse/DCINT-191",
+    "summary": "[010] Métriques Usage & FinOps Databricks (Azure + AWS) → couche curated"
+  },
+  "stories": [
+    {
+      "task_id": "T001",
+      "key": "DCINT-192",
+      "url": "https://tdf.atlassian.net/browse/DCINT-192",
+      "domain": "dataeng",
+      "summary": "T001 — Usage Databricks (compute, tables, access.audit) Azure+AWS → curated"
+    },
+    {
+      "task_id": "T002",
+      "key": "DCINT-193",
+      "url": "https://tdf.atlassian.net/browse/DCINT-193",
+      "domain": "dataeng",
+      "summary": "T002 — FinOps Databricks (billing.usage × list_prices) Azure+AWS → curated"
+    }
+  ]
+}

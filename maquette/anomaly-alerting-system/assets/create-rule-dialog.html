@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCM — Créer une règle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --font-sans:"Inter",ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --background:oklch(100% 0 0); --foreground:oklch(14.1% .005 285.823);
+  --card-background:oklch(99.5% 0 0); --card-radius:1.375rem; --card-shadow:0 18px 42px #0f172a1f;
+  --primary:oklch(60% .25 264.376); --primary-foreground:oklch(100% 0 0);
+  --secondary:oklch(96.7% .001 286.375); --secondary-foreground:oklch(21% .006 285.885);
+  --muted:oklch(96.7% .001 286.375); --muted-foreground:oklch(55.2% .016 285.938);
+  --border:oklch(92% .004 286.32); --input:oklch(98.5% 0 0); --ring:oklch(87.1% .006 286.286); --radius:.625rem;
+}
+*{box-sizing:border-box;}
+body{margin:0;font-family:var(--font-sans);background:var(--muted);color:var(--foreground);font-size:16px;-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:3rem 1rem;}
+.pill{font-family:inherit;border:1px solid var(--border);border-radius:999px;padding:.4rem .9rem;font-size:.8125rem;font-weight:600;background:var(--background);color:var(--foreground);cursor:pointer;}
+.pill.active{background:var(--primary);color:var(--primary-foreground);border-color:var(--primary);}
+.segmented{display:inline-flex;background:var(--muted);border-radius:999px;padding:3px;gap:2px;}
+.segmented button{font-family:inherit;border:none;background:transparent;padding:.5rem 1.1rem;border-radius:999px;font-size:.8125rem;font-weight:700;color:var(--muted-foreground);cursor:pointer;}
+.segmented button.active{background:var(--primary);color:var(--primary-foreground);}
+.modal{width:560px;max-width:100%;background:var(--card-background);border:1px solid var(--border);border-radius:var(--card-radius);box-shadow:var(--card-shadow);overflow:hidden;}
+.modal-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.modal-header h2{margin:0;font-size:1.05rem;font-weight:700;}
+.modal-header .sub{font-size:.8125rem;color:var(--muted-foreground);margin-top:.15rem;}
+.close-btn{width:2rem;height:2rem;border-radius:999px;border:1px solid var(--border);background:var(--background);cursor:pointer;font-size:.9rem;}
+.modal-body{padding:1.5rem;max-height:70vh;overflow-y:auto;}
+.field{margin-bottom:1.1rem;}
+.field label{font-size:.8125rem;font-weight:600;display:block;margin-bottom:.35rem;}
+.field .hint{font-size:.75rem;color:var(--muted-foreground);margin-top:.3rem;}
+input[type=text],input[type=number],select,textarea{width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:.55rem .75rem;font-family:inherit;font-size:.875rem;background:var(--input);color:var(--foreground);}
+input:focus,select:focus,textarea:focus{outline:none;box-shadow:0 0 0 3px var(--ring);}
+textarea{resize:vertical;min-height:64px;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.chip-group{display:flex;flex-wrap:wrap;gap:.5rem;}
+.alert-shortcut{border-top:1px dashed var(--border);margin-top:.5rem;padding-top:1.1rem;}
+.alert-shortcut summary{cursor:pointer;font-size:.8125rem;font-weight:600;display:flex;align-items:center;gap:.5rem;list-style:none;}
+.alert-shortcut summary::-webkit-details-marker{display:none;}
+.alert-shortcut .content{margin-top:.75rem;display:flex;flex-direction:column;gap:.5rem;}
+.alert-shortcut .note{font-size:.75rem;color:var(--muted-foreground);}
+.modal-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:.6rem;}
+.btn{font-family:inherit;cursor:pointer;border:1px solid var(--border);background:var(--background);color:var(--foreground);border-radius:999px;padding:.55rem 1.1rem;font-size:.8125rem;font-weight:600;}
+.btn-primary{background:var(--primary);color:var(--primary-foreground);border-color:var(--primary);}
+</style>
+</head>
+<body>
+<div class="modal">
+  <div class="modal-header">
+    <div><h2>Créer une règle</h2><div class="sub">Règle custom — évaluée dès le prochain cycle Databricks</div></div>
+    <button class="close-btn" aria-label="Fermer">✕</button>
+  </div>
+  <div class="modal-body">
+    <div class="field"><label for="name">Nom</label><input type="text" id="name" placeholder="Ex : Latence ingestion Azure &gt; 30min"></div>
+    <div class="field"><label for="desc">Description</label><textarea id="desc" placeholder="Contexte, impact attendu…"></textarea></div>
+    <div class="row2">
+      <div class="field"><label for="domain">Domaine</label>
+        <select id="domain">
+          <option value="pipeline">Pipeline</option><option value="compute">Compute</option><option value="cost">Cost</option>
+          <option value="standard_check">Standard check</option><option value="storage">Storage</option><option value="database">Database</option>
+        </select>
+      </div>
+      <div class="field"><label for="metric">Indicateur</label><select id="metric"></select><div class="hint">Chargé dynamiquement selon le domaine</div></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label for="op">Opérateur</label>
+        <select id="op"><option>&gt;</option><option>&lt;</option><option>&gt;=</option><option>&lt;=</option><option>=</option><option>≠</option></select>
+      </div>
+      <div class="field"><label for="threshold">Seuil</label><input type="number" id="threshold" placeholder="Ex : 30"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label for="sev">Sévérité</label>
+        <select id="sev"><option>Low</option><option selected>Medium</option><option>High</option><option>Critical</option></select>
+      </div>
+      <div class="field"><label>Mode de déclenchement</label>
+        <div class="segmented"><button type="button" class="active" data-mode="scheduled">Programmé</button><button type="button" data-mode="on_demand">Manuel</button></div>
+      </div>
+    </div>
+    <div class="field"><label>Portée LZ</label>
+      <div class="chip-group" id="lz-chips">
+        <button type="button" class="pill active">Toutes les LZ</button>
+        <button type="button" class="pill">azure-sub-fa5abbc4</button>
+        <button type="button" class="pill">aws-sub-2b91</button>
+        <button type="button" class="pill">azure-sub-77c1</button>
+      </div>
+      <div class="hint">Aucune sélection spécifique = toutes les LZ de l'utilisateur</div>
+    </div>
+    <details class="alert-shortcut">
+      <summary>☐ Configurer l'alerting maintenant <span class="hint">(raccourci — sinon disponible ensuite depuis Anomaly Rules)</span></summary>
+      <div class="content">
+        <div class="chip-group">
+          <button type="button" class="pill">📧 Email</button>
+          <button type="button" class="pill">💬 Teams</button>
+          <button type="button" class="pill">🎫 Jira</button>
+        </div>
+        <p class="note">La sélection détaillée des canaux et la fréquence de rappel se règlent dans l'Alert Config Dialog, ouvert automatiquement après la création si un canal est coché ici.</p>
+      </div>
+    </details>
+  </div>
+  <div class="modal-footer">
+    <button class="btn">Annuler</button>
+    <button class="btn btn-primary">Créer la règle</button>
+  </div>
+</div>
+<script>
+var metrics={
+  pipeline:['failure_rate','run_duration_p95','retry_count'],
+  compute:['idle_cluster_hours','dbu_consumption','node_utilization'],
+  cost:['daily_cost','cost_per_lz','budget_variance'],
+  standard_check:['schema_violation_count','null_rate','check_pass_rate'],
+  storage:['volume_usage_pct','object_count','growth_rate_7d'],
+  database:['query_timeout_count','connection_errors','avg_latency_ms']
+};
+var domainSel=document.getElementById('domain'), metricSel=document.getElementById('metric');
+function fillMetrics(){
+  metricSel.innerHTML='';
+  metrics[domainSel.value].forEach(function(m){
+    var o=document.createElement('option'); o.value=m; o.textContent=m; metricSel.appendChild(o);
+  });
+}
+domainSel.addEventListener('change',fillMetrics); fillMetrics();
+document.querySelectorAll('.segmented button').forEach(function(b){
+  b.addEventListener('click',function(){document.querySelectorAll('.segmented button').forEach(function(x){x.classList.remove('active');}); b.classList.add('active');});
+});
+document.querySelectorAll('#lz-chips .pill').forEach(function(p,i){
+  p.addEventListener('click',function(){
+    if(i===0){document.querySelectorAll('#lz-chips .pill').forEach(function(x,j){x.classList.toggle('active',j===0);});}
+    else{document.querySelectorAll('#lz-chips .pill')[0].classList.remove('active'); p.classList.toggle('active');}
+  });
+});
+document.querySelectorAll('.alert-shortcut .chip-group .pill').forEach(function(p){
+  p.addEventListener('click',function(){p.classList.toggle('active');});
+});
+</script>
+</body>
+</html>

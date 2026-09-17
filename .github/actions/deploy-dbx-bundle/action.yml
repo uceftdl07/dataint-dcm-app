@@ -1,0 +1,21 @@
+name: 'Job deployment'
+description: 'It deploys jobs to cluster using DAB'
+
+inputs:
+  DATABRICKS_ENVIRONMENT:
+    description: 'databricks environment'
+    required: true
+
+
+runs:
+  using: "composite"
+  steps:   
+    - uses: actions/checkout@v4    
+    - uses: databricks/setup-cli@main
+    - name: deploy jobs
+      shell: bash
+      run: |
+        databricks bundle deploy -t "$DATABRICKS_BUNDLE_ENV" --force-lock
+      working-directory: packages/dcm-databricks-pipeline
+      env:
+        DATABRICKS_BUNDLE_ENV: ${{ inputs.DATABRICKS_ENVIRONMENT }}

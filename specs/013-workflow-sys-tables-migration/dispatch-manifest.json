@@ -1,0 +1,23 @@
+{
+  "updated_at": "2026-08-17T13:53:30Z",
+  "spec": "013-workflow-sys-tables-migration",
+  "branch_strategy": "direct_to_base",
+  "child_branch_base": "develop",
+  "pr_target": "develop",
+  "integration_branch": null,
+  "epic": { "key": "DCINT-236", "url": "https://tdf.atlassian.net/browse/DCINT-236" },
+  "dispatch": [
+    { "task_id": "T001", "jira": "DCINT-238", "branch": "dataeng/013-curated-lakeflow-system-tables", "domain": "dataeng" },
+    { "task_id": "T002", "jira": "DCINT-237", "branch": "dataeng/013-bridge-views-regold-workflow", "domain": "dataeng" },
+    { "task_id": "T003", "jira": "DCINT-241", "branch": "dataeng/013-teardown-workflow-collector", "domain": "dataeng" },
+    { "task_id": "T004", "jira": "DCINT-239", "branch": "backend/013-backend-null-safe-freshness", "domain": "backend" },
+    { "task_id": "T005", "jira": "DCINT-240", "branch": "frontend/013-frontend-null-safe-freshness", "domain": "frontend" }
+  ],
+  "summary": {
+    "jira_stories_done": 5,
+    "jira_stories_total": 5,
+    "branches_done": 5,
+    "branches_total": 5,
+    "status": "complete"
+  }
+}

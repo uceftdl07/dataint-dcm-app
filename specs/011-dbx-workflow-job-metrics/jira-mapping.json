@@ -1,0 +1,59 @@
+{
+  "updated_at": "2026-08-04T15:55:00Z",
+  "spec": "011-dbx-workflow-job-metrics",
+  "jira_model": "subtasks_under_existing",
+  "parent": {
+    "key": "DCINT-173",
+    "url": "https://tdf.atlassian.net/browse/DCINT-173",
+    "summary": "FullStack- Exposed DBX Workflow/Jobs in DCM",
+    "issuetype": "Technical task"
+  },
+  "epic": {
+    "key": "DCINT-168",
+    "url": "https://tdf.atlassian.net/browse/DCINT-168",
+    "summary": "DCM — Workflows (Jobs & Pipelines) Databricks — Nouvelles métriques d'observabilité"
+  },
+  "hotfix_park": "hotfix/011-dbx-workflow-job-metrics",
+  "cancelled": [
+    {
+      "task_id": "T003",
+      "key": "DCINT-214",
+      "reason": "No Lakeflow/Overview page — keep Databricks Overview only",
+      "status": "Cancelled",
+      "pr": 166,
+      "pr_state": "closed"
+    }
+  ],
+  "stories": [
+    {
+      "task_id": "T001",
+      "key": "DCINT-211",
+      "url": "https://tdf.atlassian.net/browse/DCINT-211",
+      "summary": "T001 — Databricks hub, nav & workspaces",
+      "issuetype": "Sub-task",
+      "branch": "feature/DCINT-211-databricks-hub",
+      "sub_spec_path": "stories/T001-databricks-hub.md",
+      "status": "To Do"
+    },
+    {
+      "task_id": "T002",
+      "key": "DCINT-212",
+      "url": "https://tdf.atlassian.net/browse/DCINT-212",
+      "summary": "T002 — Databricks Overview (data réelle)",
+      "issuetype": "Sub-task",
+      "branch": "feature/DCINT-212-databricks-overview",
+      "sub_spec_path": "stories/T002-databricks-overview.md",
+      "status": "To Do"
+    },
+    {
+      "task_id": "T004",
+      "key": "DCINT-213",
+      "url": "https://tdf.atlassian.net/browse/DCINT-213",
+      "summary": "T004 — Lakeflow Jobs (liste + drill-down)",
+      "issuetype": "Sub-task",
+      "branch": "feature/DCINT-213-lakeflow-jobs",
+      "sub_spec_path": "stories/T004-lakeflow-jobs.md",
+      "status": "To Do"
+    }
+  ]
+}

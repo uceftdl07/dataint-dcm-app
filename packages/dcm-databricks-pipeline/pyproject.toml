@@ -1,0 +1,105 @@
+[tool.uv]
+link-mode = "copy"
+constraint-dependencies = [
+    "urllib3>=2.7.0",
+    "cryptography>=50.0.0",
+]
+
+[tool.uv.sources]
+dcm-commons = { path = "../dcm-commons", editable = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["pipelines"]
+
+[project]
+name = "dcm-databricks-pipeline"
+version = "0.1.1"
+description = "DCM Databricks PySpark pipeline — SQS to Lakebase PostgreSQL (Medallion architecture)"
+# Borne haute obligatoire : numpy==1.26.4 (dep transitive de pandas, epinglee dans
+# uv.lock) n'a pas de wheel precompile pour cp313/cp314. Sans borne, actions/setup-python
+# resout vers le dernier interpreteur disponible (3.14 sur le runner GH) et uv doit
+# compiler numpy depuis les sources (~5 min, cf. job "Install dependencies" > 5m).
+# 3.12 correspond aussi au runtime Python de Databricks (cf. constitution DCM).
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "boto3>=1.34",
+    "delta-spark>=3.1",
+    "pyspark>=3.5",
+    "databricks-sql-connector==4.2.6",
+    "azure-identity==1.20.0",
+    "databricks-sdk>=0.30",
+]
+
+# Points d'entree console des taches wheel (python_wheel_task).
+# `entry_point` cote job = la cle ci-dessous. `dcm-system-tables` recoit
+# `--table {{input}}` par iteration `for_each` (tables independantes) ;
+# `dcm-gold-dbx-compute` recoit `--table <cle>` par tache explicite (agregations
+# gold clusters chainees par `depends_on`, cf. `resources/job_dcm_gold_dbx_compute.yml`).
+[project.scripts]
+dcm-system-tables = "pipelines.system_tables.entrypoint:run"
+dcm-gold-dbx-compute = "pipelines.gold_dbx_compute.entrypoint:run"
+dcm-gold-dbx-usage = "pipelines.gold_dbx_usage.entrypoint:run"
+dcm-gold-dbx-workflow = "pipelines.gold_dbx_workflow.entrypoint:run"
+dcm-gold-dbx-workspace = "pipelines.gold_dbx_workspace.entrypoint:run"
+dcm-gold-landing-zone = "pipelines.gold_landing_zone.entrypoint:run"
+dcm-reference-lz = "pipelines.reference_lz.entrypoint:run"
+dcm-curated-purge = "pipelines.system_tables.purge_entrypoint:run"
+
+[project.optional-dependencies]
+dev = [
+    # dcm-commons n'est pas importe par les modules pipeline : garde en dev pour
+    # l'outillage local sans l'embarquer comme dependance runtime du wheel
+    # (introuvable sur PyPI ⇒ ferait echouer l'install du wheel sur le cluster).
+    "dcm-commons",
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "pytest-cov>=5.0",
+    "chispa>=0.9",
+    "ruff>=0.4",
+    "mypy>=1.9",
+    "ty>=0.0.13",
+    "boto3-stubs[sqs]",
+]
+
+# Debug local via Databricks Connect — À INSTALLER DANS UN VENV SÉPARÉ (.venv-debug),
+# jamais dans le venv principal : databricks-connect embarque son propre pyspark et
+# REFUSE de tourner si `pyspark` (dep runtime du wheel) est installé dans le même env
+# ("pyspark and databricks-connect cannot be installed at the same time").
+# Voir scripts/setup_debug_env.sh (cree .venv-debug) et .vscode/launch.json.
+debug = [
+    "databricks-connect>=16.4,<17",
+    "databricks-sql-connector==4.2.6",
+    "azure-identity==1.20.0",
+    "databricks-sdk>=0.30",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "ANN", "BLE", "C4", "SIM", "RUF"]
+ignore = ["ANN101", "ANN102", "ANN201"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+ignore_missing_imports = true
+# `pipelines/` est un namespace package (pas de `__init__.py`, volontaire) alors que
+# `pipelines/common/` en a un. Sans cette option, mypy en deduit que
+# `pipelines/common/models.py` est a la fois `common.models` et
+# `pipelines.common.models`, et s'arrete sur « Source file found twice under
+# different module names » — avant d'avoir verifie une seule ligne. Le gate `types`
+# de `dcm-review.sh` etait donc structurellement aveugle sur ce package.
+# Avec l'option : 70 fichiers analyses. Les erreurs restantes sont de la dette
+# `strict` prealable, a resorber a part — ne pas desactiver `strict` pour les taire.
+explicit_package_bases = true
+mypy_path = "."

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCM — Configurer l'alerting</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --font-sans:"Inter",ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --background:oklch(100% 0 0); --foreground:oklch(14.1% .005 285.823);
+  --card-background:oklch(99.5% 0 0); --card-radius:1.375rem; --card-shadow:0 18px 42px #0f172a1f;
+  --primary:oklch(60% .25 264.376); --primary-foreground:oklch(100% 0 0);
+  --secondary:oklch(96.7% .001 286.375); --secondary-foreground:oklch(21% .006 285.885);
+  --muted:oklch(96.7% .001 286.375); --muted-foreground:oklch(55.2% .016 285.938);
+  --info-subtle:oklch(95.5% .035 265); --info:oklch(60% .25 264.376);
+  --purple-subtle:oklch(95.5% .035 300); --purple:oklch(56% .22 300);
+  --warning-subtle:oklch(97.5% .045 85); --warning:oklch(46% .13 70);
+  --border:oklch(92% .004 286.32); --input:oklch(98.5% 0 0); --ring:oklch(87.1% .006 286.286); --radius:.625rem;
+}
+*{box-sizing:border-box;}
+body{margin:0;font-family:var(--font-sans);background:var(--muted);color:var(--foreground);font-size:16px;-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:3rem 1rem;}
+.modal{width:520px;max-width:100%;background:var(--card-background);border:1px solid var(--border);border-radius:var(--card-radius);box-shadow:var(--card-shadow);overflow:hidden;}
+.modal-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.modal-header h2{margin:0;font-size:1.05rem;font-weight:700;}
+.modal-header .sub{font-size:.8125rem;color:var(--muted-foreground);margin-top:.15rem;}
+.close-btn{width:2rem;height:2rem;border-radius:999px;border:1px solid var(--border);background:var(--background);cursor:pointer;font-size:.9rem;}
+.modal-body{padding:1.5rem;display:flex;flex-direction:column;gap:1rem;}
+.field label{font-size:.8125rem;font-weight:600;display:block;margin-bottom:.35rem;}
+select,input[type=text]{width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:.55rem .75rem;font-family:inherit;font-size:.875rem;background:var(--input);color:var(--foreground);}
+select:focus,input:focus{outline:none;box-shadow:0 0 0 3px var(--ring);}
+.channel-row{border:1px solid var(--border);border-radius:var(--radius);padding:.9rem 1rem;}
+.channel-row .head{display:flex;align-items:center;justify-content:space-between;}
+.channel-row .type{display:flex;align-items:center;gap:.6rem;font-weight:600;font-size:.875rem;}
+.type-icon{width:1.9rem;height:1.9rem;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:.9rem;}
+.type-icon.email{background:var(--info-subtle);color:var(--info);}
+.type-icon.teams{background:var(--purple-subtle);color:var(--purple);}
+.type-icon.jira{background:var(--warning-subtle);color:var(--warning);}
+.toggle{position:relative;display:inline-block;width:34px;height:20px;}
+.toggle input{opacity:0;width:0;height:0;position:absolute;}
+.toggle .track{position:absolute;inset:0;background:var(--border);border-radius:999px;cursor:pointer;transition:.15s;}
+.toggle .track:before{content:"";position:absolute;width:16px;height:16px;left:2px;top:2px;background:#fff;border-radius:50%;transition:.15s;box-shadow:0 1px 2px rgba(0,0,0,.15);}
+.toggle input:checked+.track{background:var(--primary);}
+.toggle input:checked+.track:before{transform:translateX(14px);}
+.channel-detail{margin-top:.8rem;display:none;grid-template-columns:1fr 1fr;gap:.75rem;}
+.channel-detail.open{display:grid;}
+.channel-detail label{font-size:.72rem;color:var(--muted-foreground);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:.3rem;}
+.modal-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:.6rem;}
+.btn{font-family:inherit;cursor:pointer;border:1px solid var(--border);background:var(--background);color:var(--foreground);border-radius:999px;padding:.55rem 1.1rem;font-size:.8125rem;font-weight:600;}
+.btn-primary{background:var(--primary);color:var(--primary-foreground);border-color:var(--primary);}
+</style>
+</head>
+<body>
+<div class="modal">
+  <div class="modal-header">
+    <div><h2>Configurer l'alerting</h2><div class="sub">Règle : Taux d'échec pipeline élevé</div></div>
+    <button class="close-btn" aria-label="Fermer">✕</button>
+  </div>
+  <div class="modal-body">
+    <div class="channel-row" data-channel="email">
+      <div class="head">
+        <div class="type"><span class="type-icon email">📧</span> Email</div>
+        <label class="toggle"><input type="checkbox" checked class="ch-toggle"><span class="track"></span></label>
+      </div>
+      <div class="channel-detail open">
+        <div class="field"><label>Canal</label><select><option>Email DBA Team</option></select></div>
+        <div class="field"><label>Fréquence de rappel</label><select><option>Daily</option><option selected>Weekly</option><option>Monthly</option></select></div>
+      </div>
+    </div>
+    <div class="channel-row" data-channel="teams">
+      <div class="head">
+        <div class="type"><span class="type-icon teams">💬</span> Teams</div>
+        <label class="toggle"><input type="checkbox" checked class="ch-toggle"><span class="track"></span></label>
+      </div>
+      <div class="channel-detail open">
+        <div class="field"><label>Canal</label><select><option>Canal Teams DataOps</option></select></div>
+        <div class="field"><label>Fréquence de rappel</label><select><option selected>Daily</option><option>Weekly</option><option>Monthly</option></select></div>
+      </div>
+    </div>
+    <div class="channel-row" data-channel="jira">
+      <div class="head">
+        <div class="type"><span class="type-icon jira">🎫</span> Jira</div>
+        <label class="toggle"><input type="checkbox" class="ch-toggle"><span class="track"></span></label>
+      </div>
+      <div class="channel-detail">
+        <div class="field"><label>Canal</label><select><option>Jira Incidents DCINT</option></select></div>
+        <div class="field"><label>Fréquence de rappel</label><select><option>Daily</option><option>Weekly</option><option>Monthly</option></select></div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn">Annuler</button>
+    <button class="btn btn-primary">Enregistrer</button>
+  </div>
+</div>
+<script>
+document.querySelectorAll('.ch-toggle').forEach(function(t){
+  t.addEventListener('change',function(){
+    var detail=t.closest('.channel-row').querySelector('.channel-detail');
+    detail.classList.toggle('open',t.checked);
+  });
+});
+</script>
+</body>
+</html>

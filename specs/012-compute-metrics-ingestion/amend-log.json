@@ -1,0 +1,12 @@
+{
+  "amendments": [
+    {
+      "at": "2026-08-27T00:00:00Z",
+      "task_id": "T005",
+      "domain": "dataeng",
+      "package": "packages/dcm-databricks-pipeline",
+      "reason": "T004 (gold-compute-transverse) originally covered both gold_dbx_compute_recommendations and gold_dbx_compute_forecast_daily. A real job run against real data on branch dataeng/012-gold-compute-transverse showed ai_forecast requires a Pro/Serverless SQL Warehouse and fails with UNSUPPORTED_FEATURE.AI_FUNCTION_PREVIEW on the job's generic serverless python_wheel_task compute — confirmed against Databricks' official ai_forecast docs (Requirements, V1 and V2). Split forecast_daily into its own task (T005) for a native sql_task redesign on a dedicated branch (dataeng/012-gold-compute-forecast, already created with a reference implementation), leaving T004 scoped to recommendations only (validated end-to-end, PR #219).",
+      "by": "user"
+    }
+  ]
+}

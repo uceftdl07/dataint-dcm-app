@@ -1,0 +1,36 @@
+{
+  "spec": "024-usage-tracking-governance",
+  "updated_at": "2026-09-17T00:00:00Z",
+  "project_key": "DCINT",
+  "epic": {
+    "key": "DCINT-333",
+    "url": "https://tdf.atlassian.net/browse/DCINT-333",
+    "summary": "[024] Tracking d'usage — Usage des tables UC & Gouvernance"
+  },
+  "story_model": "single_story_multi_task",
+  "story_model_note": "Ecart assume a la convention DCM 1-task-1-Story : 1 seule Story couvre les 3 tasks, sur une seule branche. Decision utilisateur enregistree dans intake.ticket_plan.note.",
+  "stories": [
+    {
+      "task_ids": [
+        "T001",
+        "T002",
+        "T003"
+      ],
+      "key": "DCINT-334",
+      "url": "https://tdf.atlassian.net/browse/DCINT-334",
+      "summary": "T001-T003: Tracking d'usage — pipeline gold usage, API /uc-usage, 2 pages UI",
+      "branch": "dataeng/024-usage-tracking-governance",
+      "sub_specs": [
+        "stories/T001-gold-usage-pipeline.md",
+        "stories/T002-uc-usage-api.md",
+        "stories/T003-uc-usage-pages.md"
+      ],
+      "domains": [
+        "dataeng",
+        "backend",
+        "frontend"
+      ],
+      "status": "To Do"
+    }
+  ]
+}

@@ -1,0 +1,274 @@
+name: dcm-frontend - CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'packages/dcm-frontend/**'
+      - '.github/workflows/dcm-frontend.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'packages/dcm-frontend/**'
+      - '.github/workflows/dcm-frontend.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        type: choice
+        required: true
+        default: 'dev'
+        options: [dev, prod]
+      deploy:
+        description: 'Run deploy step (uncheck to only test+build)'
+        type: boolean
+        required: false
+        default: true
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  NODE_VERSION: '20'
+  PACKAGE_DIR: packages/dcm-frontend
+
+jobs:
+  setup:
+    name: Resolve target environment
+    runs-on: ubuntu-latest
+    outputs:
+      deploy_env: ${{ steps.env.outputs.name }}
+      build_env: ${{ steps.env.outputs.build_env }}
+      should_deploy: ${{ steps.env.outputs.deploy }}
+    steps:
+      - id: env
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          GIT_REF: ${{ github.ref }}
+          GIT_REF_NAME: ${{ github.ref_name }}
+          INPUT_DEPLOY: ${{ inputs.deploy }}
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
+        run: |
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            # Manual run: env. choisi par l'utilisateur, deploy = case cochée
+            ENV_NAME="$INPUT_ENVIRONMENT"
+            echo "build_env=$ENV_NAME" >> "$GITHUB_OUTPUT"
+            if [[ "$INPUT_DEPLOY" == "true" ]]; then
+              if [[ "$ENV_NAME" == "prod" && "$GIT_REF" != refs/heads/hotfix/* ]]; then
+                echo "::error::Manual prod deploy is only allowed from hotfix/* branches (current: $GIT_REF_NAME)."
+                exit 1
+              fi
+              echo "name=$ENV_NAME" >> "$GITHUB_OUTPUT"
+              echo "deploy=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "name=" >> "$GITHUB_OUTPUT"
+              echo "deploy=false" >> "$GITHUB_OUTPUT"
+            fi
+          elif [[ "$EVENT_NAME" == "push" && "$GIT_REF" == "refs/heads/main" ]]; then
+            echo "name=prod" >> "$GITHUB_OUTPUT"
+            echo "build_env=prod" >> "$GITHUB_OUTPUT"
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          elif [[ "$EVENT_NAME" == "push" && "$GIT_REF" == "refs/heads/develop" ]]; then
+            echo "name=dev" >> "$GITHUB_OUTPUT"
+            echo "build_env=dev" >> "$GITHUB_OUTPUT"
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          else
+            # PR / autres branches : on ne déploie pas, mais on build
+            # contre l'env. dev pour valider la compilation avec des
+            # secrets réalistes (jamais ceux de prod).
+            echo "name=" >> "$GITHUB_OUTPUT"
+            echo "build_env=dev" >> "$GITHUB_OUTPUT"
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  test:
+    name: Lint & type check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.PACKAGE_DIR }}/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ${{ env.PACKAGE_DIR }}
+        run: npm ci
+
+      - name: Run ESLint (non-blocking)
+        id: eslint
+        continue-on-error: true
+        working-directory: ${{ env.PACKAGE_DIR }}
+        run: npm run lint 2>&1 | tee eslint-report.txt
+
+      - name: ESLint summary
+        if: always()
+        working-directory: ${{ env.PACKAGE_DIR }}
+        run: |
+          {
+            echo "## ESLint report - dcm-frontend"
+            if [[ "${{ steps.eslint.outcome }}" == "success" ]]; then
+              echo "Status: passed - no issues found."
+            else
+              echo "Status: issues found (non-blocking - to be fixed later)"
+              echo ""
+              echo '```'
+              cat eslint-report.txt 2>/dev/null || echo "(no report file)"
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: TypeScript type check (non-blocking)
+        id: tsc
+        continue-on-error: true
+        working-directory: ${{ env.PACKAGE_DIR }}
+        run: npx tsc --noEmit 2>&1 | tee tsc-report.txt
+
+      - name: TypeScript summary
+        if: always()
+        working-directory: ${{ env.PACKAGE_DIR }}
+        run: |
+          {
+            echo "## TypeScript report - dcm-frontend"
+            if [[ "${{ steps.tsc.outcome }}" == "success" ]]; then
+              echo "Status: passed - no type errors."
+            else
+              echo "Status: type errors found (non-blocking - to be fixed later)"
+              echo ""
+              echo '```'
+              cat tsc-report.txt 2>/dev/null || echo "(no report file)"
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  build:
+    name: Build frontend bundle (${{ needs.setup.outputs.build_env }})
+    needs: [setup, test]
+    runs-on: ubuntu-latest
+    environment: ${{ needs.setup.outputs.build_env }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.PACKAGE_DIR }}/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ${{ env.PACKAGE_DIR }}
+        run: npm ci
+
+      - name: Build (vite)
+        working-directory: ${{ env.PACKAGE_DIR }}
+        env:
+          # vars preferred; secrets fallback (prod currently stores VITE_* as secrets)
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL || secrets.VITE_API_BASE_URL }}
+          VITE_REDIRECT_URI: ${{ vars.VITE_REDIRECT_URI || secrets.VITE_REDIRECT_URI }}
+          VITE_ENABLE_AUTH: ${{ vars.VITE_ENABLE_AUTH || secrets.VITE_ENABLE_AUTH }}
+          VITE_AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          VITE_AZURE_CLIENT_ID: ${{ secrets.APP_ID }}
+          VITE_AZURE_SCOPE: ${{ secrets.AZURE_SCOPE }}
+        run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: dcm-frontend-dist
+          path: ${{ env.PACKAGE_DIR }}/dist
+          retention-days: 7
+
+  deploy:
+    name: Deploy to S3 & invalidate CloudFront (${{ needs.setup.outputs.deploy_env }})
+    needs: [setup, build]
+    if: needs.setup.outputs.should_deploy == 'true'
+    runs-on: ubuntu-latest
+    environment: ${{ needs.setup.outputs.deploy_env }}
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION || 'eu-central-1' }}
+      FRONTEND_BUCKET: ${{ secrets.FRONTEND_BUCKET }}
+      CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
+      AWS_FRONTEND_ROLE_ARN: ${{ secrets.AWS_FRONTEND_ROLE_ARN || vars.AWS_FRONTEND_ROLE_ARN }}
+      DEV_AWS_ACCOUNT_ID: ${{ vars.DEV_AWS_ACCOUNT_ID }}
+      PROD_AWS_ACCOUNT_ID: ${{ vars.PROD_AWS_ACCOUNT_ID }}
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: dcm-frontend-dist
+          path: dist
+
+      - name: Resolve frontend AWS account
+        id: frontend_aws
+        run: |
+          set -euo pipefail
+          if [[ "${{ needs.setup.outputs.deploy_env }}" == "prod" ]]; then
+            ACCOUNT_ID="$PROD_AWS_ACCOUNT_ID"
+            ACCOUNT_LABEL="prod"
+          else
+            ACCOUNT_ID="$DEV_AWS_ACCOUNT_ID"
+            ACCOUNT_LABEL="dev"
+          fi
+          if [[ -z "$ACCOUNT_ID" ]]; then
+            echo "::error::Missing vars.DEV_AWS_ACCOUNT_ID / vars.PROD_AWS_ACCOUNT_ID on GitHub environment '${{ needs.setup.outputs.deploy_env }}'."
+            exit 1
+          fi
+          echo "account_id=$ACCOUNT_ID" >> "$GITHUB_OUTPUT"
+          echo "account_label=$ACCOUNT_LABEL" >> "$GITHUB_OUTPUT"
+
+      - name: Validate deploy configuration
+        run: |
+          set -euo pipefail
+          if [[ -z "$AWS_FRONTEND_ROLE_ARN" ]]; then
+            echo "::error::Missing AWS_FRONTEND_ROLE_ARN on GitHub environment '${{ needs.setup.outputs.deploy_env }}'."
+            echo "::error::Must be an IAM role in account ${{ steps.frontend_aws.outputs.account_id }} (${{ steps.frontend_aws.outputs.account_label }})."
+            exit 1
+          fi
+          if [[ -z "$FRONTEND_BUCKET" || -z "$CLOUDFRONT_DISTRIBUTION_ID" ]]; then
+            echo "::error::Missing FRONTEND_BUCKET or CLOUDFRONT_DISTRIBUTION_ID on environment '${{ needs.setup.outputs.deploy_env }}'."
+            exit 1
+          fi
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ env.AWS_FRONTEND_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Verify AWS account (frontend workload)
+        run: |
+          set -euo pipefail
+          ACCOUNT="$(aws sts get-caller-identity --query Account --output text)"
+          EXPECTED="${{ steps.frontend_aws.outputs.account_id }}"
+          if [[ "$ACCOUNT" != "$EXPECTED" ]]; then
+            echo "::error::AWS role is in account $ACCOUNT — expected $EXPECTED (${{ steps.frontend_aws.outputs.account_label }})."
+            echo "::error::Set AWS_FRONTEND_ROLE_ARN on GitHub environment ${{ needs.setup.outputs.deploy_env }}."
+            exit 1
+          fi
+          echo "✓ AWS account $ACCOUNT — deploying to s3://$FRONTEND_BUCKET + CloudFront $CLOUDFRONT_DISTRIBUTION_ID"
+
+      - name: Sync hashed assets to S3 (long cache)
+        run: |
+          aws s3 sync dist/ s3://${{ env.FRONTEND_BUCKET }}/ \
+            --delete \
+            --exclude "index.html" \
+            --exclude "*.html" \
+            --cache-control "public, max-age=31536000, immutable"
+
+      - name: Sync HTML entrypoints to S3 (no cache)
+        run: |
+          aws s3 sync dist/ s3://${{ env.FRONTEND_BUCKET }}/ \
+            --exclude "*" \
+            --include "*.html" \
+            --cache-control "public, max-age=0, must-revalidate"
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ env.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"

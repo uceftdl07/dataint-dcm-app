@@ -1,0 +1,41 @@
+{
+  "work_type": "feature",
+  "domains": [
+    "dataeng"
+  ],
+  "packages": [
+    "packages/dcm-databricks-pipeline"
+  ],
+  "priority": "P2",
+  "preset": "dataeng-only",
+  "ticket_plan": {
+    "mode": "single_domain",
+    "ticket_domains": [
+      "dataeng"
+    ],
+    "expected_story_count": 4,
+    "tickets": [
+      {
+        "id": "T001",
+        "title": "Curated : registre UC (uc_tables, uc_table_tags, uc_table_operations)"
+      },
+      {
+        "id": "T002",
+        "title": "Gold fait usage : usage_table_daily, popularity_daily, consumer_daily, query_performance_daily"
+      },
+      {
+        "id": "T003",
+        "title": "Gold registre/état : usage_table_catalog, dim_workspace, usage_table_governance"
+      },
+      {
+        "id": "T004",
+        "title": "Gold transverse : usage_recommendations, usage_forecast_daily"
+      }
+    ]
+  },
+  "dependency_gaps": [
+    "Route backend packages/dcm-backend/app/api/routes/data_product_usage.py consomme l'ancienne table gold_data_product_usage ; cassera a terme (mapping colonnes different). A traiter dans une epic backend future separee, hors scope de cette epic dataeng."
+  ],
+  "verification": "dataeng_only_pytest_chispa",
+  "created_at": "2026-09-01T12:19:22Z"
+}

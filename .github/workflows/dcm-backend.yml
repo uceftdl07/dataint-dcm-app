@@ -1,0 +1,397 @@
+name: dcm-backend - CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'packages/dcm-backend/**'
+      - 'packages/dcm-commons/**'
+      - '.github/workflows/dcm-backend.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'packages/dcm-backend/**'
+      - 'packages/dcm-commons/**'
+      - '.github/workflows/dcm-backend.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        type: choice
+        required: true
+        default: 'dev'
+        options: [dev, prod]
+      deploy:
+        description: 'Run deploy step (uncheck to only test+build)'
+        type: boolean
+        required: false
+        default: true
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  PYTHON_VERSION: '3.12'
+  PACKAGE_DIR: packages/dcm-backend
+  IMAGE_TARBALL: dcm-backend-image.tar
+
+jobs:
+  setup:
+    name: Resolve target environment
+    runs-on: ubuntu-latest
+    outputs:
+      deploy_env: ${{ steps.env.outputs.name }}
+      should_deploy: ${{ steps.env.outputs.deploy }}
+    steps:
+      - id: env
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          GIT_REF: ${{ github.ref }}
+          GIT_REF_NAME: ${{ github.ref_name }}
+          INPUT_DEPLOY: ${{ inputs.deploy }}
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
+        run: |
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            if [[ "$INPUT_DEPLOY" == "true" ]]; then
+              if [[ "$INPUT_ENVIRONMENT" == "prod" && "$GIT_REF" != refs/heads/hotfix/* ]]; then
+                echo "::error::Manual prod deploy is only allowed from hotfix/* branches (current: $GIT_REF_NAME)."
+                exit 1
+              fi
+              echo "name=$INPUT_ENVIRONMENT" >> "$GITHUB_OUTPUT"
+              echo "deploy=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "name=" >> "$GITHUB_OUTPUT"
+              echo "deploy=false" >> "$GITHUB_OUTPUT"
+            fi
+          elif [[ "$EVENT_NAME" == "push" && "$GIT_REF" == "refs/heads/main" ]]; then
+            echo "name=prod" >> "$GITHUB_OUTPUT"
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          elif [[ "$EVENT_NAME" == "push" && "$GIT_REF" == "refs/heads/develop" ]]; then
+            echo "name=dev" >> "$GITHUB_OUTPUT"
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=" >> "$GITHUB_OUTPUT"
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        working-directory: ${{ env.PACKAGE_DIR }}
+        run: uv pip install --system -e ".[dev]"
+
+      - name: Run ruff check (non-blocking)
+        id: ruff
+        continue-on-error: true
+        working-directory: ${{ env.PACKAGE_DIR }}
+        run: ruff check . | tee ruff-report.txt
+
+      - name: Ruff summary
+        if: always()
+        working-directory: ${{ env.PACKAGE_DIR }}
+        run: |
+          {
+            echo "## Ruff report - dcm-backend"
+            if [[ "${{ steps.ruff.outcome }}" == "success" ]]; then
+              echo "Status: passed - no issues found."
+            else
+              echo "Status: issues found (non-blocking - to be fixed later)"
+              echo ""
+              echo '```'
+              cat ruff-report.txt 2>/dev/null || echo "(no report file)"
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run pytest
+        working-directory: ${{ env.PACKAGE_DIR }}
+        run: pytest
+
+  build:
+    name: Build Docker image
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build Docker image (no push)
+        uses: docker/build-push-action@v7
+        with:
+          # Repo root: the image needs packages/dcm-commons, a path dependency
+          # of dcm-backend, which a package-scoped context cannot reach.
+          context: .
+          file: ${{ env.PACKAGE_DIR }}/Dockerfile
+          push: false
+          tags: dcm-backend:${{ github.sha }}
+          outputs: type=docker,dest=/tmp/${{ env.IMAGE_TARBALL }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Upload image artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: dcm-backend-image
+          path: /tmp/${{ env.IMAGE_TARBALL }}
+          retention-days: 1
+
+  deploy:
+    name: Deploy to ECS (${{ needs.setup.outputs.deploy_env }})
+    needs: [setup, build]
+    if: needs.setup.outputs.should_deploy == 'true'
+    runs-on: ubuntu-latest
+    environment: ${{ needs.setup.outputs.deploy_env }}
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      ECR_REPOSITORY: ${{ secrets.BACKEND_ECR_REPOSITORY }}
+      ECS_CLUSTER: ${{ secrets.BACKEND_ECS_CLUSTER }}
+      ECS_SERVICE: ${{ secrets.BACKEND_ECS_SERVICE }}
+      DEV_AWS_ACCOUNT_ID: ${{ vars.DEV_AWS_ACCOUNT_ID }}
+      PROD_AWS_ACCOUNT_ID: ${{ vars.PROD_AWS_ACCOUNT_ID }}
+    steps:
+      - name: Download image artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: dcm-backend-image
+          path: /tmp
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Resolve backend target AWS account
+        id: backend_aws
+        run: |
+          set -euo pipefail
+          if [[ "${{ needs.setup.outputs.deploy_env }}" == "prod" ]]; then
+            ACCOUNT_ID="$PROD_AWS_ACCOUNT_ID"
+          else
+            ACCOUNT_ID="$DEV_AWS_ACCOUNT_ID"
+          fi
+          if [[ -z "$ACCOUNT_ID" ]]; then
+            echo "::error::Missing vars.DEV_AWS_ACCOUNT_ID / vars.PROD_AWS_ACCOUNT_ID on GitHub environment '${{ needs.setup.outputs.deploy_env }}'."
+            exit 1
+          fi
+          echo "account_id=$ACCOUNT_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Verify assumed AWS account
+        run: |
+          set -euo pipefail
+          ACCOUNT="$(aws sts get-caller-identity --query Account --output text)"
+          EXPECTED="${{ steps.backend_aws.outputs.account_id }}"
+          if [[ "$ACCOUNT" != "$EXPECTED" ]]; then
+            echo "::error::AWS role is in account $ACCOUNT — expected $EXPECTED for '${{ needs.setup.outputs.deploy_env }}'."
+            echo "::error::Fix AWS_ROLE_ARN on GitHub environment '${{ needs.setup.outputs.deploy_env }}'."
+            exit 1
+          fi
+          echo "✓ AWS account $ACCOUNT matches env '${{ needs.setup.outputs.deploy_env }}'"
+
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2.1.6
+
+      - name: Load, tag & push image to ECR
+        id: image
+        run: |
+          docker load --input /tmp/${{ env.IMAGE_TARBALL }}
+          REGISTRY=${{ steps.ecr-login.outputs.registry }}
+          IMAGE_URI="$REGISTRY/${{ env.ECR_REPOSITORY }}:${{ github.sha }}"
+          docker tag dcm-backend:${{ github.sha }} "$IMAGE_URI"
+          docker tag dcm-backend:${{ github.sha }} "$REGISTRY/${{ env.ECR_REPOSITORY }}:latest"
+          docker push "$IMAGE_URI"
+          docker push "$REGISTRY/${{ env.ECR_REPOSITORY }}:latest"
+          echo "uri=$IMAGE_URI" >> "$GITHUB_OUTPUT"
+
+      - name: Render new task definition (image + env + secrets)
+        id: render
+        env:
+          IMAGE_URI: ${{ steps.image.outputs.uri }}
+          SQS_QUEUE_URL: ${{ vars.SQS_QUEUE_URL }}
+          DCM_APP_NAME: ${{ vars.DCM_APP_NAME }}
+          DCM_ENVIRONMENT: ${{ vars.DCM_ENVIRONMENT }}
+          DCM_CORS_ALLOWED_ORIGINS: ${{ vars.DCM_CORS_ALLOWED_ORIGINS || vars.DCM_ALLOWED_ORIGINS }}
+          DCM_DATABRICKS_HOST: ${{ secrets.DCM_DATABRICKS_HOST }}
+          DCM_DATABRICKS_WAREHOUSE_ID: ${{ secrets.DCM_DATABRICKS_WAREHOUSE_ID }}
+          DCM_DATABRICKS_CATALOG: ${{ vars.DCM_DATABRICKS_CATALOG || secrets.DCM_DATABRICKS_CATALOG }}
+          DCM_DATABRICKS_SCHEMA: ${{ vars.DCM_DATABRICKS_SCHEMA || secrets.DCM_DATABRICKS_SCHEMA }}
+          DCM_DATABRICKS_SPN_CLIENT_ID: ${{ secrets.DCM_DATABRICKS_SPN_CLIENT_ID }}
+          DCM_DATABRICKS_SPN_CLIENT_SECRET_ARN: ${{ secrets.DCM_DATABRICKS_SPN_CLIENT_SECRET_ARN }}
+          DCM_ENTRA_TENANT_ID: ${{ secrets.DCM_ENTRA_TENANT_ID || secrets.AZURE_TENANT_ID }}
+          DCM_ENTRA_CLIENT_ID: ${{ secrets.DCM_ENTRA_CLIENT_ID }}
+          DCM_TEAMS_WEBHOOK_URL: ${{ secrets.DCM_TEAMS_WEBHOOK_URL }}
+          DCM_FRONTEND_URL: ${{ vars.VITE_REDIRECT_URI }}
+          DCM_CHAT_PROVIDER: ${{ vars.DCM_CHAT_PROVIDER || 'genie' }}
+          DCM_GENIE_SPACE_ID: ${{ vars.DCM_GENIE_SPACE_ID || secrets.DCM_GENIE_SPACE_ID }}
+          DCM_GENIE_API_BASE_URL: ${{ vars.DCM_GENIE_API_BASE_URL }}
+          AZURE_SCOPE: ${{ secrets.AZURE_SCOPE }}
+          DATABRICKS_SPN_CLIENT_SECRET_ARN: ${{ secrets.DCM_DATABRICKS_SPN_CLIENT_SECRET_ARN }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${DATABRICKS_SPN_CLIENT_SECRET_ARN:-}" ]]; then
+            echo "::error::DATABRICKS_SPN_CLIENT_SECRET_ARN is empty. Refusing to render task definition to avoid overwriting the secret."
+            exit 1
+          fi
+          if [[ "$DATABRICKS_SPN_CLIENT_SECRET_ARN" != arn:aws:secretsmanager:* ]]; then
+            echo "::error::DCM_DATABRICKS_SPN_CLIENT_SECRET_ARN must contain the AWS Secrets Manager ARN, not the Databricks client secret value."
+            exit 1
+          fi
+          if [[ "$DATABRICKS_SPN_CLIENT_SECRET_ARN" != *":DCM_DATABRICKS_SPN_CLIENT_SECRET::" ]]; then
+            SECRET_STRING=$(aws secretsmanager get-secret-value \
+              --secret-id "$DATABRICKS_SPN_CLIENT_SECRET_ARN" \
+              --query SecretString \
+              --output text)
+            SECRET_SHAPE=$(SECRET_STRING="$SECRET_STRING" python3 <<'PY'
+          import json
+          import os
+          import sys
+
+          value = os.environ.get("SECRET_STRING", "")
+          try:
+              parsed = json.loads(value)
+          except json.JSONDecodeError:
+              print("plaintext")
+              raise SystemExit(0)
+
+          if isinstance(parsed, dict) and "DCM_DATABRICKS_SPN_CLIENT_SECRET" in parsed:
+              print("json-with-databricks-secret")
+          else:
+              print("json-other")
+          PY
+            )
+            unset SECRET_STRING
+            if [[ "$SECRET_SHAPE" == "json-with-databricks-secret" ]]; then
+              echo "::error::DCM_DATABRICKS_SPN_CLIENT_SECRET_ARN points to a JSON secret. Use the ECS JSON-key suffix ':DCM_DATABRICKS_SPN_CLIENT_SECRET::' or create a dedicated plaintext secret."
+              exit 1
+            fi
+          fi
+
+          if [[ -z "${DCM_ENTRA_TENANT_ID:-}" ]]; then
+            echo "::error::DCM_ENTRA_TENANT_ID is empty. Set DCM_ENTRA_TENANT_ID or AZURE_TENANT_ID in the GitHub environment secrets."
+            exit 1
+          fi
+          if [[ -n "${AZURE_SCOPE:-}" ]]; then
+            if [[ "$AZURE_SCOPE" == api://*/* ]]; then
+              DERIVED_ENTRA_CLIENT_ID="${AZURE_SCOPE%/*}"
+            else
+              DERIVED_ENTRA_CLIENT_ID="$AZURE_SCOPE"
+            fi
+            if [[ -z "${DCM_ENTRA_CLIENT_ID:-}" ]]; then
+              DCM_ENTRA_CLIENT_ID="$DERIVED_ENTRA_CLIENT_ID"
+            elif [[ "$DCM_ENTRA_CLIENT_ID" != "$DERIVED_ENTRA_CLIENT_ID" && "$DCM_ENTRA_CLIENT_ID" != "${DERIVED_ENTRA_CLIENT_ID#api://}" ]]; then
+              echo "::warning::DCM_ENTRA_CLIENT_ID ($DCM_ENTRA_CLIENT_ID) differs from AZURE_SCOPE ($AZURE_SCOPE); using scope-derived $DERIVED_ENTRA_CLIENT_ID"
+              DCM_ENTRA_CLIENT_ID="$DERIVED_ENTRA_CLIENT_ID"
+            fi
+            export DCM_ENTRA_CLIENT_ID
+          fi
+          if [[ -z "${DCM_ENTRA_CLIENT_ID:-}" ]]; then
+            echo "::error::DCM_ENTRA_CLIENT_ID is empty. Set DCM_ENTRA_CLIENT_ID or AZURE_SCOPE in the GitHub environment secrets."
+            exit 1
+          fi
+          if [[ -z "${DCM_DATABRICKS_CATALOG:-}" || -z "${DCM_DATABRICKS_SCHEMA:-}" ]]; then
+            echo "::error::DCM_DATABRICKS_CATALOG and DCM_DATABRICKS_SCHEMA must be set (GitHub Variables or Secrets on environment '${{ needs.setup.outputs.deploy_env }}')."
+            echo "::error::Expected catalog=it and the schema of the target environment (ba_data_connect_monitoring__d for dev, ba_data_connect_monitoring__p for prod) — empty values break /api/v1/auth/me user lookup."
+            exit 1
+          fi
+          if [[ "${DCM_CHAT_PROVIDER:-genie}" == "genie" && -z "${DCM_GENIE_SPACE_ID:-}" ]]; then
+            echo "::error::DCM_GENIE_SPACE_ID is required when DCM_CHAT_PROVIDER=genie. Set it as a GitHub environment Variable or Secret on '${{ needs.setup.outputs.deploy_env }}'."
+            exit 1
+          fi
+          export DCM_CHAT_PROVIDER="${DCM_CHAT_PROVIDER:-genie}"
+          echo "Chat config for deploy: DCM_CHAT_PROVIDER=${DCM_CHAT_PROVIDER} DCM_GENIE_SPACE_ID=${DCM_GENIE_SPACE_ID:+set(${#DCM_GENIE_SPACE_ID} chars)}"
+
+          # Pull current task definition (active revision used by the service)
+          TASK_DEF_ARN=$(aws ecs describe-services \
+            --cluster "$ECS_CLUSTER" \
+            --services "$ECS_SERVICE" \
+            --query 'services[0].taskDefinition' \
+            --output text)
+
+          aws ecs describe-task-definition \
+            --task-definition "$TASK_DEF_ARN" \
+            --query 'taskDefinition' \
+            > current-taskdef.json
+
+          # Drop fields that register-task-definition refuses
+          jq 'del(
+                .taskDefinitionArn,
+                .revision,
+                .status,
+                .requiresAttributes,
+                .compatibilities,
+                .registeredAt,
+                .registeredBy
+              )' current-taskdef.json > stripped.json
+
+          # Python builds ECS env JSON — safe for any secret/var special characters
+          ENV_VARS_JSON=$(python3 <<'PY'
+          import json, os
+          KEYS = [
+              "SQS_QUEUE_URL", "DCM_APP_NAME", "DCM_ENVIRONMENT", "DCM_CORS_ALLOWED_ORIGINS",
+              "DCM_DATABRICKS_HOST", "DCM_DATABRICKS_WAREHOUSE_ID", "DCM_DATABRICKS_CATALOG",
+              "DCM_DATABRICKS_SCHEMA", "DCM_DATABRICKS_SPN_CLIENT_ID",
+              "DCM_DATABRICKS_SPN_CLIENT_SECRET_ARN",
+              "DCM_ENTRA_TENANT_ID", "DCM_ENTRA_CLIENT_ID",
+              "DCM_TEAMS_WEBHOOK_URL", "DCM_FRONTEND_URL",
+              "DCM_CHAT_PROVIDER", "DCM_GENIE_SPACE_ID", "DCM_GENIE_API_BASE_URL",
+          ]
+          print(json.dumps([{"name": k, "value": os.environ.get(k, "")} for k in KEYS]))
+          PY
+          )
+
+          SECRETS_JSON=$(jq -nc \
+            --arg arn "${DATABRICKS_SPN_CLIENT_SECRET_ARN}" \
+            '[{name: "DCM_DATABRICKS_SPN_CLIENT_SECRET", valueFrom: $arn}]')
+
+          # Patch container[0]: image + environment + secrets
+          jq \
+            --arg image "$IMAGE_URI" \
+            --argjson env_vars "$ENV_VARS_JSON" \
+            --argjson secrets "$SECRETS_JSON" \
+            '.containerDefinitions[0].image = $image
+             | .containerDefinitions[0].environment = $env_vars
+             | .containerDefinitions[0].secrets = $secrets' \
+            stripped.json > new-taskdef.json
+
+          if ! jq -e '.containerDefinitions[0].secrets[]? | select(.name == "DCM_DATABRICKS_SPN_CLIENT_SECRET")' new-taskdef.json >/dev/null; then
+            echo "::error::Rendered task definition does not inject DCM_DATABRICKS_SPN_CLIENT_SECRET"
+            exit 1
+          fi
+
+      - name: Register new task definition revision
+        id: register
+        run: |
+          set -euo pipefail
+          NEW_TD_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file://new-taskdef.json \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+          echo "Registered: $NEW_TD_ARN"
+          echo "arn=$NEW_TD_ARN" >> "$GITHUB_OUTPUT"
+
+      - name: Update ECS service to new revision
+        run: |
+          aws ecs update-service \
+            --cluster "$ECS_CLUSTER" \
+            --service "$ECS_SERVICE" \
+            --task-definition "${{ steps.register.outputs.arn }}" \
+            --force-new-deployment

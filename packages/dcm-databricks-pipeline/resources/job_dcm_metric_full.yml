@@ -1,0 +1,65 @@
+resources:
+
+  # Volume it.ba_data_connect_monitoring__d.ingestion_volume géré hors bundle (déjà existant)
+
+  # Job Orchestrator
+  jobs:
+    dcm_orchestrator:
+      name: "[${bundle.target}] DCM Observability Orchestrator"
+      max_concurrent_runs: 1
+      timeout_seconds: 7200
+
+      # Job cluster classique single-node dédié à la tâche SQS (boto3 + accès SQS/S3 via instance profile).
+      job_clusters:
+        - job_cluster_key: sqs_job_cluster
+          new_cluster:
+            spark_version: ${var.sqs_cluster_spark_version}
+            node_type_id: ${var.sqs_cluster_node_type}
+            num_workers: 0
+            is_single_node: true
+            data_security_mode: DATA_SECURITY_MODE_DEDICATED
+            kind: CLASSIC_PREVIEW
+            enable_elastic_disk: false
+            aws_attributes:
+              instance_profile_arn: ${var.sqs_instance_profile_arn}
+              first_on_demand: 1
+              zone_id: eu-central-1a
+
+      tasks:
+        - task_key: sqs_to_volume_drain
+          description: "Lit SQS (drain complet), depose JSON dans le volume d'ingestion"
+          job_cluster_key: sqs_job_cluster
+          libraries:
+            - pypi:
+                package: boto3
+          notebook_task:
+            notebook_path: ../pipelines/sqs_to_volume_drain.py
+            base_parameters:
+              sqs_queue_url:          ${var.sqs_queue_url}
+              ingestion_volume_path:  ${var.ingestion_volume_path}
+              batch_limit:            "0"
+          timeout_seconds: 1800
+          max_retries: 1
+          min_retry_interval_millis: 60000
+
+        - task_key: run_dlt_pipeline
+          description: "DLT pipeline RAW -> CURATED -> GOLD"
+          depends_on:
+            - task_key: sqs_to_volume_drain
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.dcm_dlt_pipeline.id}
+          timeout_seconds: 5400
+
+      email_notifications:
+        on_failure:
+          - ${var.notification_email}
+        no_alert_for_skipped_runs: true
+
+      tags:
+        project: dcm-databricks-pipeline
+        managed_by: databricks-asset-bundle
+
+      queue:
+        enabled: true
+
+      performance_target: PERFORMANCE_OPTIMIZED

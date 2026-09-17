@@ -1,0 +1,142 @@
+schema_version: "1.0"
+
+extension:
+  # `id` MUST equal the namespace of every command below: spec-kit validates
+  # `speckit.{id}.{command}` at install time and refuses the extension otherwise.
+  # It is also the install directory — renaming it is a migration, not a detail.
+  id: "dcm"
+  name: "DCM Team Workflow"
+  version: "2.9.2"
+  description: "DCM spec framework — spec/tasks/dispatch workflow with a pre-commit review gate on Claude Code and Copilot"
+  author: "DCM Squad"
+  repository: "https://github.com/TotalEnergiesCode/dataint-dcm-app/tree/main/spec-kit-dcm-workflow"
+  license: "MIT"
+
+requires:
+  speckit_version: ">=0.8.0"
+
+# One name per command, no `aliases:`: `specify extension add` registers a Claude
+# skill per name AND per alias, and each one costs context in every session.
+provides:
+  commands:
+    - name: "speckit.dcm.specify"
+      file: "commands/specify.md"
+      description: "Scope intake (work type, domains, ticket plan) then spec.md (flag: --intake-only)"
+
+    - name: "speckit.dcm.plan-guide"
+      file: "commands/plan-guide.md"
+      description: "Run the plan gate — spec Prerequisites present and filled"
+
+    - name: "speckit.dcm.tasks"
+      file: "commands/tasks.md"
+      description: "tasks.md + stories from spec, no questions (flags: --consolidate, --add, --append)"
+
+    - name: "speckit.dcm.implement"
+      file: "commands/implement.md"
+      description: "Task selection, branch check, per-task checkpoints during implement"
+
+    - name: "speckit.dcm.dispatch"
+      file: "commands/dispatch.md"
+      description: "Create Jira Epic + Stories and git child branches from tasks.md (flags: --jira-only, --branches-only)"
+
+    - name: "speckit.dcm.sync-status"
+      file: "commands/sync-status.md"
+      description: "Sync tasks.md completion status to Jira"
+
+    - name: "speckit.dcm.review"
+      file: "commands/review.md"
+      description: "Quality review — lint, tests, skills; --commit writes the pre-commit stamp"
+
+    - name: "speckit.dcm.publish-pr"
+      file: "commands/publish-pr.md"
+      description: "Commit, push child branch, open PR via GitHub MCP"
+
+    - name: "speckit.dcm.usage-report"
+      file: "commands/usage-report.md"
+      description: "Markdown report — tokens + model per specify/tasks/implement step or task"
+
+  # Every setting lives in dcm-config.template.yml. Scripts and commands read the
+  # installed dcm-config.yml directly (grep/python3), not via the ConfigManager.
+  config:
+    - name: "dcm-config.yml"
+      template: "dcm-config.template.yml"
+      description: "DCM workflow configuration"
+      required: true
+
+  templates:
+    # One template for the 5 work types: the agent deletes the work-type blocks that
+    # do not apply. `## Prerequisites` is the only section the plan gate requires.
+    - name: "spec.md"
+      path: "templates/spec.md"
+    - name: "story-spec.template.md"
+      path: "templates/story-spec.template.md"
+    - name: "merge-strategy.template.md"
+      path: "templates/merge-strategy.template.md"
+    - name: "usage-report.template.md"
+      path: "templates/usage-report.template.md"
+    - name: "active-epics.template.json"
+      path: "templates/active-epics.template.json"
+
+# Hooks are ADVISORY: execute_hook() only tells the agent how to run the command, so
+# `optional: false` is a hint. What really blocks are the shell scripts called from
+# the command bodies, by their exit code:
+#   scripts/dcm-precheck.sh --gate specify|plan|tasks|implement  (2 = stop)
+#   scripts/dcm-branch-sync-check.sh                             (2 = stop)
+#   scripts/dcm-conflict-check.sh                     (non-zero = stop)
+#   scripts/dcm-parse-tasks.sh              (2 = tasks.md format divergence)
+#   git-hooks/pre-commit + scripts/dcm-pre-commit-review-stamp.sh check
+# Anything that must not be skippable belongs there, not here.
+#
+# Every `command:` must match a provides.commands name — a hook can only name a
+# REGISTERED command; the flag rides along in the string. `--intake-only` is needed
+# because the base spec-kit specify command writes spec.md right after the hook.
+# (That command is /speckit-specify on Claude Code, /speckit.specify on Copilot —
+# shared sources write `{speckit}specify`; see GUIDE.md § Notation.)
+hooks:
+  before_specify:
+    - extension: dcm
+      command: "speckit.dcm.specify --intake-only"
+      enabled: true
+      optional: false
+      description: "Ask work type, domains, ticket plan — writes pending intake, then hands back"
+
+  before_plan:
+    - extension: dcm
+      command: "speckit.dcm.plan-guide"
+      enabled: true
+      optional: false
+      description: "dcm-precheck.sh --gate plan — Prerequisites section filled in spec.md"
+
+  before_tasks:
+    - extension: dcm
+      command: "speckit.dcm.tasks"
+      enabled: true
+      optional: false
+      description: "dcm-precheck.sh --gate tasks, then tasks.md + one sub-spec per task"
+
+  before_implement:
+    - extension: dcm
+      command: "speckit.dcm.implement"
+      enabled: true
+      optional: false
+      description: "dcm-precheck.sh --gate implement, branch + sync check, sub-spec only"
+
+  after_tasks:
+    - extension: dcm
+      command: "speckit.dcm.dispatch"
+      enabled: true
+      optional: true
+      prompt: "Dispatch Jira Stories and team branches?"
+      description: "Create Jira hierarchy and child git branches after task generation"
+
+tags:
+  - "workflow"
+  - "jira"
+  - "git"
+  - "dcm"
+  - "team-dispatch"
+  - "scope"
+  - "sub-spec"
+
+# No root-level `defaults:` on purpose: spec-kit only reads `config.defaults`, so it
+# would be dead code that drifts from dcm-config.template.yml.

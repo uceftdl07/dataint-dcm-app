@@ -1,0 +1,52 @@
+{
+  "updated_at": "2026-08-25T11:10:00Z",
+  "spec": "015-compute-metrics-exposition",
+  "branch_strategy": "direct_to_base",
+  "child_branch_base": "develop",
+  "pr_target": "develop",
+  "integration_branch": null,
+  "epic": {
+    "key": "DCINT-266",
+    "url": "https://tdf.atlassian.net/browse/DCINT-266",
+    "status": "created"
+  },
+  "dispatch": [
+    {
+      "task_id": "T001",
+      "domain": "backend",
+      "jira_key": "DCINT-267",
+      "branch": "backend/015-compute-metrics-api",
+      "sub_spec": "stories/T001-compute-metrics-api.md",
+      "pr": 213
+    },
+    {
+      "task_id": "T002",
+      "domain": "frontend",
+      "jira_key": "DCINT-268",
+      "branch": "frontend/015-compute-clusters-warehouses-ui",
+      "sub_spec": "stories/T002-compute-clusters-ui.md",
+      "pr": 214
+    },
+    {
+      "task_id": "T003",
+      "domain": "frontend",
+      "jira_key": "DCINT-269",
+      "branch": "frontend/015-compute-warehouses-ui",
+      "sub_spec": "stories/T003-compute-warehouses-ui.md",
+      "pr": null
+    },
+    {
+      "task_id": "T004",
+      "domain": "frontend",
+      "jira_key": "DCINT-270",
+      "branch": "frontend/015-compute-reco-forecast-ui",
+      "sub_spec": "stories/T004-compute-reco-forecast-ui.md",
+      "pr": null
+    }
+  ],
+  "summary": {
+    "jira_stories_done": 4,
+    "jira_stories_total": 4,
+    "status": "4_stories_page_by_page"
+  }
+}

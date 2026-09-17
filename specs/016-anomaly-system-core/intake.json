@@ -1,0 +1,44 @@
+{
+  "work_type": "feature",
+  "domains": ["dataeng", "backend", "frontend"],
+  "selection_mode": "manual",
+  "packages": {
+    "dataeng": ["packages/dcm-databricks-pipeline"],
+    "backend": ["packages/dcm-backend", "packages/dcm-commons"],
+    "frontend": ["packages/dcm-frontend"]
+  },
+  "priority": "P1",
+  "ticket_plan": {
+    "mode": "custom",
+    "count": 4,
+    "tickets": [
+      {
+        "task": "DataEng-anomaly-rules-schema",
+        "domain": "dataeng",
+        "scope": "UC tables anomaly_rules, anomaly_reports (DDL) + Rule Evaluator Databricks job (cron 15min: load rules -> eval thresholds -> open/close incidents)"
+      },
+      {
+        "task": "Backend-anomaly-rules-api",
+        "domain": "backend",
+        "scope": "CRUD anomaly_rules, GET /anomaly-reports (list/filter), POST /internal/anomaly-reports (M2M JWT ingress from pipeline)"
+      },
+      {
+        "task": "Frontend-anomaly-rules-page",
+        "domain": "frontend",
+        "scope": "Anomaly Rules page (table, create/edit custom rule dialog, activate/deactivate)"
+      },
+      {
+        "task": "Frontend-anomaly-reports-page",
+        "domain": "frontend",
+        "scope": "Anomaly Reports page (table, filters, detail view, Jira link placeholder)"
+      }
+    ]
+  },
+  "dependency_notes": "Alerting Module (notification_channels, alert_configs, AlertingService, MailJet/Teams/Jira) is a separate follow-up spec (Spec B), not in scope here. POST /internal/anomaly-reports is called by the pipeline but has no notification side-effect yet in this spec.",
+  "prerequisites": [
+    "P1 company anomaly rules spike: identify target metrics/thresholds per domain (pipeline, compute, cost, standard_check, storage, database) before /speckit.plan",
+    "Dedup policy decision: UNIQUE (rule_id, lz_id) vs multi-incident tolerance per rule"
+  ],
+  "contracts_note": "spec.md includes a Contracts section (AnomalyRule / AnomalyReport schema shape) referenced read-only by all 3 tickets to keep cross-domain context minimal.",
+  "summary": "D\u00e9tection d'anomalies DCM (rules + reports) - couche core avant le module alerting"
+}

@@ -1,0 +1,16 @@
+{
+  "work_type": "feature",
+  "domains": ["dataeng"],
+  "ticket_plan": {
+    "mode": "single_domain",
+    "ticket_domains": ["dataeng"],
+    "expected_story_count": 1
+  },
+  "dependency_gaps": [],
+  "packages": ["packages/dcm-databricks-pipeline"],
+  "priority": "P2",
+  "preset": "dataeng_only",
+  "selection_mode": "preset",
+  "summary": "Ingerer system.access.workspaces_latest (AWS+Azure) en curated_dbx_access_workspaces_latest et creer la vue dim_dbx_workspace (inner join avec dim_reference_landing_zone_dbx_workspace sur workspace_id, filtre subscription_or_account_id NOT NULL et status=RUNNING)",
+  "created_at": "2026-09-02T00:00:00Z"
+}

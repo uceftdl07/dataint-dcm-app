@@ -1,0 +1,38 @@
+{
+  "updated_at": "2026-08-25T00:00:00Z",
+  "pull_requests": [
+    {
+      "task_id": "T001",
+      "branch": "dataeng/012-curated-compute-system-tables",
+      "number": 184,
+      "url": "https://github.com/TotalEnergiesCode/dataint-dcm-app/pull/184",
+      "base": "develop",
+      "story_key": "DCINT-223"
+    },
+    {
+      "task_id": "T002",
+      "branch": "dataeng/012-gold-compute-clusters",
+      "number": 188,
+      "url": "https://github.com/TotalEnergiesCode/dataint-dcm-app/pull/188",
+      "base": "develop",
+      "story_key": "DCINT-225"
+    },
+    {
+      "task_id": "T003",
+      "branch": "dataeng/012-gold-warehouses",
+      "number": 212,
+      "url": "https://github.com/TotalEnergiesCode/dataint-dcm-app/pull/212",
+      "base": "develop",
+      "story_key": "DCINT-226"
+    },
+    {
+      "task_id": "T004",
+      "branch": "dataeng/012-gold-compute-transverse",
+      "number": 219,
+      "url": "https://github.com/TotalEnergiesCode/dataint-dcm-app/pull/219",
+      "base": "develop",
+      "story_key": "DCINT-224"
+    }
+  ]
+}
+

@@ -1,0 +1,127 @@
+[project]
+name = "dcm-azure-collector"
+version = "0.1.0"
+description = "DCM Azure collector agent — App Service WebJob collecting metrics from Azure LZ"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Proprietary — TotalEnergies internal use only" }
+authors = [{ name = "Yahia ZERDOUMI", email = "yahia.zerdoumi@totalenergies.com" }]
+
+dependencies = [
+    "dcm-commons",
+    "azure-identity>=1.17",
+    "azure-keyvault-secrets>=4.8",
+    "azure-mgmt-datafactory>=8.0",
+    "azure-mgmt-monitor>=6.0",
+    "azure-mgmt-costmanagement>=4.0",
+    "azure-mgmt-sql>=4.0.0b1",
+    "azure-mgmt-rdbms>=10.0",
+    "azure-mgmt-cosmosdb>=9.0",
+    "azure-mgmt-security>=7.0",
+    "azure-mgmt-policyinsights>=1.1.0b1,<1.1.0b6",
+    "azure-mgmt-resource>=23.0",
+    "httpx>=0.27",
+    "structlog>=24.4",
+    "croniter>=2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=9.0.3",
+    "pytest-asyncio>=0.23",
+    "pytest-mock>=3.14",
+    "respx>=0.21",
+    "ruff>=0.4",
+    "mypy>=1.10",
+]
+
+[project.scripts]
+dcm-azure-collector = "azure_collector.main:run"
+
+# ---------------------------------------------------------------------------
+# Build backend
+# ---------------------------------------------------------------------------
+[tool.uv]
+link-mode = "copy"
+prerelease = "if-necessary-or-explicit"
+constraint-dependencies = [
+    "cryptography>=49.0.0",
+    "urllib3>=2.7.0",
+    "cryptography>=50.0.0",
+]
+
+[tool.uv.sources]
+dcm-commons = { path = "../dcm-commons", editable = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["azure_collector"]
+
+# ---------------------------------------------------------------------------
+# Ruff
+# ---------------------------------------------------------------------------
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["azure_collector", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W", "F", "I", "N", "UP", "B", "C4",
+    "SIM", "TCH", "RUF", "ANN", "D", "PTH", "ASYNC",
+]
+ignore = [
+    "D100", "D104", "D107",
+    "ANN101", "ANN102",
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+known-first-party = ["azure_collector", "dcm_commons"]
+force-sort-within-sections = true
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+# ---------------------------------------------------------------------------
+# Mypy
+# ---------------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_return_any = true
+disallow_any_generics = true
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_reexport = true
+
+[[tool.mypy.overrides]]
+module = [
+    "msal.*",
+    "structlog.*",
+    "azure.*",
+]
+ignore_missing_imports = true
+
+# ---------------------------------------------------------------------------
+# Pytest
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = ["--strict-markers", "--tb=short", "-q"]
+markers = [
+    "unit: pure unit tests with no I/O",
+    "integration: tests that require real Azure credentials",
+]

@@ -1,0 +1,19 @@
+{
+  "work_type": "feature",
+  "domains": ["backend", "frontend", "dataeng"],
+  "packages": [
+    "packages/dcm-backend",
+    "packages/dcm-commons",
+    "packages/dcm-frontend",
+    "packages/dcm-databricks-pipeline"
+  ],
+  "priority": "P2",
+  "preset": "fullstack",
+  "ticket_plan": {
+    "mode": "one_per_domain",
+    "ticket_domains": ["dataeng", "backend", "frontend"],
+    "expected_story_count": 3
+  },
+  "dependency_gaps": [],
+  "created_at": "2026-08-21T00:00:00Z"
+}

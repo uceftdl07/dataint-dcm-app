@@ -1,0 +1,205 @@
+# Proactive ECR token refresh for Azure collector App Services (all client LZs).
+# ECR get-login-password tokens expire ~12h. This workflow updates DOCKER_REGISTRY_*
+# without stop/start so the next platform restart can still pull the image.
+# ECR token refresh: dcm-azure-collector-refresh-ecr-creds.yml (cron 6h)
+# Full pipeline or redeploy: dcm-azure-collector.yml
+
+name: dcm-azure-collector - Refresh ECR creds (client LZs)
+
+on:
+  schedule:
+    - cron: '0 */6 * * *' # 00:00, 06:00, 12:00, 18:00 UTC
+  workflow_dispatch:
+    inputs:
+      deploy_target:
+        description: 'all = every key in azure-collector-deploy-targets.json; or pick one LZ'
+        type: choice
+        required: true
+        default: all
+        options:
+          - all
+          - datasquad-d
+          - novadatahub-m
+      github_environment:
+        description: 'GitHub environment (AZURE_BUILDER_* + AWS_AZURE_COLLECTOR_ECR_ROLE_ARN)'
+        type: string
+        required: false
+        default: 'dev'
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION || 'eu-central-1' }}
+
+jobs:
+  resolve-targets:
+    name: Resolve refresh targets
+    runs-on: ubuntu-latest
+    outputs:
+      targets: ${{ steps.out.outputs.targets }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build target matrix
+        id: out
+        env:
+          INPUT_DEPLOY_TARGET: ${{ inputs.deploy_target }}
+        run: |
+          set -euo pipefail
+          TARGET="${INPUT_DEPLOY_TARGET:-all}"
+          FILE=".github/azure-collector-deploy-targets.json"
+          list_targets() {
+            jq -r 'keys[] | select(startswith("_") | not)' "$FILE" | paste -sd ', ' -
+          }
+          if [[ "$TARGET" == "all" ]]; then
+            TARGETS="$(jq -c '[keys[] | select(startswith("_") | not)]' "$FILE")"
+            echo "Refresh ALL: $(list_targets)"
+          else
+            if ! jq -e --arg t "$TARGET" '.[$t]' "$FILE" >/dev/null; then
+              echo "::error::Unknown deploy_target '$TARGET'. Targets: $(list_targets)"
+              exit 1
+            fi
+            TARGETS="$(jq -c --arg t "$TARGET" '[$t]' "$FILE")"
+            echo "Refresh one: $TARGET"
+          fi
+          echo "targets=$TARGETS" >> "$GITHUB_OUTPUT"
+
+  refresh-ecr-creds:
+    name: Refresh ${{ matrix.target }}
+    needs: resolve-targets
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJson(needs.resolve-targets.outputs.targets) }}
+    environment: ${{ inputs.github_environment || 'dev' }}
+    env:
+      DEPLOY_TARGET: ${{ matrix.target }}
+      AWS_COLLECTOR_ROLE_ARN: ${{ secrets.AWS_AZURE_COLLECTOR_ECR_ROLE_ARN || vars.AWS_AZURE_COLLECTOR_ECR_ROLE_ARN }}
+      AZURE_CLIENT_ID: ${{ vars.AZURE_BUILDER_CLIENT_ID || secrets.AZURE_BUILDER_CLIENT_ID || vars.AZURE_CLIENT_ID || secrets.AZURE_CLIENT_ID }}
+      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_BUILDER_CLIENT_SECRET || secrets.AZURE_CLIENT_SECRET }}
+      AZURE_TENANT_ID: ${{ vars.AZURE_BUILDER_TENANT_ID || secrets.AZURE_BUILDER_TENANT_ID || vars.AZURE_TENANT_ID || secrets.AZURE_TENANT_ID }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Load deploy target
+        id: target
+        env:
+          GITHUB_ENVIRONMENT: ${{ inputs.github_environment || 'dev' }}
+        run: |
+          set -euo pipefail
+          jq -r --arg t "$DEPLOY_TARGET" '
+            .[$t] |
+            [
+              .azure_subscription_id // "",
+              .resource_group // "",
+              .webapp_name // "",
+              (.description // "")
+            ] | @tsv
+          ' ".github/azure-collector-deploy-targets.json" | {
+            IFS=$'\t' read -r SUB RG APP DESC
+            {
+              echo "subscription_id=$SUB"
+              echo "resource_group=$RG"
+              echo "webapp_name=$APP"
+            } >> "$GITHUB_OUTPUT"
+            echo "Target: $DEPLOY_TARGET${DESC:+ — $DESC}"
+            echo "App Service: $APP ($RG)"
+          }
+
+          if [[ -z "$AZURE_CLIENT_ID" || -z "$AZURE_CLIENT_SECRET" || -z "$AZURE_TENANT_ID" ]]; then
+            echo "::error::Set AZURE_BUILDER_* on environment '$GITHUB_ENVIRONMENT'."
+            exit 1
+          fi
+          if [[ -z "$AWS_COLLECTOR_ROLE_ARN" ]]; then
+            echo "::error::Missing AWS_AZURE_COLLECTOR_ECR_ROLE_ARN."
+            exit 1
+          fi
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ env.AWS_COLLECTOR_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Get ECR pull credentials
+        id: ecr_creds
+        run: |
+          ECR_PASSWORD="$(aws ecr get-login-password --region "$AWS_REGION")"
+          echo "::add-mask::$ECR_PASSWORD"
+          echo "password=$ECR_PASSWORD" >> "$GITHUB_OUTPUT"
+
+      - name: Login to Azure
+        run: |
+          az login \
+            --service-principal \
+            --username "$AZURE_CLIENT_ID" \
+            --password "$AZURE_CLIENT_SECRET" \
+            --tenant "$AZURE_TENANT_ID" \
+            --output none
+
+      - name: Refresh registry password (no restart)
+        id: refresh
+        env:
+          LZ_SUBSCRIPTION_ID: ${{ steps.target.outputs.subscription_id }}
+        run: |
+          set -euo pipefail
+          az account set --subscription "$LZ_SUBSCRIPTION_ID"
+          RG="${{ steps.target.outputs.resource_group }}"
+          APP="${{ steps.target.outputs.webapp_name }}"
+
+          LINUX_FX="$(az webapp show -g "$RG" -n "$APP" --query siteConfig.linuxFxVersion -o tsv)"
+          if [[ "$LINUX_FX" != DOCKER\|* ]]; then
+            echo "::warning::$APP is not DOCKER ($LINUX_FX) — skip refresh."
+            echo "skipped=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          FULL_IMAGE="${LINUX_FX#DOCKER|}"
+          REGISTRY_HOST="${FULL_IMAGE%%/*}"
+          REGISTRY_URL="https://${REGISTRY_HOST}"
+
+          echo "Image (unchanged): $FULL_IMAGE"
+          echo "Registry: $REGISTRY_URL"
+
+          az webapp config container set \
+            -g "$RG" -n "$APP" \
+            --container-image-name "$FULL_IMAGE" \
+            --container-registry-url "$REGISTRY_URL" \
+            --container-registry-user AWS \
+            --container-registry-password "${{ steps.ecr_creds.outputs.password }}" \
+            --output none
+
+          echo "skipped=false" >> "$GITHUB_OUTPUT"
+          echo "✓ Refreshed ECR creds for $APP (no stop/start)"
+
+      - name: Verify App Service still healthy
+        if: steps.refresh.outputs.skipped != 'true'
+        env:
+          LZ_SUBSCRIPTION_ID: ${{ steps.target.outputs.subscription_id }}
+        run: |
+          set -euo pipefail
+          az account set --subscription "$LZ_SUBSCRIPTION_ID"
+          RG="${{ steps.target.outputs.resource_group }}"
+          APP="${{ steps.target.outputs.webapp_name }}"
+
+          META="$(az webapp show -g "$RG" -n "$APP" -o json --query '{
+            state: state,
+            availability: availabilityState,
+            image: siteConfig.linuxFxVersion
+          }')"
+          WEB_STATE="$(echo "$META" | jq -r '.state')"
+          AVAIL="$(echo "$META" | jq -r '.availability')"
+          IMAGE="$(echo "$META" | jq -r '.image')"
+
+          az webapp show -g "$RG" -n "$APP" \
+            --query "{name:name,state:state,availability:availabilityState,image:siteConfig.linuxFxVersion}" \
+            -o table
+
+          if [[ "$WEB_STATE" != "Running" || "$AVAIL" != "Normal" || "$IMAGE" != DOCKER\|* ]]; then
+            echo "::error::$APP not Running/Normal after cred refresh — run dcm-azure-collector.yml (redeploy_only)."
+            exit 1
+          fi
+          echo "✓ $APP Running/Normal — creds refreshed, container not restarted"

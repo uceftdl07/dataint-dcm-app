@@ -1,0 +1,83 @@
+lz_id: novadatahub
+application_rules:
+  - description: Python
+    comment: Flow needed to download Python packages (required by az CLI)
+    target_fqdns:
+      - pypi.org
+      - pypi.io
+      - pypi.python.org
+      - '*.pythonhosted.org'
+    protocol_port:
+      - Https
+  - description: Maven
+    comment: Access maven repository
+    target_fqdns:
+      - '*.maven.org'
+      - '*.maven.apache.org'
+    protocol_port:
+      - Https
+  - description: novadatahub DCM Entra ID auth
+    comment: SP collector + MI App Service
+    target_fqdns:
+      - login.live.com
+      - login.microsoftonline.com
+      - graph.microsoft.com
+      - '*.login.microsoftonline.com'
+      - '*.aadcdn.msftauth.net'
+      - '*.logincdn.msftauth.net'
+      - '*.login.live.com'
+      - '*.login.windows.net'
+      - '*.aadcdn.microsoftonline-p.com'
+      - '*.microsoftonline-p.com'
+      - '*.hubtotal.net'
+    protocol_port:
+      - Https
+  - description: novadatahub DCM Azure Management APIs
+    comment: ADF, Cost, databases, ARM
+    target_fqdns:
+      - management.azure.com
+    protocol_port:
+      - Https
+  - description: novadatahub DCM Databricks control plane
+    comment: Collector databricks
+    target_fqdns:
+      - '*.azuredatabricks.net'
+    protocol_port:
+      - Https
+  - description: novadatahub DCM APIGEE ingest dev
+    comment: dev.apixnp.alzp.tgscloud.net
+    target_fqdns:
+      - '*.apixnp.alzp.tgscloud.net'
+      - '*.apixnp.iasp.tgscloud.net'
+    protocol_port:
+      - Https
+  - description: novadatahub DCM APIGEE ingest prod
+    comment: apix.alzp.tgscloud.net
+    target_fqdns:
+      - '*.apix.alzp.tgscloud.net'
+    protocol_port:
+      - Https
+  - description: novadatahub DCM ECR Docker pull dev
+    comment: awss-wl-dcm 551656632516
+    target_fqdns:
+      - 551656632516.dkr.ecr.eu-central-1.amazonaws.com
+    protocol_port:
+      - Https
+  - description: novadatahub DCM ECR Docker pull prod
+    comment: awsp-dcm 884068385310
+    target_fqdns:
+      - 884068385310.dkr.ecr.eu-central-1.amazonaws.com
+    protocol_port:
+      - Https
+  - description: novadatahub DCM ECR auth token
+    comment: GetAuthorizationToken eu-central-1
+    target_fqdns:
+      - api.ecr.eu-central-1.amazonaws.com
+    protocol_port:
+      - Https
+  - description: novadatahub DCM ECR Docker layers S3
+    comment: Starport layer bucket eu-central-1
+    target_fqdns:
+      - prod-eu-central-1-starport-layer-bucket.s3.eu-central-1.amazonaws.com
+    protocol_port:
+      - Https

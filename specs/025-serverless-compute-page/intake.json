@@ -1,0 +1,50 @@
+{
+  "work_type": "feature",
+  "domains": ["frontend", "backend", "dataeng"],
+  "ticket_plan": {
+    "mode": "one_per_domain",
+    "ticket_domains": ["dataeng", "backend", "frontend"],
+    "expected_story_count": 3
+  },
+  "dependency_gaps": [
+    {
+      "need": "Tables gold au grain surface serverless (serverless_cost_daily / _rolling / _governance)",
+      "required_domain": "dataeng",
+      "ticket_planned": true,
+      "resolution": "add_backend_ticket",
+      "evidence": "packages/dcm-databricks-pipeline/pipelines/gold_dbx_compute/ — aucune table gold_dbx_compute_serverless_*; cluster_cost_daily.py:129 filtre usage_metadata.cluster_id IS NOT NULL, ce qui exclut structurellement tout le serverless",
+      "spec_note": "Story dataeng : nouvelles tables gold + 4 correctifs sur les builders existants (warehouse_utilization_daily, job_cluster_cost_daily, pipeline_cost_daily, cluster_cost_daily)"
+    },
+    {
+      "need": "Endpoints REST /compute-metrics/serverless/*",
+      "required_domain": "backend",
+      "ticket_planned": true,
+      "resolution": "add_backend_ticket",
+      "evidence": "packages/dcm-backend/app/api/routes/compute_metrics.py — 29 routes GET (clusters/warehouses/jobs/pipelines/recommendations/forecast), aucune route serverless ; 'serverless' n'apparait qu'en commentaire ligne 1248",
+      "spec_note": "Story backend : overview / cost / governance / leviers / drill-down par surface + neutralisation de l'efficience serverless dans les reponses warehouse"
+    },
+    {
+      "need": "Page /databricks/serverless + 3 composants de dataviz absents",
+      "required_domain": "frontend",
+      "ticket_planned": true,
+      "resolution": "add_backend_ticket",
+      "evidence": "packages/dcm-frontend/src/config/navigation.ts — groupe Compute a 5 feuilles, aucune 'Serverless' ; packages/dcm-frontend/src/components/domain/compute/ — ComputeKpiCard/ComputeDataTable/ComputeTrendChart/ComputeTabs reutilisables, mais aucune barre empilee, aucune barre horizontale triee, aucune heatmap",
+      "spec_note": "Story frontend : page + entree nav + 3 nouveaux composants ; ComputePipelines.tsx montre deja le pattern compute_kind (spec 024 T008) a reprendre"
+    }
+  ],
+  "packages": [
+    "packages/dcm-databricks-pipeline",
+    "packages/dcm-backend",
+    "packages/dcm-commons",
+    "packages/dcm-frontend"
+  ],
+  "priority": "P2",
+  "preset": "full_platform",
+  "selection_mode": "preset",
+  "summary": "Page Serverless compute : rendre visibles les 38 % de depense DBU (136 674 $/30j) invisibles dans DCM, sur les 11 surfaces serverless, et corriger les 4 defauts des pages compute existantes dont ~98 k$/30j d'economies fictives sur les warehouses serverless",
+  "created_at": "2026-09-10T00:00:00Z",
+  "intake_mode": "non_interactive",
+  "intake_source": "docs/spike/serverless-compute-page/proposition.md (revision 2026-09-10) — Q1-Q7 repondues depuis le spike sur instruction utilisateur d'autonomie totale, pas par AskQuestion",
+  "amended_at": "2026-09-10T00:00:00Z",
+  "amend_count": 1
+}

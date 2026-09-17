@@ -1,0 +1,10 @@
+{
+  "name": "dcm",
+  "displayName": "Data Connect Monitoring",
+  "description": "DCM toolkit for Landing Zone collector onboarding: Entra ID SP setup, secrets, cloud permissions, collector packages (Azure/AWS), and ingestion validation.",
+  "version": "1.0.0",
+  "publisher": "BA-Data-Connect-Monitoring",
+  "keywords": ["dcm", "data-connect-monitoring", "landing-zone", "collector", "entra-id", "apigee"],
+  "agents": "agents/",
+  "skills": "skills/"
+}

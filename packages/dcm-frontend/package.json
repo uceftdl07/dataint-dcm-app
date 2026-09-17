@@ -1,0 +1,69 @@
+{
+  "name": "dcm-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier . --write --ignore-unknown",
+    "format:check": "prettier . --check --ignore-unknown",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:perf": "vitest run src/hooks/data-fetching.perf.test.ts src/hooks/useHeaderNotifications.test.ts src/hooks/useNotificationPreferences.test.ts",
+    "prepare": "cd ../.. && husky packages/dcm-frontend/.husky"
+  },
+  "dependencies": {
+    "@azure/msal-browser": "^4.0.0",
+    "@azure/msal-react": "^3.0.0",
+    "@tanstack/react-query": "^5.100.14",
+    "clsx": "^2.0.0",
+    "date-fns": "^3.0.0",
+    "driver.js": "^1.4.0",
+    "lucide-react": "^0.400.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "react-router-dom": "^6.30.4",
+    "recharts": "^2.12.0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "@vitejs/plugin-react": "^6.0.2",
+    "autoprefixer": "^10.4.0",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.0",
+    "husky": "^9.1.7",
+    "jsdom": "^27.0.1",
+    "lint-staged": "^17.0.5",
+    "postcss": "^8.5.23",
+    "prettier": "^3.8.3",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.4.0",
+    "vite": "^8.0.16",
+    "vitest": "^4.1.9"
+  },
+  "overrides": {
+    "brace-expansion@1": "1.1.18",
+    "brace-expansion@2": "2.1.4",
+    "js-yaml": "4.3.1",
+    "nanoid": "3.3.18"
+  },
+  "lint-staged": {
+    "src/**/*.{ts,tsx}": [
+      "eslint --fix --max-warnings 0",
+      "prettier --write"
+    ],
+    "**/*.{js,jsx,cjs,mjs,json,css,md,html,yml,yaml}": "prettier --write",
+    "vite.config.ts": "prettier --write"
+  }
+}

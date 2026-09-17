@@ -1,0 +1,8 @@
+{
+  "domains": ["dataeng", "backend", "frontend"],
+  "packages": {
+    "dataeng": ["packages/dcm-databricks-pipeline"],
+    "backend": ["packages/dcm-backend", "packages/dcm-commons"],
+    "frontend": ["packages/dcm-frontend"]
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "work_type": "feature",
+  "domains": ["frontend", "backend", "dataeng"],
+  "ticket_plan": {
+    "mode": "one_per_domain",
+    "ticket_domains": ["dataeng", "backend", "frontend"],
+    "expected_story_count": 3
+  },
+  "dependency_gaps": [
+    {
+      "need": "Lifetime_previous_period et IDLE_previous_period sur les fenetres glissantes",
+      "required_domain": "dataeng",
+      "ticket_planned": true,
+      "resolution": "add_dataeng_ticket",
+      "evidence": "packages/dcm-databricks-pipeline/pipelines/gold_dbx_compute/cluster_efficiency_rolling.py — aucune colonne *_prev_window ; seul cluster_cost_rolling.cost_usd_prev_window existe",
+      "spec_note": "Ajouter uptime_hours_prev_window et idle_pct_prev_window a gold_dbx_compute_cluster_efficiency_rolling, symetriquement a cost_usd_prev_window. La table doit de toute facon etre recreee (active_hours passe de bigint a decimal dans b102155) : la migration est deja payee."
+    },
+    {
+      "need": "Autoscaling actif, min_node et max_node par cluster",
+      "required_domain": "dataeng",
+      "ticket_planned": true,
+      "resolution": "add_dataeng_ticket",
+      "evidence": "packages/dcm-backend/app/api/routes/clusters.py:162-181 — la requete de GET /compute ne selectionne pas autoscale_min/autoscale_max, le modele les expose donc toujours a null ; seul curated_dbx_compute_clusters.min_autoscale_workers/max_autoscale_workers porte l'information",
+      "spec_note": "Exposer autoscale_enabled, autoscale_min_workers, autoscale_max_workers depuis la CTE clusters_as_of de cluster_efficiency_daily (curated_dbx_compute_clusters deja jointe pour driver/worker_node_type), puis les propager via latest_attrs dans cluster_efficiency_rolling. Evite que le service compute-metrics du backend, qui ne lit que du gold et des dimensions, franchisse la frontiere medaillon."
+    }
+  ],
+  "packages": [
+    "packages/dcm-frontend",
+    "packages/dcm-backend",
+    "packages/dcm-databricks-pipeline"
+  ],
+  "priority": "P2",
+  "preset": null,
+  "selection_mode": "manual",
+  "summary": "Adapter les pages Cluster (front + back) aux tables gold *_rolling : filtre de plage statique 1/7/30/90 jours avec from_date/to_date affiches, indicateurs par onglet Overview/Cost/Efficiency, et detail cluster enrichi des specs techniques avec tendances Cost et Lifetime sur ~90 jours suivables par jour, semaine et mois",
+  "created_at": "2026-09-04T22:34:40Z"
+}

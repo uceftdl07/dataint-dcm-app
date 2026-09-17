@@ -1,0 +1,31 @@
+name: 'Install dependencies'
+description: "Build python package with uv"
+# installs dependencies for python project using uv
+runs:
+  using: "composite"
+  steps:
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+      with:
+        enable-cache: true
+        cache-dependency-glob: "packages/dcm-databricks-pipeline/uv.lock"
+
+    - name: Setup Java 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Setup python
+      id: setup-python
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: 'packages/dcm-databricks-pipeline/pyproject.toml'
+        architecture: x64
+
+    - name: Install python packages
+      shell: bash
+      working-directory: packages/dcm-databricks-pipeline
+      run: |
+        uv sync --extra dev --frozen
+        

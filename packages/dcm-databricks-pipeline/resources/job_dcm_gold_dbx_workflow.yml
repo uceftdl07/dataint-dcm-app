@@ -1,0 +1,172 @@
+resources:
+
+  # Job Databricks PySpark — Agregations gold Databricks Workflows (epic 009,
+  # 9 tables gold_dbx_workflow_*) — no DLT. Migre hors du pipeline DLT
+  # (`dlt_03_gold_layer.py`, migration T002/013-workflow-sys-tables) vers un job
+  # standalone, symetrique a `dcm_gold_dbx_compute`/`dcm_gold_dbx_usage`.
+  #
+  # SOURCE : uniquement les system tables `curated_dbx_lakeflow_*` (via les
+  # vues-pont `pipelines.gold_dbx_workflow.bridges`), jamais
+  # `curated_dbx_workflow_runs`/`curated_dbx_workflow_task_runs` (collecteur
+  # JSON, hors scope) — cf. `pipelines/gold_dbx_workflow/__init__.py`.
+  #
+  # Chainage : AUCUN `depends_on` entre les 9 taches. Chacune recalcule
+  # integralement les vues-pont depuis les system tables (snapshot, pas de
+  # fenetre incrementale ni de table intermediaire persistee) : aucune tache ne
+  # lit le resultat d'une autre, elles s'executent donc en parallele.
+  #
+  jobs:
+    dcm_gold_dbx_workflow:
+      name: "[${bundle.target}] DCM Gold Databricks Workflow"
+      max_concurrent_runs: 1
+      timeout_seconds: 7200
+
+      # Planification quotidienne, apres le job system tables (03h).
+      schedule:
+        quartz_cron_expression: "0 30 4 * * ?"
+        timezone_id: "Europe/Paris"
+        pause_status: UNPAUSED
+
+      # `full_refresh` : parametre de job, sans effet aujourd'hui (les 9 tables
+      # sont des snapshots toujours recalcules en entier, cf.
+      # `pipelines.gold_dbx_workflow.entrypoint`) — conserve pour homogeneite
+      # d'interface avec `dcm_gold_dbx_compute`/`dcm_gold_dbx_usage`.
+      parameters:
+        - name: full_refresh
+          default: ""
+
+      # Compute serverless : pas de job cluster a provisionner/dimensionner.
+      environments:
+        - environment_key: gold_dbx_workflow_env
+          spec:
+            environment_version: "3"
+            dependencies:
+              - ../dist/*.whl
+
+      tasks:
+        - task_key: gold_dbx_workflow_success_rate
+          description: "Run status + success rate 24h/7j (gold_dbx_workflow_success_rate)"
+          environment_key: gold_dbx_workflow_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-workflow
+            named_parameters:
+              table:        "success_rate"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        - task_key: gold_dbx_workflow_duration_percentiles
+          description: "Duration p50/p95/p99 + queued/retries (gold_dbx_workflow_duration_percentiles)"
+          environment_key: gold_dbx_workflow_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-workflow
+            named_parameters:
+              table:        "duration_percentiles"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        - task_key: gold_dbx_workflow_duration_drift
+          description: "Derive de duree vs moyenne mobile 14j (gold_dbx_workflow_duration_drift)"
+          environment_key: gold_dbx_workflow_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-workflow
+            named_parameters:
+              table:        "duration_drift"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        - task_key: gold_dbx_workflow_task_failure_rate
+          description: "Taux d'echec des taches par workflow/jour (gold_dbx_workflow_task_failure_rate)"
+          environment_key: gold_dbx_workflow_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-workflow
+            named_parameters:
+              table:        "task_failure_rate"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        - task_key: gold_dbx_workflow_concurrency_1min
+          description: "Runs actifs concurrents par bucket 1 min (gold_dbx_workflow_concurrency_1min)"
+          environment_key: gold_dbx_workflow_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-workflow
+            named_parameters:
+              table:        "concurrency_1min"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        - task_key: gold_dbx_workflow_task_health
+          description: "Sante par tache (echec/duree, grain task_key x jour) (gold_dbx_workflow_task_health)"
+          environment_key: gold_dbx_workflow_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-workflow
+            named_parameters:
+              table:        "task_health"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        - task_key: gold_dbx_workflow_runs
+          description: "Detail par run pour drill-down UI (gold_dbx_workflow_runs)"
+          environment_key: gold_dbx_workflow_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-workflow
+            named_parameters:
+              table:        "runs"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        - task_key: gold_dbx_workflow_tasks
+          description: "Detail par execution de tache pour drill-down UI (gold_dbx_workflow_tasks)"
+          environment_key: gold_dbx_workflow_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-workflow
+            named_parameters:
+              table:        "tasks"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+        - task_key: gold_dbx_workflow_never_run
+          description: "Jobs definis sans aucun run observe (gold_dbx_workflow_never_run)"
+          environment_key: gold_dbx_workflow_env
+          python_wheel_task:
+            package_name: dcm_databricks_pipeline
+            entry_point: dcm-gold-dbx-workflow
+            named_parameters:
+              table:        "never_run"
+              catalog:      ${var.catalog}
+              schema:       ${var.schema}
+              full_refresh: "{{job.parameters.full_refresh}}"
+          max_retries: 0
+
+      email_notifications:
+        on_failure:
+          - ${var.notification_email}
+        no_alert_for_skipped_runs: true
+
+      tags:
+        project: dcm-databricks-pipeline
+        managed_by: databricks-asset-bundle
+        domain: gold-dbx-workflow

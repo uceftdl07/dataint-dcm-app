@@ -1,0 +1,18 @@
+{
+  "work_type": "feature",
+  "domains": ["frontend"],
+  "packages": ["packages/dcm-frontend"],
+  "priority": "P2",
+  "ticket_plan": {
+    "stories": 3,
+    "by_domain": {
+      "Frontend-US1": "T001 — Main nav simplification (3 items visible)",
+      "Frontend-US2": "T002 — Settings section sidebar (Administration + My LZ)",
+      "Frontend-US3": "T003 — Databricks v2 sub-nav + placeholder pages"
+    }
+  },
+  "task_dispatch_mode": "granular",
+  "summary": "DCM nav v2 : simplifier la sidebar à 3 items principaux (Home, Databricks, Talk to your Data), ajouter section Settings (Administration + My Landing Zones), restructurer Databricks v2 (Lakeflow, Compute, FinOps, Usage Data Product) avec pages placeholder vides.",
+  "created_at": "2026-07-28",
+  "feature_directory": "specs/011-nav-v2-cleanup"
+}

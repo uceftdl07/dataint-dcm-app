@@ -1,0 +1,30 @@
+{
+  "updated_at": "2026-07-01T00:00:00Z",
+  "spec": "009-widget-inactive-cluster",
+  "branch_strategy": "direct_to_base",
+  "child_branch_base": "develop",
+  "pr_target": "develop",
+  "integration_branch": null,
+  "epic": {
+    "key": "DCINT-159",
+    "url": "https://tdf.atlassian.net/browse/DCINT-159"
+  },
+  "dispatch": [
+    {
+      "task_id": "T001",
+      "domain": "frontend",
+      "jira_key": "DCINT-160",
+      "jira_url": "https://tdf.atlassian.net/browse/DCINT-160",
+      "branch": "frontend/009-inactive-cluster-widget",
+      "branch_created": true,
+      "jira_created": true
+    }
+  ],
+  "summary": {
+    "jira_stories_done": 1,
+    "jira_stories_total": 1,
+    "branches_done": 1,
+    "branches_total": 1,
+    "status": "complete"
+  }
+}

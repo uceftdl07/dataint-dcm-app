@@ -1,0 +1,54 @@
+/* DCM Guide button — scoped animations only */
+
+@keyframes dcm-guide-breathe {
+  0%, 100% { transform: scale(1); opacity: 0.55; }
+  50% { transform: scale(1.08); opacity: 0.9; }
+}
+
+@keyframes dcm-guide-shimmer {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+@keyframes dcm-guide-panel-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes dcm-guide-item-in {
+  from { opacity: 0; transform: translateX(8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes dcm-guide-tooltip-in {
+  from { opacity: 0; transform: translateX(-4px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.dcm-guide-trigger-pulse {
+  animation: dcm-guide-breathe 2.4s ease-in-out infinite;
+}
+
+.dcm-guide-trigger-shimmer {
+  background: linear-gradient(
+    110deg,
+    transparent 0%,
+    rgba(0, 85, 164, 0.12) 45%,
+    rgba(0, 174, 239, 0.18) 55%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: dcm-guide-shimmer 3s linear infinite;
+}
+
+.dcm-guide-menu-panel {
+  animation: dcm-guide-panel-in 0.22s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.dcm-guide-menu-item {
+  animation: dcm-guide-item-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.dcm-guide-tooltip-bubble {
+  animation: dcm-guide-tooltip-in 0.2s ease-out forwards;
+}

@@ -1,0 +1,15 @@
+{
+  "work_type": "feature",
+  "domains": {
+    "frontend": true,
+    "backend": true,
+    "dataeng": false,
+    "devops": false,
+    "qa": false
+  },
+  "packages": [
+    "packages/dcm-frontend",
+    "packages/dcm-backend"
+  ],
+  "priority": "P1"
+}

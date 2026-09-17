@@ -1,0 +1,7 @@
+{
+  "domains": ["backend", "frontend"],
+  "packages": {
+    "backend": ["packages/dcm-backend", "packages/dcm-commons"],
+    "frontend": ["packages/dcm-frontend"]
+  }
+}

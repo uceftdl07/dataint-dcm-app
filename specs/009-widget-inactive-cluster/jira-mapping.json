@@ -1,0 +1,21 @@
+{
+  "updated_at": "2026-07-01T00:00:00Z",
+  "spec": "009-widget-inactive-cluster",
+  "epic": {
+    "key": "DCINT-159",
+    "url": "https://tdf.atlassian.net/browse/DCINT-159",
+    "summary": "Inactive Cluster Widget on Dashboard",
+    "status": "Draft"
+  },
+  "stories": [
+    {
+      "task_id": "T001",
+      "key": "DCINT-160",
+      "url": "https://tdf.atlassian.net/browse/DCINT-160",
+      "summary": "T001 [Frontend] Add Inactive Cluster MetricCard to Dashboard",
+      "domain": "frontend",
+      "branch": "frontend/009-inactive-cluster-widget",
+      "status": "To Do"
+    }
+  ]
+}

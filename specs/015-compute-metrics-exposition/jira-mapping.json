@@ -1,0 +1,50 @@
+{
+  "updated_at": "2026-08-25T11:10:00Z",
+  "spec": "015-compute-metrics-exposition",
+  "project": "DCINT",
+  "epic": {
+    "key": "DCINT-266",
+    "url": "https://tdf.atlassian.net/browse/DCINT-266",
+    "summary": "[015] Compute Metrics Exposition (UI)",
+    "status": "created"
+  },
+  "stories": [
+    {
+      "task_id": "T001",
+      "key": "DCINT-267",
+      "url": "https://tdf.atlassian.net/browse/DCINT-267",
+      "summary": "Backend API exposition gold compute",
+      "branch": "backend/015-compute-metrics-api",
+      "status": "created",
+      "pr": 213
+    },
+    {
+      "task_id": "T002",
+      "key": "DCINT-268",
+      "url": "https://tdf.atlassian.net/browse/DCINT-268",
+      "summary": "Frontend page Compute Clusters",
+      "branch": "frontend/015-compute-clusters-warehouses-ui",
+      "status": "created",
+      "pr": 214
+    },
+    {
+      "task_id": "T003",
+      "key": "DCINT-269",
+      "url": "https://tdf.atlassian.net/browse/DCINT-269",
+      "summary": "Frontend page Compute SQL Warehouses",
+      "branch": "frontend/015-compute-warehouses-ui",
+      "status": "created",
+      "pr": null
+    },
+    {
+      "task_id": "T004",
+      "key": "DCINT-270",
+      "url": "https://tdf.atlassian.net/browse/DCINT-270",
+      "summary": "Frontend page Recommendations & Forecast",
+      "branch": "frontend/015-compute-reco-forecast-ui",
+      "status": "created",
+      "pr": null
+    }
+  ],
+  "notes": "4 Stories — 1 backend + 3 front (1 page/ticket). PO 2026-08-25 page-by-page QA."
+}

@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCM — Compute · Clusters</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --font-sans:"Inter",ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --background:oklch(100% 0 0); --foreground:oklch(14.1% .005 285.823);
+  --card-background:oklch(99.5% 0 0); --card-radius:1.375rem; --card-padding-x:1.25rem; --card-padding-y:1rem;
+  --card-shadow:0 10px 30px #0f172a12; --card-hover-shadow:0 18px 42px #0f172a1f;
+  --primary:oklch(60% .25 264.376); --primary-foreground:oklch(100% 0 0);
+  --secondary:oklch(96.7% .001 286.375); --secondary-foreground:oklch(21% .006 285.885);
+  --muted:oklch(96.7% .001 286.375); --muted-foreground:oklch(55.2% .016 285.938);
+  --success:oklch(52% .1483 133.57); --success-subtle:oklch(96.5% .035 145); --success-border:oklch(84% .09 145);
+  --warning:oklch(46% .13 70); --warning-subtle:oklch(97.5% .045 85); --warning-border:oklch(86% .12 80);
+  --danger:oklch(57.7% .245 27.325); --danger-foreground:oklch(100% 0 0); --danger-subtle:oklch(96% .035 25); --danger-border:oklch(86% .105 25);
+  --info:oklch(60% .25 264.376); --info-subtle:oklch(95.5% .035 265); --info-border:oklch(82% .09 265);
+  --purple:oklch(56% .22 300); --purple-subtle:oklch(95.5% .035 300); --purple-border:oklch(82% .09 300);
+  --border:oklch(92% .004 286.32); --input:oklch(98.5% 0 0); --ring:oklch(87.1% .006 286.286); --radius:.625rem;
+  --sidebar:oklch(98.5% 0 0); --sidebar-foreground:oklch(14.1% .005 285.823);
+  --sidebar-accent:oklch(96.7% .001 286.375); --sidebar-accent-foreground:oklch(21% .006 285.885); --sidebar-border:oklch(92% .004 286.32);
+  --tdf-gradient-brand:linear-gradient(135deg,oklch(47.42% .215 265.21),oklch(45.82% .081 176.28));
+}
+*{box-sizing:border-box;} body{margin:0;font-family:var(--font-sans);background:var(--background);color:var(--foreground);font-size:16px;-webkit-font-smoothing:antialiased;}
+.btn{font-family:inherit;cursor:pointer;border:1px solid var(--border);background:var(--background);color:var(--foreground);border-radius:999px;padding:.4rem .9rem;font-size:.8125rem;font-weight:600;display:inline-flex;align-items:center;gap:.4rem;}
+.btn-guide{background:var(--info-subtle);color:var(--info);border-color:var(--info-border);}
+.icon-btn{width:2rem;height:2rem;border-radius:999px;border:1px solid var(--border);background:var(--background);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:.9rem;}
+.dropdown-btn{border:1px solid var(--border);border-radius:999px;padding:.4rem .9rem;font-size:.8125rem;background:var(--background);display:inline-flex;align-items:center;gap:.5rem;color:var(--foreground);cursor:pointer;}
+.date-field{font-size:.8125rem;color:var(--muted-foreground);padding:.4rem .75rem;} .date-field b{color:var(--foreground);font-weight:600;}
+.segmented{display:inline-flex;background:var(--muted);border-radius:999px;padding:3px;gap:2px;}
+.segmented button{font-family:inherit;border:none;background:transparent;padding:.4rem .8rem;border-radius:999px;font-size:.8125rem;font-weight:700;color:var(--muted-foreground);cursor:pointer;}
+.segmented button.active{background:var(--primary);color:var(--primary-foreground);}
+select.select-pill{appearance:none;border:1px solid var(--border);border-radius:999px;padding:.4rem 1.75rem .4rem .9rem;font-size:.8125rem;font-family:inherit;background:var(--background) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><path d="M1 3l4 4 4-4" stroke="%2355544f" fill="none" stroke-width="1.4"/></svg>') no-repeat right .75rem center;color:var(--foreground);cursor:pointer;}
+.pill{font-family:inherit;border:1px solid var(--border);border-radius:999px;padding:.4rem .9rem;font-size:.8125rem;font-weight:600;background:var(--background);color:var(--foreground);cursor:pointer;}
+.pill.active{background:var(--primary);color:var(--primary-foreground);border-color:var(--primary);}
+.search{display:inline-flex;align-items:center;gap:.5rem;border:1px solid var(--border);border-radius:999px;padding:.5rem 1rem;color:var(--muted-foreground);font-size:.875rem;min-width:200px;}
+.search input{border:none;outline:none;background:transparent;font-family:inherit;font-size:.875rem;color:var(--foreground);width:100%;}
+.badge{display:inline-flex;align-items:center;gap:.3rem;padding:.15rem .55rem;border-radius:999px;font-size:.72rem;font-weight:700;border:1px solid transparent;white-space:nowrap;}
+.badge-danger{background:var(--danger-subtle);color:var(--danger);border-color:var(--danger-border);}
+.badge-success{background:var(--success-subtle);color:var(--success);border-color:var(--success-border);}
+.badge-warning{background:var(--warning-subtle);color:var(--warning);border-color:var(--warning-border);}
+.badge-info{background:var(--info-subtle);color:var(--info);border-color:var(--info-border);}
+.badge-purple{background:var(--purple-subtle);color:var(--purple);border-color:var(--purple-border);}
+.card{background:var(--card-background);border:1px solid var(--border);border-radius:var(--card-radius);padding:var(--card-padding-y) var(--card-padding-x);box-shadow:var(--card-shadow);}
+.kpi-card{border:1px solid var(--border);border-radius:var(--card-radius);overflow:hidden;background:var(--card-background);}
+.kpi-card-header{padding:.75rem 1rem;display:flex;justify-content:space-between;align-items:center;font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;}
+.kpi-card.amber .kpi-card-header{background:var(--warning-subtle);color:var(--foreground);}
+.kpi-card.green .kpi-card-header{background:var(--success-subtle);color:var(--foreground);}
+.kpi-card.blue .kpi-card-header{background:var(--info-subtle);color:var(--foreground);}
+.kpi-card.purple .kpi-card-header{background:var(--purple-subtle);color:var(--foreground);}
+.kpi-card.danger .kpi-card-header{background:var(--danger-subtle);color:var(--foreground);}
+.kpi-icon{width:2rem;height:2rem;border-radius:999px;background:var(--background);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.9rem;}
+.kpi-card-body{padding:1rem;} .kpi-value{font-size:1.5rem;font-weight:700;}
+.kpi-value.amber{color:var(--warning);} .kpi-value.green{color:var(--success);} .kpi-value.blue{color:var(--primary);} .kpi-value.purple{color:var(--purple);} .kpi-value.danger{color:var(--danger);}
+.kpi-sub{font-size:.8125rem;color:var(--muted-foreground);}
+.section-label{font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-foreground);margin:.5rem 0;}
+table.data-table{width:100%;border-collapse:collapse;font-size:.8125rem;}
+.data-table thead th{text-align:left;text-transform:uppercase;font-size:.68rem;letter-spacing:.05em;color:var(--muted-foreground);padding:.7rem .5rem;border-bottom:1px solid var(--border);white-space:nowrap;}
+.data-table tbody td{padding:.7rem .5rem;border-bottom:1px solid var(--border);vertical-align:middle;}
+.data-table tbody tr:last-child td{border-bottom:none;}
+.data-table tbody tr.clickable{cursor:pointer;}
+.data-table tbody tr.clickable:hover{background:var(--muted);}
+.muted{color:var(--muted-foreground);} .mono-id{font-size:.72rem;color:var(--muted-foreground);display:block;}
+.ext-link{color:var(--primary);font-weight:600;text-decoration:none;font-size:.8125rem;}
+.empty-state{text-align:center;color:var(--muted-foreground);font-size:.8125rem;padding:2rem 0;}
+.app-shell{display:grid;grid-template-columns:220px 1fr;min-height:100vh;border:1px solid var(--border);}
+.app-sidebar{background:var(--sidebar);color:var(--sidebar-foreground);border-right:1px solid var(--sidebar-border);padding:1rem .75rem;display:flex;flex-direction:column;justify-content:space-between;}
+.app-logo{display:flex;align-items:center;gap:.5rem;padding:.5rem;margin-bottom:1rem;}
+.app-logo .mark{width:28px;height:28px;border-radius:8px;background:var(--tdf-gradient-brand);}
+.app-logo .word b{display:block;line-height:1.1;font-size:.95rem;} .app-logo .word .accent{color:var(--primary);}
+.nav-group{margin-bottom:.25rem;}
+.nav-item{display:flex;align-items:center;gap:.6rem;padding:.5rem .6rem;border-radius:var(--radius);font-size:.85rem;font-weight:500;color:var(--sidebar-foreground);cursor:pointer;text-decoration:none;}
+.nav-item:hover{background:var(--sidebar-accent);} .nav-item.current{background:var(--sidebar-accent);font-weight:700;}
+.nav-sub{margin-left:1.5rem;display:flex;flex-direction:column;} .nav-sub .nav-item{font-size:.82rem;padding:.4rem .6rem;}
+.sidebar-footer{border-top:1px solid var(--sidebar-border);padding-top:.75rem;}
+.user-chip{display:flex;align-items:center;gap:.5rem;padding:.4rem;font-size:.75rem;}
+.avatar{width:28px;height:28px;border-radius:999px;background:var(--secondary);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.7rem;}
+.app-main{display:flex;flex-direction:column;}
+.app-topbar{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:.75rem;}
+.topbar-left .breadcrumb{font-size:.75rem;color:var(--muted-foreground);margin-bottom:.15rem;}
+.topbar-left .page-title{font-size:1.15rem;font-weight:700;}
+.topbar-right{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;}
+.app-content{padding:1.5rem;display:flex;flex-direction:column;gap:1.25rem;}
+.content-toolbar{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;}
+
+.subtabs{display:flex;gap:.5rem;flex-wrap:wrap;}
+.subtab{font-family:inherit;border:1px solid var(--border);border-radius:999px;padding:.45rem 1rem;font-size:.8125rem;font-weight:600;background:var(--background);color:var(--foreground);cursor:pointer;}
+.subtab.active{background:var(--info-subtle);color:var(--info);border-color:var(--info-border);}
+.tab-panel{display:flex;flex-direction:column;gap:1.25rem;}
+.subpanel{display:flex;flex-direction:column;gap:1.25rem;}
+.tab-panel[hidden],.subpanel[hidden]{display:none;}
+.hint-banner{display:flex;gap:.6rem;align-items:flex-start;background:var(--info-subtle);border:1px solid var(--info-border);border-radius:var(--radius);padding:.75rem 1rem;font-size:.8125rem;}
+
+/* drawer */
+.drawer-overlay{position:fixed;inset:0;background:oklch(14.1% .005 285.823 / .35);z-index:40;display:none;}
+.drawer-overlay.open{display:block;}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:460px;max-width:92vw;background:var(--card-background);box-shadow:var(--card-hover-shadow);z-index:41;transform:translateX(100%);transition:transform .22s ease;display:flex;flex-direction:column;}
+.drawer.open{transform:translateX(0);}
+.drawer-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:.75rem;}
+.drawer-header .type-tag{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted-foreground);font-weight:700;margin-bottom:.2rem;}
+.drawer-header h2{margin:0;font-size:1.05rem;font-weight:700;}
+.drawer-body{padding:1.25rem 1.5rem;overflow-y:auto;display:flex;flex-direction:column;gap:1.4rem;}
+.close-btn{width:2rem;height:2rem;border-radius:999px;border:1px solid var(--border);background:var(--background);cursor:pointer;font-size:.9rem;flex:none;}
+.id-card{border:1px solid var(--border);border-radius:var(--radius);padding:.9rem 1rem;display:grid;grid-template-columns:1fr 1fr;gap:.7rem .5rem;font-size:.8125rem;}
+.id-card .f .k{color:var(--muted-foreground);font-size:.68rem;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:.1rem;}
+.id-card .f .v{font-weight:600;}
+.drawer-kpis{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;}
+.mini-kpi{border:1px solid var(--border);border-radius:var(--radius);padding:.6rem .75rem;}
+.mini-kpi .k{font-size:.68rem;text-transform:uppercase;color:var(--muted-foreground);letter-spacing:.04em;}
+.mini-kpi .v{font-size:1.1rem;font-weight:700;margin-top:.15rem;}
+.trend-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.5rem;}
+.trend-head .lbl{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted-foreground);font-weight:700;}
+.trend-head .val{font-size:1.15rem;font-weight:700;}
+.mini-reco{border:1px solid var(--border);border-radius:var(--radius);padding:.65rem .8rem;font-size:.8125rem;display:flex;flex-direction:column;gap:.35rem;margin-bottom:.5rem;}
+.mini-reco:last-child{margin-bottom:0;}
+.mini-reco .top{display:flex;justify-content:space-between;align-items:center;gap:.5rem;}
+.mini-sq{border-top:1px solid var(--border);padding:.55rem 0;font-size:.8125rem;}
+.mini-sq:first-child{border-top:none;padding-top:0;}
+.mini-sq .top{display:flex;justify-content:space-between;align-items:center;}
+.drawer-cta{display:block;text-align:center;padding:.6rem;border:1px solid var(--info-border);background:var(--info-subtle);color:var(--info);border-radius:var(--radius);font-weight:700;font-size:.8125rem;text-decoration:none;}
+
+/* forecast card */
+.forecast-card .fc-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.75rem;margin-bottom:.75rem;}
+.fc-value{font-size:1.5rem;font-weight:700;}
+.fc-range{font-size:.8125rem;color:var(--muted-foreground);}
+.fc-legend{display:flex;gap:1rem;font-size:.75rem;color:var(--muted-foreground);margin-top:.5rem;}
+.fc-legend span{display:inline-flex;align-items:center;gap:.35rem;}
+.fc-dot{width:18px;height:2px;display:inline-block;}
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="app-sidebar">
+    <div>
+      <div class="app-logo"><span class="mark"></span><span class="word"><b>Data</b><b class="accent">connect</b></span></div>
+      <nav>
+        <a class="nav-item">▦ Home</a>
+        <div class="nav-group"><a class="nav-item">⛓ Databricks</a>
+          <div class="nav-sub">
+            <a class="nav-item">Overview</a>
+            <a class="nav-item">Jobs &amp; Pipelines</a>
+            <div class="nav-group">
+              <a class="nav-item">Compute</a>
+              <div class="nav-sub">
+                <a class="nav-item current">Clusters</a>
+                <a class="nav-item ">SQL Warehouses</a>
+                <a class="nav-item " style="justify-content:space-between;">Recommandations &amp; Forecast <span class="badge badge-warning" style="margin-left:.4rem;">9</span></a>
+              </div>
+            </div>
+            <a class="nav-item">FinOps</a>
+            <a class="nav-item">Usage Data Product</a>
+          </div>
+        </div>
+        <div class="nav-group"><a class="nav-item">🛎 Anomalies</a>
+          <div class="nav-sub"><a class="nav-item">Rules</a><a class="nav-item">Reports</a></div>
+        </div>
+        <a class="nav-item">🗂 Talk to your Data</a>
+      </nav>
+    </div>
+    <div class="sidebar-footer">
+      <div class="nav-group"><a class="nav-item">⚙ Administration</a><div class="nav-sub"><a class="nav-item">Notification Settings</a></div></div>
+      <div class="user-chip"><span class="avatar">ML</span> Maher Lezhari</div>
+    </div>
+  </aside>
+  <div class="app-main">
+    <div class="app-topbar">
+      <div class="topbar-left"><div class="breadcrumb">DCM · Databricks · Compute</div><div class="page-title">Clusters</div></div>
+      <div class="topbar-right">
+        <button class="btn btn-guide">◎ Guide</button>
+        <button class="icon-btn" aria-label="Notifications">🔔</button>
+        <button class="dropdown-btn">☁ Toutes les LZ ▾</button>
+        <select class="select-pill"><option>Tous les clouds</option><option>Azure</option><option>AWS</option></select>
+        <select class="select-pill"><option>Tous les workspaces</option><option>ws-data-eng-prod</option><option>ws-ml-platform</option></select>
+        <span class="date-field">Du <b>14/07/2026</b></span>
+        <span class="date-field">Au <b>13/08/2026</b></span>
+        <div class="segmented"><button>30d</button><button class="active">90d</button><button>6m</button><button>1y</button></div>
+      </div>
+    </div>
+
+    <div class="app-content">
+      <div class="tab-panel" data-tabpanel="clusters">
+        <div class="subtabs">
+          <button class="subtab active" data-sub="cl-overview">Overview</button>
+          <button class="subtab" data-sub="cl-cost">Cost</button>
+          <button class="subtab" data-sub="cl-efficiency">Efficiency</button>
+          <button class="subtab" data-sub="cl-governance">Governance</button>
+        </div>
+
+        <div class="content-toolbar" style="justify-content:flex-end;">
+          <span class="muted" style="font-size:.8125rem;">Tendance coût (drawer) :</span>
+          <select class="select-pill" id="granularity" onchange="onGranularityChange()">
+            <option value="day">Par jour</option>
+            <option value="week" selected>Par semaine</option>
+            <option value="month">Par mois</option>
+          </select>
+        </div>
+
+        <!-- Overview -->
+        <div class="subpanel" data-subpanel="cl-overview">
+          <div class="kpi-grid">
+            <div class="kpi-card blue"><div class="kpi-card-header">Coût total (90j) <span class="kpi-icon">💶</span></div><div class="kpi-card-body"><div class="kpi-value blue">34 520 €</div><div class="kpi-sub">+6,4 % vs période précédente</div></div></div>
+            <div class="kpi-card green"><div class="kpi-card-header">Clusters actifs <span class="kpi-icon">✓</span></div><div class="kpi-card-body"><div class="kpi-value green">58</div><div class="kpi-sub">sur 74 clusters connus</div></div></div>
+            <div class="kpi-card amber"><div class="kpi-card-header">Clusters zombies <span class="kpi-icon">🧊</span></div><div class="kpi-card-body"><div class="kpi-value amber">7</div><div class="kpi-sub">actifs &gt;8h, usage quasi nul</div></div></div>
+            <div class="kpi-card purple"><div class="kpi-card-header">Reco ouvertes <span class="kpi-icon">🎯</span></div><div class="kpi-card-body"><div class="kpi-value purple">5</div><div class="kpi-sub">dont 3 sévérité haute</div></div></div>
+          </div>
+          <div class="card">
+            <table class="data-table">
+              <thead><tr><th></th><th>Cluster</th><th>LZ</th><th>Coût (90j)</th><th>CPU p95</th><th>Idle %</th><th>Statut util.</th><th>Gouvernance</th></tr></thead>
+              <tbody>
+                <tr class="clickable" onclick="openDrawer('etl_ingestion_prod')"><td><span class="badge badge-success">●</span></td><td>etl_ingestion_prod<span class="mono-id">0612-114523-abcloop</span></td><td class="mono-id">azure-sub-fa5abbc4</td><td>8 420 €</td><td>78 %</td><td>4 %</td><td><span class="badge badge-success">Optimal</span></td><td><span class="badge badge-success">OK</span></td></tr>
+                <tr class="clickable" onclick="openDrawer('ml_training_gpu')"><td><span class="badge badge-warning">●</span></td><td>ml_training_gpu<span class="mono-id">0714-092011-mlgpu1</span></td><td class="mono-id">aws-sub-91ef</td><td>15 200 €</td><td>32 %</td><td>55 %</td><td><span class="badge badge-warning">Sur-dimensionné</span></td><td><span class="badge badge-warning">1 tag manquant</span></td></tr>
+                <tr class="clickable" onclick="openDrawer('ds_notebook_shared')"><td><span class="badge badge-danger">●</span></td><td>ds_notebook_shared<span class="mono-id">0501-081455-dsnb02</span></td><td class="mono-id">azure-sub-77c1</td><td>3 100 €</td><td>91 %</td><td>2 %</td><td><span class="badge badge-danger">Sous-dimensionné</span></td><td><span class="badge badge-success">OK</span></td></tr>
+                <tr class="clickable" onclick="openDrawer('sap_datasphere_run')"><td><span class="badge badge-danger">●</span></td><td>sap_datasphere_run<span class="mono-id">0322-153310-sapds9</span></td><td class="mono-id">azure-sub-fa5abbc4</td><td>2 200 €</td><td>8 %</td><td>91 %</td><td><span class="badge badge-warning">Zombie</span></td><td><span class="badge badge-danger">2 problèmes</span></td></tr>
+                <tr class="clickable" onclick="openDrawer('finance_batch_nightly')"><td><span class="badge badge-success">●</span></td><td>finance_batch_nightly<span class="mono-id">0209-020045-finb01</span></td><td class="mono-id">aws-sub-2b91</td><td>5 600 €</td><td>55 %</td><td>18 %</td><td><span class="badge badge-success">Optimal</span></td><td><span class="badge badge-success">OK</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Cost -->
+        <div class="subpanel" data-subpanel="cl-cost" hidden>
+          <div class="kpi-grid">
+            <div class="kpi-card blue"><div class="kpi-card-header">Coût total (90j) <span class="kpi-icon">💶</span></div><div class="kpi-card-body"><div class="kpi-value blue">34 520 €</div><div class="kpi-sub">+6,4 % vs période précédente</div></div></div>
+            <div class="kpi-card green"><div class="kpi-card-header">DBU consommés <span class="kpi-icon">⚡</span></div><div class="kpi-card-body"><div class="kpi-value green">142 380</div><div class="kpi-sub">sur la période</div></div></div>
+            <div class="kpi-card amber"><div class="kpi-card-header">Top coûteux <span class="kpi-icon">🔥</span></div><div class="kpi-card-body"><div class="kpi-value amber">ml_training_gpu</div><div class="kpi-sub">15 200 € — 44 % du total</div></div></div>
+          </div>
+          <div class="content-toolbar">
+            <span class="search"><span>🔍</span><input type="text" id="costSearch" placeholder="Rechercher un cluster…" oninput="filterCost()"></span>
+            <select class="select-pill" id="costSkuFilter" onchange="filterCost()"><option value="">Tous les SKU</option><option value="Classic">Classic</option><option value="Photon">Photon</option><option value="Serverless">Serverless</option></select>
+            <select class="select-pill" id="costSort" onchange="filterCost()"><option value="cost">Trier par coût ↓</option><option value="name">Trier par nom</option></select>
+          </div>
+          <div class="card">
+            <table class="data-table">
+              <thead><tr><th>Cluster</th><th>SKU</th><th>DBU</th><th>Coût</th><th>Δ vs J-1</th><th>Rang LZ</th></tr></thead>
+              <tbody id="costRows">
+                <tr class="clickable" data-name="ml_training_gpu" data-sku="Classic" data-cost="15200" onclick="openDrawer('ml_training_gpu')"><td>ml_training_gpu</td><td>Classic</td><td>61 200</td><td>15 200 €</td><td class="badge badge-danger">+9,1 %</td><td>#1</td></tr>
+                <tr class="clickable" data-name="etl_ingestion_prod" data-sku="Photon" data-cost="8420" onclick="openDrawer('etl_ingestion_prod')"><td>etl_ingestion_prod</td><td>Photon</td><td>34 900</td><td>8 420 €</td><td class="badge badge-success">-2,3 %</td><td>#2</td></tr>
+                <tr class="clickable" data-name="finance_batch_nightly" data-sku="Classic" data-cost="5600" onclick="openDrawer('finance_batch_nightly')"><td>finance_batch_nightly</td><td>Classic</td><td>22 100</td><td>5 600 €</td><td class="badge badge-success">-0,8 %</td><td>#3</td></tr>
+                <tr class="clickable" data-name="ds_notebook_shared" data-sku="Photon" data-cost="3100" onclick="openDrawer('ds_notebook_shared')"><td>ds_notebook_shared</td><td>Photon</td><td>13 700</td><td>3 100 €</td><td class="badge badge-warning">+4,0 %</td><td>#4</td></tr>
+                <tr class="clickable" data-name="sap_datasphere_run" data-sku="Classic" data-cost="2200" onclick="openDrawer('sap_datasphere_run')"><td>sap_datasphere_run</td><td>Classic</td><td>9 200</td><td>2 200 €</td><td class="badge badge-success">-1,1 %</td><td>#5</td></tr>
+              </tbody>
+            </table>
+            <p class="empty-state" id="costEmpty" hidden>Aucun cluster ne correspond à ce filtre.</p>
+          </div>
+        </div>
+
+        <!-- Efficiency -->
+        <div class="subpanel" data-subpanel="cl-efficiency" hidden>
+          <div class="kpi-grid">
+            <div class="kpi-card blue"><div class="kpi-card-header">CPU p95 moyen <span class="kpi-icon">📈</span></div><div class="kpi-card-body"><div class="kpi-value blue">53 %</div><div class="kpi-sub">tous clusters confondus</div></div></div>
+            <div class="kpi-card green"><div class="kpi-card-header">Mem p95 moyen <span class="kpi-icon">🧠</span></div><div class="kpi-card-body"><div class="kpi-value green">51 %</div><div class="kpi-sub">tous clusters confondus</div></div></div>
+            <div class="kpi-card amber"><div class="kpi-card-header">Zombies <span class="kpi-icon">🧊</span></div><div class="kpi-card-body"><div class="kpi-value amber">1</div><div class="kpi-sub">sap_datasphere_run</div></div></div>
+            <div class="kpi-card purple"><div class="kpi-card-header">Économies estimées <span class="kpi-icon">💡</span></div><div class="kpi-card-body"><div class="kpi-value purple">4 100 €</div><div class="kpi-sub">si rightsizing appliqué</div></div></div>
+          </div>
+          <div class="content-toolbar" id="effPills">
+            <button class="pill active" data-status="">Tous</button>
+            <button class="pill" data-status="Sur-dimensionné">Sur-dimensionné</button>
+            <button class="pill" data-status="Sous-dimensionné">Sous-dimensionné</button>
+            <button class="pill" data-status="Optimal">Optimal</button>
+            <button class="pill" data-status="Zombie">Zombie</button>
+          </div>
+          <div class="card">
+            <table class="data-table">
+              <thead><tr><th>Cluster</th><th>CPU p95</th><th>Mem p95</th><th>Idle %</th><th>Statut</th><th>Node recommandé</th><th>Économie</th></tr></thead>
+              <tbody id="effRows">
+                <tr class="clickable" data-status="Sur-dimensionné" onclick="openDrawer('ml_training_gpu')"><td>ml_training_gpu</td><td>32 %</td><td>41 %</td><td>55 %</td><td><span class="badge badge-warning">Sur-dimensionné</span></td><td>Standard_NC4as_T4_v3</td><td>4 100 €</td></tr>
+                <tr class="clickable" data-status="Zombie" onclick="openDrawer('sap_datasphere_run')"><td>sap_datasphere_run</td><td>8 %</td><td>12 %</td><td>91 %</td><td><span class="badge badge-warning">Zombie</span></td><td class="muted">Éteindre</td><td>~2 000 €</td></tr>
+                <tr class="clickable" data-status="Sous-dimensionné" onclick="openDrawer('ds_notebook_shared')"><td>ds_notebook_shared</td><td>91 %</td><td>88 %</td><td>2 %</td><td><span class="badge badge-danger">Sous-dimensionné</span></td><td>Standard_DS5_v2</td><td class="muted">—</td></tr>
+                <tr class="clickable" data-status="Optimal" onclick="openDrawer('etl_ingestion_prod')"><td>etl_ingestion_prod</td><td>78 %</td><td>65 %</td><td>4 %</td><td><span class="badge badge-success">Optimal</span></td><td class="muted">—</td><td class="muted">—</td></tr>
+                <tr class="clickable" data-status="Optimal" onclick="openDrawer('finance_batch_nightly')"><td>finance_batch_nightly</td><td>55 %</td><td>48 %</td><td>18 %</td><td><span class="badge badge-success">Optimal</span></td><td class="muted">—</td><td class="muted">—</td></tr>
+              </tbody>
+            </table>
+            <p class="empty-state" id="effEmpty" hidden>Aucun cluster ne correspond à ce filtre.</p>
+          </div>
+        </div>
+
+        <!-- Governance -->
+        <div class="subpanel" data-subpanel="cl-governance" hidden>
+          <div class="kpi-grid">
+            <div class="kpi-card amber"><div class="kpi-card-header">Tags manquants <span class="kpi-icon">🏷</span></div><div class="kpi-card-body"><div class="kpi-value amber">2</div><div class="kpi-sub">owner ou cost-center absent</div></div></div>
+            <div class="kpi-card danger"><div class="kpi-card-header">DBR obsolète <span class="kpi-icon">⛔</span></div><div class="kpi-card-body"><div class="kpi-value danger">1</div><div class="kpi-sub">hors LTS supportée</div></div></div>
+            <div class="kpi-card amber"><div class="kpi-card-header">Sans auto-termination <span class="kpi-icon">⏱</span></div><div class="kpi-card-body"><div class="kpi-value amber">1</div><div class="kpi-sub">risque de coût dormant</div></div></div>
+            <div class="kpi-card purple"><div class="kpi-card-header">Sévérité haute <span class="kpi-icon">🚩</span></div><div class="kpi-card-body"><div class="kpi-value purple">1</div><div class="kpi-sub">cluster(s) concerné(s)</div></div></div>
+          </div>
+          <div class="content-toolbar" id="govPills">
+            <button class="pill active" data-filter="">Tous</button>
+            <button class="pill" data-filter="tags">Tags manquants</button>
+            <button class="pill" data-filter="dbr">DBR obsolète</button>
+            <button class="pill" data-filter="autostop">Sans auto-stop</button>
+          </div>
+          <div class="card">
+            <table class="data-table">
+              <thead><tr><th>Cluster</th><th>Owner</th><th>Cost-center</th><th>DBR</th><th>Auto-termination</th><th>Action recommandée</th><th>Sévérité</th></tr></thead>
+              <tbody id="govRows">
+                <tr class="clickable" data-tags="1" data-dbr="1" data-autostop="1" onclick="openDrawer('sap_datasphere_run')"><td>sap_datasphere_run</td><td><span class="badge badge-danger">Absent</span></td><td><span class="badge badge-success">OK</span></td><td>12.2 <span class="badge badge-danger">Obsolète</span></td><td class="muted">Non configurée</td><td>Monter vers DBR 14.3 LTS</td><td><span class="badge badge-danger">High</span></td></tr>
+                <tr class="clickable" data-tags="1" data-dbr="0" data-autostop="0" onclick="openDrawer('ml_training_gpu')"><td>ml_training_gpu</td><td><span class="badge badge-success">OK</span></td><td><span class="badge badge-danger">Absent</span></td><td>14.3 <span class="badge badge-success">LTS</span></td><td>30 min</td><td>Ajouter le tag cost-center</td><td><span class="badge badge-info">Low</span></td></tr>
+                <tr class="clickable" data-tags="0" data-dbr="0" data-autostop="0" onclick="openDrawer('etl_ingestion_prod')"><td>etl_ingestion_prod</td><td><span class="badge badge-success">OK</span></td><td><span class="badge badge-success">OK</span></td><td>14.3 <span class="badge badge-success">LTS</span></td><td>30 min</td><td class="muted">Aucune</td><td class="muted">—</td></tr>
+                <tr class="clickable" data-tags="0" data-dbr="0" data-autostop="0" onclick="openDrawer('ds_notebook_shared')"><td>ds_notebook_shared</td><td><span class="badge badge-success">OK</span></td><td><span class="badge badge-success">OK</span></td><td>14.3 <span class="badge badge-success">LTS</span></td><td>15 min</td><td class="muted">Aucune</td><td class="muted">—</td></tr>
+                <tr class="clickable" data-tags="0" data-dbr="0" data-autostop="0" onclick="openDrawer('finance_batch_nightly')"><td>finance_batch_nightly</td><td><span class="badge badge-success">OK</span></td><td><span class="badge badge-success">OK</span></td><td>14.3 <span class="badge badge-success">LTS</span></td><td>20 min</td><td class="muted">Aucune</td><td class="muted">—</td></tr>
+              </tbody>
+            </table>
+            <p class="empty-state" id="govEmpty" hidden>Aucun cluster ne correspond à ce filtre.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Drawer détail cluster -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <div><div class="type-tag">Cluster</div><h2 id="drawerTitle">—</h2></div>
+    <button class="close-btn" onclick="closeDrawer()" aria-label="Fermer">✕</button>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+</div>
+
+<script>
+var CLUSTERS = {
+  etl_ingestion_prod:{lz:'azure-sub-fa5abbc4',owner:'data-eng-team',cc:'CC-4021',dbr:'14.3 LTS',node:'Standard_DS4_v2',autoterm:'30 min',cost:'8 420 €',trendEnd:8420,trendVol:150,cpu:'78 %',mem:'65 %',idle:'4 %',status:'Optimal',recos:[]},
+  ml_training_gpu:{lz:'aws-sub-91ef',owner:'ml-platform',cc:'— absent',dbr:'14.3 LTS',node:'Standard_NC6s_v3',autoterm:'0 min (aucune)',cost:'15 200 €',trendEnd:15200,trendVol:320,cpu:'32 %',mem:'41 %',idle:'55 %',status:'Sur-dimensionné',recos:['ml_training_gpu']},
+  ds_notebook_shared:{lz:'azure-sub-77c1',owner:'analytics-team',cc:'CC-1180',dbr:'14.3 LTS',node:'Standard_DS3_v2',autoterm:'15 min',cost:'3 100 €',trendEnd:3100,trendVol:70,cpu:'91 %',mem:'88 %',idle:'2 %',status:'Sous-dimensionné',recos:[]},
+  sap_datasphere_run:{lz:'azure-sub-fa5abbc4',owner:'— absent',cc:'CC-2200',dbr:'12.2 (obsolète)',node:'Standard_DS3_v2',autoterm:'0 min (aucune)',cost:'2 200 €',trendEnd:2200,trendVol:40,cpu:'8 %',mem:'12 %',idle:'91 %',status:'Zombie',recos:['sap_datasphere_run']},
+  finance_batch_nightly:{lz:'aws-sub-2b91',owner:'finance-data',cc:'CC-3390',dbr:'14.3 LTS',node:'Standard_DS4_v2',autoterm:'20 min',cost:'5 600 €',trendEnd:5600,trendVol:100,cpu:'55 %',mem:'48 %',idle:'18 %',status:'Optimal',recos:[]}
+};
+var RECOS = {
+  ml_training_gpu:[{t:'Réduire vers Standard_NC4as_T4_v3',c:'Rightsizing',s:'Medium'},{t:'Ajouter le tag cost-center',c:'Governance',s:'Low'}],
+  sap_datasphere_run:[{t:'Monter vers DBR 14.3 LTS',c:'Governance',s:'High'},{t:'Cluster quasi inactif — éteindre ou activer l\'auto-stop',c:'FinOps',s:'High'},{t:'Ajouter le tag owner',c:'Governance',s:'Low'}]
+};
+var SEV_BADGE={Low:'badge-info',Medium:'badge-warning',High:'badge-danger'};
+
+function spark(points,w,h){
+  var max=Math.max.apply(null,points), min=Math.min.apply(null,points);
+  var step=w/(points.length-1);
+  return points.map(function(v,i){
+    var x=i*step, y=h-((v-min)/((max-min)||1))*h;
+    return x.toFixed(1)+','+y.toFixed(1);
+  }).join(' ');
+}
+
+/* Génère une série "quotidienne" simulée sur 84 jours (~12 semaines / 3 mois),
+   croissante vers la valeur affichée en KPI, avec une légère oscillation. */
+function genTrend(end,days,volatility){
+  var start = end*0.84;
+  var pts = [];
+  for(var i=0;i<days;i++){
+    var t = i/(days-1);
+    var base = start + (end-start)*t;
+    var noise = Math.sin(i*0.9)*volatility*0.5 + Math.sin(i*2.3)*volatility*0.25;
+    pts.push(Math.round(Math.max(0, base+noise)));
+  }
+  pts[pts.length-1] = end; // le dernier point colle exactement au total affiché
+  return pts;
+}
+/* Agrège une série quotidienne par groupes de N jours (moyenne) : 1=jour, 7=semaine, 28=mois */
+function aggregateTrend(points,groupSize){
+  if(groupSize<=1) return points;
+  var out=[];
+  for(var i=0;i<points.length;i+=groupSize){
+    var chunk = points.slice(i,i+groupSize);
+    out.push(Math.round(chunk.reduce(function(a,b){return a+b;},0)/chunk.length));
+  }
+  return out;
+}
+var GROUP_SIZE = {day:1, week:7, month:28};
+var GRANULARITY_LABEL = {day:'par jour', week:'par semaine', month:'par mois'};
+var currentGranularity = 'week';
+var currentDrawerKey = null;
+function onGranularityChange(){
+  currentGranularity = document.getElementById('granularity').value;
+  if(currentDrawerKey) openDrawer(currentDrawerKey);
+}
+
+document.querySelectorAll('.subtabs').forEach(function(group){
+  group.querySelectorAll('.subtab').forEach(function(b){
+    b.addEventListener('click',function(){
+      group.querySelectorAll('.subtab').forEach(function(x){x.classList.remove('active');});
+      b.classList.add('active');
+      var panels = group.parentElement.querySelectorAll('.subpanel');
+      panels.forEach(function(p){p.hidden = p.dataset.subpanel !== b.dataset.sub;});
+    });
+  });
+});
+
+/* ---------- Cost : recherche + filtre SKU + tri ---------- */
+function filterCost(){
+  var q = document.getElementById('costSearch').value.trim().toLowerCase();
+  var sku = document.getElementById('costSkuFilter').value;
+  var sortBy = document.getElementById('costSort').value;
+  var tbody = document.getElementById('costRows');
+  var rows = Array.prototype.slice.call(tbody.querySelectorAll('tr'));
+  var visible = 0;
+  rows.forEach(function(r){
+    var matchesName = !q || r.dataset.name.toLowerCase().indexOf(q) !== -1;
+    var matchesSku = !sku || r.dataset.sku === sku;
+    var show = matchesName && matchesSku;
+    r.hidden = !show;
+    if(show) visible++;
+  });
+  rows.sort(function(a,b){
+    if(sortBy==='name') return a.dataset.name.localeCompare(b.dataset.name);
+    return Number(b.dataset.cost) - Number(a.dataset.cost);
+  });
+  rows.forEach(function(r){ tbody.appendChild(r); });
+  document.getElementById('costEmpty').hidden = visible !== 0;
+}
+
+/* ---------- Efficiency : pills statut ---------- */
+document.getElementById('effPills').querySelectorAll('.pill').forEach(function(b){
+  b.addEventListener('click',function(){
+    document.getElementById('effPills').querySelectorAll('.pill').forEach(function(x){x.classList.remove('active');});
+    b.classList.add('active');
+    var status = b.dataset.status;
+    var rows = document.getElementById('effRows').querySelectorAll('tr');
+    var visible = 0;
+    rows.forEach(function(r){
+      var show = !status || r.dataset.status === status;
+      r.hidden = !show;
+      if(show) visible++;
+    });
+    document.getElementById('effEmpty').hidden = visible !== 0;
+  });
+});
+
+/* ---------- Governance : pills tags / dbr / auto-stop ---------- */
+document.getElementById('govPills').querySelectorAll('.pill').forEach(function(b){
+  b.addEventListener('click',function(){
+    document.getElementById('govPills').querySelectorAll('.pill').forEach(function(x){x.classList.remove('active');});
+    b.classList.add('active');
+    var filter = b.dataset.filter;
+    var rows = document.getElementById('govRows').querySelectorAll('tr');
+    var visible = 0;
+    rows.forEach(function(r){
+      var show = !filter || r.dataset[filter] === '1';
+      r.hidden = !show;
+      if(show) visible++;
+    });
+    document.getElementById('govEmpty').hidden = visible !== 0;
+  });
+});
+
+function openDrawer(key){
+  var d = CLUSTERS[key];
+  if(!d) return;
+  currentDrawerKey = key;
+  document.getElementById('drawerTitle').textContent = key;
+  var idCard = '<div class="id-card">'+
+    '<div class="f"><span class="k">Landing zone</span><span class="v">'+d.lz+'</span></div>'+
+    '<div class="f"><span class="k">Owner</span><span class="v">'+d.owner+'</span></div>'+
+    '<div class="f"><span class="k">Cost-center</span><span class="v">'+d.cc+'</span></div>'+
+    '<div class="f"><span class="k">DBR</span><span class="v">'+d.dbr+'</span></div>'+
+    '<div class="f"><span class="k">Node</span><span class="v">'+d.node+'</span></div>'+
+    '<div class="f"><span class="k">Auto-termination</span><span class="v">'+d.autoterm+'</span></div>'+
+  '</div>';
+  var kpis = '<div class="drawer-kpis">'+
+    '<div class="mini-kpi"><div class="k">CPU p95</div><div class="v">'+d.cpu+'</div></div>'+
+    '<div class="mini-kpi"><div class="k">Mem p95</div><div class="v">'+d.mem+'</div></div>'+
+    '<div class="mini-kpi"><div class="k">Idle</div><div class="v">'+d.idle+'</div></div>'+
+    '<div class="mini-kpi"><div class="k">Statut</div><div class="v">'+d.status+'</div></div>'+
+  '</div>';
+  var rawTrend = genTrend(d.trendEnd,84,d.trendVol);
+  var aggTrend = aggregateTrend(rawTrend, GROUP_SIZE[currentGranularity]);
+  var trendPts = spark(aggTrend,320,60);
+  var trend = '<div><div class="trend-head"><span class="lbl">Coût — tendance 90j ('+GRANULARITY_LABEL[currentGranularity]+')</span><span class="val">'+d.cost+'</span></div>'+
+    '<svg viewBox="0 0 320 60" width="100%" height="60"><polyline points="'+trendPts+'" fill="none" stroke="var(--primary)" stroke-width="2"/></svg></div>';
+  var recoList = RECOS[key]||[];
+  var recos = '<div><div class="trend-head"><span class="lbl">Recommandations liées ('+recoList.length+')</span></div>'+
+    (recoList.length? recoList.map(function(r){return '<div class="mini-reco"><div class="top"><span>'+r.t+'</span><span class="badge '+SEV_BADGE[r.s]+'">'+r.s+'</span></div><span class="badge badge-purple" style="width:fit-content;">'+r.c+'</span></div>';}).join('') : '<p class="muted" style="font-size:.8125rem;">Aucune recommandation ouverte.</p>');
+  recos += recoList.length? '<a class="drawer-cta" href="./dcm-compute-recommendations-forecast.html">Voir dans Recommandations &amp; Forecast →</a>' : '';
+  recos += '</div>';
+  document.getElementById('drawerBody').innerHTML = idCard+kpis+trend+recos;
+  document.getElementById('drawerOverlay').classList.add('open');
+  document.getElementById('drawer').classList.add('open');
+}
+function closeDrawer(){
+  document.getElementById('drawerOverlay').classList.remove('open');
+  document.getElementById('drawer').classList.remove('open');
+}
+</script>
+</body>
+</html>

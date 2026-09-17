@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DCM — Guide onboarding LZ cliente</title>
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --surface: #fff;
+      --text: #1a1a2e;
+      --muted: #5c6370;
+      --border: #dde1e6;
+      --accent: #005eb8;
+      --accent-soft: #e8f1fa;
+      --you: #0d7377;
+      --you-bg: #e6f4f4;
+      --agent: #6a4c93;
+      --agent-bg: #f0ebf7;
+      --devops: #c45c00;
+      --devops-bg: #fdf0e6;
+      --ok: #1e7e34;
+      --warn: #856404;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    header {
+      background: var(--accent);
+      color: #fff;
+      padding: 1.25rem 1.5rem;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      box-shadow: 0 1px 0 rgba(0,0,0,.08);
+    }
+    header h1 { margin: 0; font-size: 1.25rem; font-weight: 600; }
+    header p { margin: .35rem 0 0; opacity: .9; font-size: .9rem; }
+    .layout {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      min-height: calc(100vh - 72px);
+    }
+    nav {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 1rem 0;
+      position: sticky;
+      top: 72px;
+      height: calc(100vh - 72px);
+      overflow-y: auto;
+    }
+    nav a {
+      display: block;
+      padding: .5rem 1.25rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: .875rem;
+      border-left: 3px solid transparent;
+    }
+    nav a:hover { background: var(--bg); color: var(--text); }
+    nav a.active {
+      color: var(--accent);
+      border-left-color: var(--accent);
+      background: var(--accent-soft);
+      font-weight: 600;
+    }
+    main { padding: 1.5rem 2rem 3rem; max-width: 920px; }
+    section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      scroll-margin-top: 88px;
+    }
+    section h2 {
+      margin: 0 0 1rem;
+      font-size: 1.15rem;
+      color: var(--accent);
+    }
+    section h3 { font-size: 1rem; margin: 1.25rem 0 .5rem; }
+    p { margin: .5rem 0; }
+    .badge {
+      display: inline-block;
+      font-size: .7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      padding: .15rem .5rem;
+      border-radius: 4px;
+      margin-right: .35rem;
+    }
+    .badge-you { background: var(--you-bg); color: var(--you); }
+    .badge-agent { background: var(--agent-bg); color: var(--agent); }
+    .badge-devops { background: var(--devops-bg); color: var(--devops); }
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: var(--accent-soft);
+      padding: .75rem 1rem;
+      margin: 1rem 0;
+      border-radius: 0 6px 6px 0;
+      font-size: .9rem;
+    }
+    .callout-warn {
+      border-left-color: var(--warn);
+      background: #fff8e6;
+    }
+    .diagram {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+    @media (max-width: 700px) {
+      .layout { grid-template-columns: 1fr; }
+      nav { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+      .diagram { grid-template-columns: 1fr; }
+    }
+    .box {
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+    }
+    .box h4 { margin: 0 0 .5rem; font-size: .85rem; }
+    .box.core { border-color: var(--accent); background: var(--accent-soft); }
+    .box.lz { border-color: var(--you); background: var(--you-bg); }
+    .arrow-row {
+      text-align: center;
+      font-size: 1.5rem;
+      color: var(--muted);
+      margin: .5rem 0;
+    }
+    .flow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .5rem;
+      align-items: center;
+      margin: 1rem 0;
+    }
+    .flow-step {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: .4rem .65rem;
+      font-size: .8rem;
+      cursor: pointer;
+      transition: border-color .15s;
+    }
+    .flow-step:hover, .flow-step.selected {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .flow-arrow { color: var(--muted); font-size: .9rem; }
+    .phase-detail {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: var(--bg);
+      border-radius: 6px;
+      font-size: .9rem;
+      min-height: 80px;
+    }
+    .checklist { list-style: none; padding: 0; margin: 0; }
+    .checklist li {
+      display: flex;
+      align-items: flex-start;
+      gap: .65rem;
+      padding: .65rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: .9rem;
+    }
+    .checklist li:last-child { border-bottom: none; }
+    .checklist input { margin-top: .25rem; width: 18px; height: 18px; cursor: pointer; }
+    .checklist label { flex: 1; cursor: pointer; }
+    .checklist label.done { text-decoration: line-through; color: var(--muted); }
+    .progress-bar {
+      height: 8px;
+      background: var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      margin: .75rem 0;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--ok);
+      width: 0%;
+      transition: width .3s;
+    }
+    .progress-text { font-size: .8rem; color: var(--muted); }
+    pre, code {
+      font-family: ui-monospace, monospace;
+      font-size: .82rem;
+    }
+    pre {
+      background: #1e1e2e;
+      color: #cdd6f4;
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+    }
+    .img-slot {
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      min-height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      margin: 1rem 0;
+      overflow: hidden;
+    }
+    .img-slot img { max-width: 100%; display: block; }
+    .img-slot .placeholder {
+      color: var(--muted);
+      font-size: .85rem;
+      text-align: center;
+      padding: 1rem;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: .875rem; margin: .75rem 0; }
+    th, td { border: 1px solid var(--border); padding: .5rem .65rem; text-align: left; }
+    th { background: var(--bg); }
+    .tabs { display: flex; gap: .25rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .tab {
+      padding: .4rem .75rem;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      border-radius: 6px 6px 0 0;
+      cursor: pointer;
+      font-size: .85rem;
+    }
+    .tab.active { background: var(--surface); border-bottom-color: var(--surface); font-weight: 600; color: var(--accent); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    footer {
+      text-align: center;
+      padding: 1rem;
+      font-size: .75rem;
+      color: var(--muted);
+    }
+    a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>DCM — Guide visuel onboarding LZ cliente</h1>
+    <p>Agent <code>@dp-dcm-lz-client</code> · Copilot · Azure · Checklist interactive</p>
+  </header>
+
+  <div class="layout">
+    <nav id="nav">
+      <a href="#intro" class="active">Introduction</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#network">Flux firewall</a>
+      <a href="#install">Installation agent</a>
+      <a href="#invoke">Invoquer l'agent</a>
+      <a href="#questions">Questions Phase 1</a>
+      <a href="#phases">Parcours des phases</a>
+      <a href="#phase52">Phase 5.2 (deploy)</a>
+      <a href="#troubleshoot">Pièges fréquents</a>
+      <a href="#links">Liens</a>
+    </nav>
+
+    <main>
+      <section id="intro">
+        <h2>Introduction</h2>
+        <p>Ce guide accompagne l'onboarding d'une <strong>Landing Zone cliente</strong> dans Data Connect Monitoring (DCM).</p>
+        <div class="callout">
+          <strong>Agent vs guide :</strong> l'agent <code>@dp-dcm-lz-client</code> <em>exécute</em> les commandes. Ce guide <em>explique</em> où vous en êtes et qui fait quoi.
+        </div>
+        <p><span class="badge badge-you">Toi</span> réponses, secrets, confirmations</p>
+        <p><span class="badge badge-agent">Agent</span> MR Robot, az, tests ingest</p>
+        <p><span class="badge badge-devops">DevOps</span> BASK apply, deploy code Phase 5.2</p>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <p class="progress-text" id="progressText">Progression checklist : 0 / 0</p>
+      </section>
+
+      <section id="architecture">
+        <h2>Architecture — Où tourne le collector ?</h2>
+        <div class="callout callout-warn">
+          Le collector <strong>novadatahub</strong> (et chaque LZ cliente) tourne sur l'<strong>App Service dans la subscription cliente</strong> — pas dans le container DataSquad.
+        </div>
+        <div class="diagram">
+          <div class="box lz">
+            <h4>Subscription LZ cliente</h4>
+            <p><strong>App Service</strong><br><code>azr*fn*-dcm</code></p>
+            <p style="font-size:.8rem;margin-top:.5rem">Key Vault · Storage BB</p>
+            <p style="font-size:.75rem;color:var(--you)">← Collector Python ici (Phase 5.2)</p>
+          </div>
+          <div class="box core">
+            <h4>DCM Core (équipe DCM)</h4>
+            <p><strong>Apigee</strong> → Backend DCM</p>
+            <p style="font-size:.8rem;margin-top:.5rem">ACI DataSquad = référence seulement</p>
+          </div>
+        </div>
+        <div class="arrow-row">métriques HTTPS ↓</div>
+        <table>
+          <tr><th>Repo</th><th>Rôle</th></tr>
+          <tr><td><code>azr-iac-bb-dataint-dcm</code></td><td>BB Terraform — crée App Service vide</td></tr>
+          <tr><td><code>BA-{LZ}-Infrastructure</code></td><td>Satellite BASK <code>DataintDCM/ClientInfra</code></td></tr>
+          <tr><td><code>dataint-dcm-app</code></td><td>Code collector + agent Copilot</td></tr>
+        </table>
+        <p>Détail : <a href="00-architecture.md">00-architecture.md</a></p>
+      </section>
+
+      <section id="network">
+        <h2>Prérequis réseau — ouverture flux firewall</h2>
+        <div class="callout callout-warn">
+          <strong>À demander à l'équipe infra LZ</strong> avant Phase 5.1 / 5.2 — egress HTTPS (443) depuis le subnet intégration App Service DCM.
+        </div>
+        <p><span class="badge badge-devops">DevOps / Réseau</span> NAT Gateway, Azure Firewall FQDN, ou proxy corporate</p>
+        <table>
+          <tr><th>#</th><th>Destination</th><th>Usage</th></tr>
+          <tr><td>1</td><td><code>login.microsoftonline.com</code></td><td>Auth Entra — <strong>bloquant</strong></td></tr>
+          <tr><td>2</td><td><code>management.azure.com</code></td><td>APIs Azure (collectors)</td></tr>
+          <tr><td>3</td><td><code>dev.apixnp.alzp.tgscloud.net</code></td><td>Ingestion Apigee</td></tr>
+          <tr><td>4</td><td><code>551656632516.dkr.ecr.eu-central-1.amazonaws.com</code></td><td>Pull image ECR central DCM</td></tr>
+          <tr><td>5</td><td><code>api.ecr.eu-central-1.amazonaws.com</code></td><td>Token ECR</td></tr>
+          <tr><td>6</td><td><code>prod-eu-central-1-starport-layer-bucket.s3.eu-central-1.amazonaws.com</code></td><td>Layers Docker ECR</td></tr>
+        </table>
+        <p>Variante Apigee prod : <code>*.apixnp.alzp.tgscloud.net</code>. Pas d'ACR Azure — image sur ECR AWS central.</p>
+        <p>Template mail infra : <a href="04-network-egress.md">04-network-egress.md</a></p>
+      </section>
+
+      <section id="install">
+        <h2>Installation de l'agent</h2>
+        <p><span class="badge badge-you">Toi</span> une seule fois par poste</p>
+        <pre>cd dataint-dcm-app
+git checkout develop
+chmod +x packages/dcm-agent/install.sh
+./packages/dcm-agent/install.sh --global</pre>
+        <p>Recharger VS Code → Copilot → taper <code>@dp-dcm-lz-client</code></p>
+        <div class="img-slot" data-src="assets/01-copilot-agent-list.png" data-label="Capture : liste agents Copilot avec dp-dcm-lz-client"></div>
+        <p>Détail : <a href="01-install-agent.md">01-install-agent.md</a></p>
+      </section>
+
+      <section id="invoke">
+        <h2>Invoquer l'agent</h2>
+        <h3>1. Connexion Azure</h3>
+        <pre>az login --tenant "329e91b0-e21f-48fb-a071-456717ecc28e" \
+  --scope "https://api-aad.pf-identity.iasp.tgscloud.net/.default"</pre>
+        <p>Choisir la <strong>subscription LZ cliente</strong> (ex. <code>sub-iasp-lz-novadatahub</code>).</p>
+        <div class="img-slot" data-src="assets/03-az-login-subscription.png" data-label="Capture : sélecteur subscription az login"></div>
+
+        <h3>2. Message Copilot</h3>
+        <pre>@dp-dcm-lz-client Azure : sub-iasp-lz-novadatahub, env=m, subscription_id=77180ab7-ad22-4e7e-aa0b-e2f909e6d0fa, prenom.nom@totalenergies.com</pre>
+        <div class="img-slot" data-src="assets/02-copilot-invoke.png" data-label="Capture : message Copilot avec @dp-dcm-lz-client"></div>
+      </section>
+
+      <section id="questions">
+        <h2>Questions Phase 1 — à préparer</h2>
+        <p>L'agent demande ou déduit :</p>
+        <table>
+          <tr><th>Paramètre</th><th>Exemple</th><th>Vous fournissez ?</th></tr>
+          <tr><td>Subscription LZ</td><td><code>sub-iasp-lz-novadatahub</code></td><td>Oui</td></tr>
+          <tr><td>Environnement</td><td><code>d</code>, <code>m</code>, <code>p</code></td><td>Oui</td></tr>
+          <tr><td>Subscription ID</td><td>UUID</td><td>Oui</td></tr>
+          <tr><td>Email contact</td><td>@totalenergies.com</td><td>Oui</td></tr>
+          <tr><td><code>source_lz_id</code></td><td><code>azr-lz-novadatahub-dev</code></td><td>Non — agent déduit</td></tr>
+        </table>
+        <h3>Choix des collectors (multi-sélection)</h3>
+        <p>Ne cochez que ce qui existe dans votre LZ :</p>
+        <ul style="font-size:.9rem">
+          <li><code>datafactory</code> — Azure Data Factory</li>
+          <li><code>databricks</code> — Databricks</li>
+          <li><code>cost_management</code> — Coûts</li>
+          <li><code>databases</code> — SQL, PG, MySQL, Cosmos</li>
+        </ul>
+        <div class="img-slot" data-src="assets/04-collectors-table.png" data-label="Capture : tableau collectors agent"></div>
+      </section>
+
+      <section id="phases">
+        <h2>Parcours des phases — cliquez une étape</h2>
+        <div class="flow" id="phaseFlow"></div>
+        <div class="phase-detail" id="phaseDetail">Cliquez une phase ci-dessus pour voir le détail.</div>
+
+        <h3>Checklist onboarding</h3>
+        <ul class="checklist" id="checklist"></ul>
+        <p style="font-size:.8rem;color:var(--muted)">Coché = sauvegardé dans votre navigateur (localStorage).</p>
+        <p>Détail : <a href="02-phases-checklist.md">02-phases-checklist.md</a></p>
+      </section>
+
+      <section id="phase52">
+        <h2>Phase 5.2 — Installer le programme collector</h2>
+        <div class="callout callout-warn">
+          <strong>Point clé :</strong> Terraform (5.1) crée une App Service <em>vide</em>. Phase 5.2 = y mettre le code Python <code>dcm-azure-collector</code>.
+        </div>
+        <p><span class="badge badge-devops">DevOps</span> souvent requis — deploy personnel souvent refusé (droits + App Service privée).</p>
+
+        <div class="tabs">
+          <button type="button" class="tab active" data-tab="jocelyn">Ce que dit Jocelyn</button>
+          <button type="button" class="tab" data-tab="workflow">Workflow GitHub DCM</button>
+          <button type="button" class="tab" data-tab="verify">Vérifier que c'est OK</button>
+        </div>
+
+        <div class="tab-panel active" id="tab-jocelyn">
+          <p>Guide BB <code>installation.md</code> §5.2 :</p>
+          <blockquote style="border-left:3px solid var(--border);padding-left:1rem;margin:0;font-size:.9rem">
+            « collector package deployment must be completed by <strong>your CI/CD process</strong> »
+          </blockquote>
+          <p>Méthodes : Zip Deploy · artefact CI · container Docker</p>
+        </div>
+
+        <div class="tab-panel" id="tab-workflow">
+          <p>Workflow équipe DCM (facilite la 5.2, pas dans le guide Jocelyn) :</p>
+          <pre>dataint-dcm-app/.github/workflows/dcm-azure-collector-deploy-lz.yml</pre>
+          <table>
+            <tr><th>Input novadatahub</th><th>Valeur</th></tr>
+            <tr><td><code>lz_preset</code></td><td><code>novadatahub-m</code></td></tr>
+            <tr><td><code>deploy_method</code></td><td><code>run-from-package</code></td></tr>
+            <tr><td><code>storage_account</code></td><td><code>azrmstndth-dcm</code></td></tr>
+          </table>
+          <div class="img-slot" data-src="assets/06-github-deploy-lz-workflow.png" data-label="Capture : GitHub Actions deploy LZ"></div>
+        </div>
+
+        <div class="tab-panel" id="tab-verify">
+          <pre>az webapp log tail -g azrmrgndth04 -n azrmfnndth-dcm</pre>
+          <p>Attendu : config KV OK · collecte démarrée · pas d'erreur auth en boucle</p>
+          <div class="img-slot" data-src="assets/07-app-service-logs.png" data-label="Capture : logs App Service collector"></div>
+        </div>
+        <p>Détail : <a href="03-phase-5-2-deploy.md">03-phase-5-2-deploy.md</a></p>
+      </section>
+
+      <section id="troubleshoot">
+        <h2>Pièges fréquents</h2>
+        <table>
+          <tr><th>Symptôme</th><th>Cause</th><th>Action</th></tr>
+          <tr><td>Apigee 403</td><td>Mauvais header</td><td><code>x-apif-apikey</code> pas <code>x-api-key</code></td></tr>
+          <tr><td>KV ForbiddenByFirewall</td><td>IP non autorisée</td><td>PIM + whitelist IP sur KV</td></tr>
+          <tr><td>Deploy 403</td><td>App Service privée</td><td><code>run-from-package</code> via blob</td></tr>
+          <tr><td>Ingest 202 mais pas de métriques</td><td>Phase 5.2 pas faite</td><td>Deploy collector sur App Service</td></tr>
+          <tr><td>Confusion ACI DataSquad</td><td>Mauvais workflow</td><td>Utiliser deploy-lz, pas dcm-azure-collector.yml</td></tr>
+          <tr><td>App Service ne pull pas l'image</td><td>Egress ECR/S3 bloqué</td><td>Ouvrir flux #4–6 — <a href="04-network-egress.md">04-network-egress.md</a></td></tr>
+          <tr><td>Erreur auth au démarrage</td><td>Entra bloqué</td><td>Ouvrir <code>login.microsoftonline.com</code> (#1)</td></tr>
+        </table>
+      </section>
+
+      <section id="links">
+        <h2>Liens utiles</h2>
+        <ul style="font-size:.9rem">
+          <li><a href="../GUIDE-UTILISATEUR.md">GUIDE-UTILISATEUR.md</a> — référence texte complète</li>
+          <li><a href="https://github.com/TotalEnergiesCode/azr-iac-bb-dataint-dcm/blob/main/installation.md">installation.md</a> — guide Jocelyn (BB)</li>
+          <li><code>packages/dcm-agent/agents/dp-dcm-lz-client.agent.md</code></li>
+          <li><code>BA-Data-Connect-Monitoring-infra/DCM-client-LZ-onboarding-handoff.md</code></li>
+        </ul>
+      </section>
+
+      <footer>DCM onboarding guide · dataint-dcm-app · juin 2026</footer>
+    </main>
+  </div>
+
+  <script>
+    const PHASES = [
+      { id: "p1", label: "1 · Paramètres", role: "you", title: "Paramètres + collectors", body: "Répondre aux questions de l'agent : subscription LZ, env, email, choix des collectors (multi-sélection)." },
+      { id: "p2", label: "2 · Entra", role: "agent", title: "SP collector Entra", body: "L'agent crée le SP via MR Robot. Consentement admin Entra si HTTP 409 sur le rôle Collector." },
+      { id: "p51", label: "5.1 · Infra", role: "devops", title: "Infra Building Block", body: "DevOps LZ : BASK apply satellite DataintDCM/ClientInfra dans BA-{LZ}-Infrastructure. Crée RG, KV, App Service vide." },
+      { id: "p3b", label: "3b · Secrets KV", role: "you", title: "Secrets dans KV BB", body: "Copier 4 secrets dcm-* dans azr{env}kv{appcode}-dcm. PIM + IP whitelist si KV privé." },
+      { id: "p52", label: "5.2 · Code", role: "devops", title: "Deploy collector", body: "Installer dcm-azure-collector sur l'App Service. CI/CD ou jumpbox. Voir section Phase 5.2." },
+      { id: "p4", label: "4 · RBAC", role: "agent", title: "Permissions MI", body: "Vérifier rôles Managed Identity sur subscription. BB en pose déjà une base." },
+      { id: "p6", label: "6 · Ingest", role: "agent", title: "Test Apigee", body: "POST /ingest — HTTP 202 = OK. Peut passer avant 5.2 (test OAuth SP)." },
+      { id: "p7", label: "7 · Fiche", role: "agent", title: "Documentation", body: "Agent génère fiche onboarding lz-{nom}-{env}.md" }
+    ];
+
+    const CHECKLIST = [
+      { id: "c1", text: "Installer agent (install.sh --global)", role: "you" },
+      { id: "c2", text: "az login + subscription LZ sélectionnée", role: "you" },
+      { id: "c3", text: "Invoquer @dp-dcm-lz-client avec paramètres LZ", role: "you" },
+      { id: "c4", text: "Choisir collectors (multi-sélection)", role: "you" },
+      { id: "c5", text: "Consentement admin Entra (rôle Collector)", role: "you" },
+      { id: "c6", text: "Phase 5.1 — BASK apply satellite ClientInfra", role: "devops" },
+      { id: "c6b", text: "Flux firewall ouverts (Entra, Azure, Apigee, ECR — 6 FQDN)", role: "devops" },
+      { id: "c7", text: "Phase 3b — 4 secrets dcm-* dans KV BB", role: "you" },
+      { id: "c8", text: "Phase 5.2 — deploy code sur App Service", role: "devops" },
+      { id: "c9", text: "Phase 6 — ingest 202 confirmé", role: "agent" },
+      { id: "c10", text: "Logs App Service — collecte active", role: "devops" }
+    ];
+
+    const STORAGE_KEY = "dcm-onboarding-checklist-v2";
+
+    function roleBadge(role) {
+      const map = { you: ["Toi", "badge-you"], agent: ["Agent", "badge-agent"], devops: ["DevOps", "badge-devops"] };
+      const [l, c] = map[role] || ["", ""];
+      return `<span class="badge ${c}">${l}</span>`;
+    }
+
+    function initPhaseFlow() {
+      const flow = document.getElementById("phaseFlow");
+      const detail = document.getElementById("phaseDetail");
+      PHASES.forEach((p, i) => {
+        if (i > 0) {
+          const arr = document.createElement("span");
+          arr.className = "flow-arrow";
+          arr.textContent = "→";
+          flow.appendChild(arr);
+        }
+        const el = document.createElement("button");
+        el.type = "button";
+        el.className = "flow-step";
+        el.textContent = p.label;
+        el.addEventListener("click", () => {
+          document.querySelectorAll(".flow-step").forEach(s => s.classList.remove("selected"));
+          el.classList.add("selected");
+          detail.innerHTML = roleBadge(p.role) + `<strong>${p.title}</strong><p>${p.body}</p>`;
+        });
+        flow.appendChild(el);
+      });
+      flow.querySelector(".flow-step").click();
+    }
+
+    function loadChecks() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); } catch { return {}; }
+    }
+
+    function saveChecks(state) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function updateProgress(state) {
+      const total = CHECKLIST.length;
+      const done = CHECKLIST.filter(c => state[c.id]).length;
+      const pct = total ? Math.round((done / total) * 100) : 0;
+      document.getElementById("progressFill").style.width = pct + "%";
+      document.getElementById("progressText").textContent = `Progression checklist : ${done} / ${total} (${pct}%)`;
+    }
+
+    function initChecklist() {
+      const ul = document.getElementById("checklist");
+      const state = loadChecks();
+      CHECKLIST.forEach(item => {
+        const li = document.createElement("li");
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.id = item.id;
+        cb.checked = !!state[item.id];
+        const label = document.createElement("label");
+        label.htmlFor = item.id;
+        label.innerHTML = roleBadge(item.role) + item.text;
+        if (state[item.id]) label.classList.add("done");
+        cb.addEventListener("change", () => {
+          state[item.id] = cb.checked;
+          label.classList.toggle("done", cb.checked);
+          saveChecks(state);
+          updateProgress(state);
+        });
+        li.appendChild(cb);
+        li.appendChild(label);
+        ul.appendChild(li);
+      });
+      updateProgress(state);
+    }
+
+    function initTabs() {
+      document.querySelectorAll(".tab").forEach(tab => {
+        tab.addEventListener("click", () => {
+          const id = tab.dataset.tab;
+          document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+          document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+          tab.classList.add("active");
+          document.getElementById("tab-" + id).classList.add("active");
+        });
+      });
+    }
+
+    function initImages() {
+      document.querySelectorAll(".img-slot").forEach(slot => {
+        const src = slot.dataset.src;
+        const label = slot.dataset.label;
+        const img = new Image();
+        img.onload = () => { slot.innerHTML = ""; slot.appendChild(img); };
+        img.onerror = () => {
+          slot.innerHTML = `<div class="placeholder">📷 ${label}<br><small>Ajouter <code>${src}</code></small></div>`;
+        };
+        img.src = src;
+        img.alt = label;
+      });
+    }
+
+    function initNav() {
+      const links = document.querySelectorAll("nav a");
+      const sections = [...links].map(a => document.querySelector(a.getAttribute("href")));
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            links.forEach(l => l.classList.remove("active"));
+            const active = document.querySelector(`nav a[href="#${e.target.id}"]`);
+            if (active) active.classList.add("active");
+          }
+        });
+      }, { rootMargin: "-30% 0px -60% 0px" });
+      sections.forEach(s => s && observer.observe(s));
+    }
+
+    initPhaseFlow();
+    initChecklist();
+    initTabs();
+    initImages();
+    initNav();
+  </script>
+</body>
+</html>

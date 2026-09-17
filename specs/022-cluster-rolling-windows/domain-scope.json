@@ -1,0 +1,16 @@
+{
+  "work_type": "feature",
+  "domains": {
+    "frontend": true,
+    "backend": true,
+    "dataeng": true,
+    "devops": false,
+    "qa": false
+  },
+  "packages": [
+    "packages/dcm-frontend",
+    "packages/dcm-backend",
+    "packages/dcm-databricks-pipeline"
+  ],
+  "priority": "P2"
+}

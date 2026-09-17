@@ -1,0 +1,43 @@
+{
+  "updated_at": "2026-07-30T07:25:00Z",
+  "last_run_at": "2026-07-30T07:25:00Z",
+  "spec": "011-nav-v2-cleanup",
+  "epic": {
+    "key": "DCINT-195",
+    "url": "https://tdf.atlassian.net/browse/DCINT-195",
+    "summary": "[011] DCM Navigation v2 — Sidebar Cleanup & Restructure",
+    "status": "Draft"
+  },
+  "stories": [
+    {
+      "task_id": "T001",
+      "key": "DCINT-196",
+      "url": "https://tdf.atlassian.net/browse/DCINT-196",
+      "summary": "T001: Frontend — Main nav simplification (3 items visible)",
+      "domain": "frontend",
+      "branch": "frontend/011-main-nav-simplification",
+      "sub_spec_path": "stories/T001-main-nav-simplification.md",
+      "status": "To Do"
+    },
+    {
+      "task_id": "T002",
+      "key": "DCINT-197",
+      "url": "https://tdf.atlassian.net/browse/DCINT-197",
+      "summary": "T002: Frontend — Settings section in Sidebar (Administration + My Landing Zones)",
+      "domain": "frontend",
+      "branch": "frontend/011-settings-section",
+      "sub_spec_path": "stories/T002-settings-section.md",
+      "status": "To Do"
+    },
+    {
+      "task_id": "T003",
+      "key": "DCINT-198",
+      "url": "https://tdf.atlassian.net/browse/DCINT-198",
+      "summary": "T003: Frontend — Databricks v2 sub-nav + placeholder pages",
+      "domain": "frontend",
+      "branch": "frontend/011-databricks-v2-subnav",
+      "sub_spec_path": "stories/T003-databricks-v2-subnav.md",
+      "status": "To Do"
+    }
+  ]
+}

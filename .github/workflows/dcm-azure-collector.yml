@@ -1,0 +1,695 @@
+name: dcm-azure-collector - CI, push ECR & deploy LZs
+
+# Single workflow — push develop/main (collector paths) → test → build → push ECR → deploy all LZs
+# Manual: workflow_dispatch — redeploy_only for one LZ without rebuild
+# ECR token refresh: dcm-azure-collector-refresh-ecr-creds.yml (cron 6h)
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'packages/dcm-azure-collector/**'
+      - 'packages/dcm-commons/**'
+      - '.github/workflows/dcm-azure-collector.yml'
+      - '.github/workflows/dcm-azure-collector-refresh-ecr-creds.yml'
+      - '.github/azure-collector-deploy-targets.json'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'packages/dcm-azure-collector/**'
+      - 'packages/dcm-commons/**'
+      - '.github/workflows/dcm-azure-collector.yml'
+      - '.github/workflows/dcm-azure-collector-refresh-ecr-creds.yml'
+      - '.github/azure-collector-deploy-targets.json'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'GitHub Environment (dev/prod) — supplies DCM_APIGEE_BASE_URL + DCM_ENTRA_SCOPE; must match the LZ github_environment'
+        type: choice
+        required: true
+        default: 'dev'
+        options: [dev, prod]
+      redeploy_only:
+        description: 'Redeploy from existing ECR image — skip test, build and push'
+        type: boolean
+        required: false
+        default: false
+      deploy_lz:
+        description: 'LZ to deploy — all, one key (e.g. novadatahub-m), or none'
+        type: choice
+        required: true
+        default: all
+        options:
+          - none
+          - all
+          - datasquad-d
+          - novadatahub-m
+      image_tag:
+        description: 'Redeploy only — ECR tag (latest = newest in registry, or commit SHA)'
+        type: string
+        required: false
+        default: latest
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  PYTHON_VERSION: '3.12'
+  PACKAGE_DIR: packages/dcm-azure-collector
+  IMAGE_NAME: dcm-azure-collector
+  IMAGE_TARBALL: dcm-azure-collector-image.tar
+  AWS_REGION: ${{ vars.AWS_REGION || 'eu-central-1' }}
+  ECR_REGISTRY: ${{ vars.AWS_COLLECTOR_ECR_REGISTRY || secrets.AWS_COLLECTOR_ECR_REGISTRY }}
+  ECR_REPOSITORY: ${{ vars.AZURE_COLLECTOR_ECR_REPOSITORY || secrets.AZURE_COLLECTOR_ECR_REPOSITORY || 'awsd-dcm-azure-collector' }}
+
+jobs:
+  setup:
+    name: '01 · Setup pipeline mode'
+    runs-on: ubuntu-latest
+    outputs:
+      deploy_env: ${{ steps.env.outputs.name }}
+      run_ci: ${{ steps.env.outputs.run_ci }}
+      push_ecr: ${{ steps.env.outputs.push_ecr }}
+      deploy_lz: ${{ steps.env.outputs.deploy_lz }}
+      image_tag: ${{ steps.env.outputs.image_tag }}
+    steps:
+      - id: env
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          GIT_REF: ${{ github.ref }}
+          GIT_SHA: ${{ github.sha }}
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
+          INPUT_REDEPLOY_ONLY: ${{ inputs.redeploy_only }}
+          INPUT_DEPLOY_LZ: ${{ inputs.deploy_lz }}
+          INPUT_IMAGE_TAG: ${{ inputs.image_tag }}
+        run: |
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            echo "name=$INPUT_ENVIRONMENT" >> "$GITHUB_OUTPUT"
+            if [[ "$INPUT_REDEPLOY_ONLY" == "true" ]]; then
+              if [[ "$INPUT_DEPLOY_LZ" == "none" ]]; then
+                echo "::error::redeploy_only requires deploy_lz (all or one LZ key)."
+                exit 1
+              fi
+              echo "run_ci=false" >> "$GITHUB_OUTPUT"
+              echo "push_ecr=false" >> "$GITHUB_OUTPUT"
+              echo "deploy_lz=$INPUT_DEPLOY_LZ" >> "$GITHUB_OUTPUT"
+              echo "image_tag=${INPUT_IMAGE_TAG:-latest}" >> "$GITHUB_OUTPUT"
+            else
+              echo "run_ci=true" >> "$GITHUB_OUTPUT"
+              echo "push_ecr=true" >> "$GITHUB_OUTPUT"
+              echo "deploy_lz=$INPUT_DEPLOY_LZ" >> "$GITHUB_OUTPUT"
+              echo "image_tag=$GIT_SHA" >> "$GITHUB_OUTPUT"
+            fi
+          elif [[ "$EVENT_NAME" == "push" && "$GIT_REF" == "refs/heads/main" ]]; then
+            echo "name=prod" >> "$GITHUB_OUTPUT"
+            echo "run_ci=true" >> "$GITHUB_OUTPUT"
+            echo "push_ecr=true" >> "$GITHUB_OUTPUT"
+            echo "deploy_lz=all" >> "$GITHUB_OUTPUT"
+            echo "image_tag=$GIT_SHA" >> "$GITHUB_OUTPUT"
+          elif [[ "$EVENT_NAME" == "push" && "$GIT_REF" == "refs/heads/develop" ]]; then
+            echo "name=dev" >> "$GITHUB_OUTPUT"
+            echo "run_ci=true" >> "$GITHUB_OUTPUT"
+            echo "push_ecr=true" >> "$GITHUB_OUTPUT"
+            echo "deploy_lz=all" >> "$GITHUB_OUTPUT"
+            echo "image_tag=$GIT_SHA" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=" >> "$GITHUB_OUTPUT"
+            echo "run_ci=true" >> "$GITHUB_OUTPUT"
+            echo "push_ecr=false" >> "$GITHUB_OUTPUT"
+            echo "deploy_lz=none" >> "$GITHUB_OUTPUT"
+            echo "image_tag=" >> "$GITHUB_OUTPUT"
+          fi
+
+  test:
+    name: '02 · Test (pytest, ruff, mypy)'
+    needs: setup
+    if: needs.setup.outputs.run_ci == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        working-directory: ${{ env.PACKAGE_DIR }}
+        run: uv pip install --system -e ".[dev]"
+
+      - name: Run ruff check (non-blocking)
+        id: ruff
+        continue-on-error: true
+        working-directory: ${{ env.PACKAGE_DIR }}
+        run: ruff check . | tee ruff-report.txt
+
+      - name: Ruff summary
+        if: always()
+        working-directory: ${{ env.PACKAGE_DIR }}
+        run: |
+          {
+            echo "## Ruff report - dcm-azure-collector"
+            if [[ "${{ steps.ruff.outcome }}" == "success" ]]; then
+              echo "Status: passed - no issues found."
+            else
+              echo "Status: issues found (non-blocking - to be fixed later)"
+              echo ""
+              echo '```'
+              cat ruff-report.txt 2>/dev/null || echo "(no report file)"
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run mypy type check (non-blocking)
+        id: mypy
+        continue-on-error: true
+        working-directory: ${{ env.PACKAGE_DIR }}
+        run: mypy azure_collector | tee mypy-report.txt
+
+      - name: Mypy summary
+        if: always()
+        working-directory: ${{ env.PACKAGE_DIR }}
+        run: |
+          {
+            echo "## Mypy report - dcm-azure-collector"
+            if [[ "${{ steps.mypy.outcome }}" == "success" ]]; then
+              echo "Status: passed - no type errors."
+            else
+              echo "Status: type errors found (non-blocking - to be fixed later)"
+              echo ""
+              echo '```'
+              cat mypy-report.txt 2>/dev/null || echo "(no report file)"
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run pytest
+        working-directory: ${{ env.PACKAGE_DIR }}
+        run: pytest
+
+  build:
+    name: '03 · Build Docker image'
+    needs: [setup, test]
+    if: needs.setup.outputs.run_ci == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build Docker image (no push)
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ${{ env.PACKAGE_DIR }}/Dockerfile
+          platforms: linux/amd64
+          push: false
+          tags: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          outputs: type=docker,dest=/tmp/${{ env.IMAGE_TARBALL }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke test image (dcm_commons bundled)
+        run: |
+          docker load --input /tmp/${{ env.IMAGE_TARBALL }}
+          docker run --rm --entrypoint python ${{ env.IMAGE_NAME }}:${{ github.sha }} \
+            -c "import azure_collector, dcm_commons; print('ok')"
+
+      - name: Upload image artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: dcm-azure-collector-image
+          path: /tmp/${{ env.IMAGE_TARBALL }}
+          retention-days: 1
+
+  push_ecr:
+    name: '04 · Push image to ECR (${{ needs.setup.outputs.deploy_env }})'
+    needs: [setup, build]
+    if: needs.setup.outputs.push_ecr == 'true'
+    runs-on: ubuntu-latest
+    environment: ${{ needs.setup.outputs.deploy_env }}
+    env:
+      AWS_COLLECTOR_ROLE_ARN: ${{ secrets.AWS_AZURE_COLLECTOR_ECR_ROLE_ARN || vars.AWS_AZURE_COLLECTOR_ECR_ROLE_ARN }}
+    steps:
+      - name: Resolve ECR from GitHub variables
+        id: ecr_env
+        run: |
+          set -euo pipefail
+          REGISTRY="${ECR_REGISTRY:-}"
+          if [[ -z "$REGISTRY" ]]; then
+            echo "::error::Set AWS_COLLECTOR_ECR_REGISTRY on environment '${{ needs.setup.outputs.deploy_env }}' (e.g. ACCOUNT.dkr.ecr.REGION.amazonaws.com)."
+            exit 1
+          fi
+          if [[ ! "$REGISTRY" =~ ^[0-9]{12}\.dkr\.ecr\.[a-z0-9-]+\.amazonaws\.com$ ]]; then
+            echo "::error::AWS_COLLECTOR_ECR_REGISTRY must look like '123456789012.dkr.ecr.eu-central-1.amazonaws.com' (no protocol, username, or spaces)."
+            exit 1
+          fi
+          if [[ -z "$AWS_COLLECTOR_ROLE_ARN" ]]; then
+            echo "::error::Missing AWS_AZURE_COLLECTOR_ECR_ROLE_ARN on environment '${{ needs.setup.outputs.deploy_env }}'."
+            exit 1
+          fi
+          if [[ -z "$ECR_REPOSITORY" ]]; then
+            echo "::error::Set AZURE_COLLECTOR_ECR_REPOSITORY on environment '${{ needs.setup.outputs.deploy_env }}'."
+            exit 1
+          fi
+          ACCOUNT_ID="${REGISTRY%%.dkr.ecr.*}"
+          LABEL="${{ vars.AWS_COLLECTOR_ECR_ACCOUNT_LABEL || secrets.AWS_COLLECTOR_ECR_ACCOUNT_LABEL || '' }}"
+          if [[ -z "$LABEL" ]]; then
+            LABEL="$ACCOUNT_ID"
+          fi
+          {
+            echo "account_id=$ACCOUNT_ID"
+            echo "registry=$REGISTRY"
+            echo "account_label=$LABEL"
+          } >> "$GITHUB_OUTPUT"
+          echo "✓ ECR registry from vars: $REGISTRY (account $ACCOUNT_ID)"
+
+      - name: Export ECR coordinates
+        run: |
+          echo "DCM_ECR_ACCOUNT_ID=${{ steps.ecr_env.outputs.account_id }}" >> "$GITHUB_ENV"
+          echo "DCM_ECR_REGISTRY=${{ steps.ecr_env.outputs.registry }}" >> "$GITHUB_ENV"
+          echo "DCM_ECR_ACCOUNT_LABEL=${{ steps.ecr_env.outputs.account_label }}" >> "$GITHUB_ENV"
+
+      - name: Download image artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: dcm-azure-collector-image
+          path: /tmp
+
+      - uses: actions/checkout@v7
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ env.AWS_COLLECTOR_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Verify AWS account (central DCM ECR)
+        run: |
+          set -euo pipefail
+          ACCOUNT="$(aws sts get-caller-identity --query Account --output text)"
+          if [[ "$ACCOUNT" != "$DCM_ECR_ACCOUNT_ID" ]]; then
+            echo "::error::AWS role is in account $ACCOUNT — expected $DCM_ECR_ACCOUNT_ID ($DCM_ECR_ACCOUNT_LABEL)."
+            exit 1
+          fi
+          echo "✓ AWS account $ACCOUNT — pushing to $DCM_ECR_REGISTRY"
+
+      - name: Login to central DCM ECR
+        run: |
+          aws ecr get-login-password --region "$AWS_REGION" \
+            | docker login --username AWS --password-stdin "$DCM_ECR_REGISTRY"
+
+      - name: Load, tag & push image to ECR
+        run: |
+          docker load --input /tmp/${{ env.IMAGE_TARBALL }}
+          IMAGE_URI="$DCM_ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }}"
+          LATEST_URI="$DCM_ECR_REGISTRY/$ECR_REPOSITORY:latest"
+          docker tag ${{ env.IMAGE_NAME }}:${{ github.sha }} "$IMAGE_URI"
+          docker tag ${{ env.IMAGE_NAME }}:${{ github.sha }} "$LATEST_URI"
+          docker push "$IMAGE_URI"
+          docker push "$LATEST_URI"
+          echo "✓ Image available at $IMAGE_URI"
+          {
+            echo "## ECR push — done"
+            echo "- \`$IMAGE_URI\`"
+            echo "- \`$LATEST_URI\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  resolve_lz:
+    name: '05 · Resolve LZ targets'
+    needs: setup
+    if: needs.setup.outputs.deploy_lz != 'none'
+    runs-on: ubuntu-latest
+    outputs:
+      targets: ${{ steps.out.outputs.targets }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build target matrix
+        id: out
+        env:
+          DEPLOY_ENV: ${{ needs.setup.outputs.deploy_env }}
+        run: |
+          set -euo pipefail
+          TARGET="${{ needs.setup.outputs.deploy_lz }}"
+          FILE=".github/azure-collector-deploy-targets.json"
+          list_targets() {
+            jq -r 'keys[] | select(startswith("_") | not)' "$FILE" | paste -sd ', ' -
+          }
+          # Only LZs whose github_environment matches the workflow Environment (Apigee/Entra vars live there).
+          if [[ "$TARGET" == "all" ]]; then
+            TARGETS="$(jq -c --arg e "$DEPLOY_ENV" '
+              [to_entries[]
+                | select(.key | startswith("_") | not)
+                | select((.value.github_environment // "dev") == $e)
+                | .key]
+            ' "$FILE")"
+            echo "Deploy LZs for environment=$DEPLOY_ENV: $(echo "$TARGETS" | jq -r 'join(", ")')"
+          else
+            if ! jq -e --arg t "$TARGET" '.[$t]' "$FILE" >/dev/null; then
+              echo "::error::Unknown deploy_lz '$TARGET'. Targets: $(list_targets)"
+              exit 1
+            fi
+            LZ_ENV="$(jq -r --arg t "$TARGET" '.[$t].github_environment // "dev"' "$FILE")"
+            if [[ "$LZ_ENV" != "$DEPLOY_ENV" ]]; then
+              echo "::error::LZ '$TARGET' requires GitHub Environment '$LZ_ENV' (Apigee/Entra vars). You selected '$DEPLOY_ENV'."
+              exit 1
+            fi
+            TARGETS="$(jq -c --arg t "$TARGET" '[$t]' "$FILE")"
+            echo "Deploy one: $TARGET (environment=$DEPLOY_ENV)"
+          fi
+          COUNT="$(echo "$TARGETS" | jq 'length')"
+          if [[ "$COUNT" -eq 0 ]]; then
+            echo "::warning::No deploy targets for environment=$DEPLOY_ENV — nothing to deploy."
+          fi
+          echo "targets=$TARGETS" >> "$GITHUB_OUTPUT"
+
+  deploy_lz:
+    name: '06 · Deploy ${{ matrix.target }}'
+    needs: [setup, push_ecr, resolve_lz]
+    if: >-
+      always() &&
+      needs.setup.outputs.deploy_lz != 'none' &&
+      needs.setup.result == 'success' &&
+      needs.resolve_lz.result == 'success' &&
+      needs.resolve_lz.outputs.targets != '[]' &&
+      (needs.setup.outputs.push_ecr != 'true' || needs.push_ecr.result == 'success')
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJson(needs.resolve_lz.outputs.targets) }}
+    environment: ${{ needs.setup.outputs.deploy_env }}
+    env:
+      DEPLOY_TARGET: ${{ matrix.target }}
+      IMAGE_TAG: ${{ needs.setup.outputs.image_tag }}
+      AWS_COLLECTOR_ROLE_ARN: ${{ secrets.AWS_AZURE_COLLECTOR_ECR_ROLE_ARN || vars.AWS_AZURE_COLLECTOR_ECR_ROLE_ARN }}
+      AZURE_CLIENT_ID: ${{ vars.AZURE_BUILDER_CLIENT_ID || secrets.AZURE_BUILDER_CLIENT_ID || vars.AZURE_CLIENT_ID || secrets.AZURE_CLIENT_ID }}
+      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_BUILDER_CLIENT_SECRET || secrets.AZURE_CLIENT_SECRET }}
+      AZURE_TENANT_ID: ${{ vars.AZURE_BUILDER_TENANT_ID || secrets.AZURE_BUILDER_TENANT_ID || vars.AZURE_TENANT_ID || secrets.AZURE_TENANT_ID }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Resolve ECR from GitHub variables
+        id: ecr_env
+        run: |
+          set -euo pipefail
+          REGISTRY="${ECR_REGISTRY:-}"
+          if [[ -z "$REGISTRY" ]]; then
+            echo "::error::Set AWS_COLLECTOR_ECR_REGISTRY on environment '${{ needs.setup.outputs.deploy_env }}' (e.g. ACCOUNT.dkr.ecr.REGION.amazonaws.com)."
+            exit 1
+          fi
+          if [[ ! "$REGISTRY" =~ ^[0-9]{12}\.dkr\.ecr\.[a-z0-9-]+\.amazonaws\.com$ ]]; then
+            echo "::error::AWS_COLLECTOR_ECR_REGISTRY must look like '123456789012.dkr.ecr.eu-central-1.amazonaws.com' (no protocol, username, or spaces)."
+            exit 1
+          fi
+          ACCOUNT_ID="${REGISTRY%%.dkr.ecr.*}"
+          LABEL="${{ vars.AWS_COLLECTOR_ECR_ACCOUNT_LABEL || secrets.AWS_COLLECTOR_ECR_ACCOUNT_LABEL || '' }}"
+          if [[ -z "$LABEL" ]]; then
+            LABEL="$ACCOUNT_ID"
+          fi
+          {
+            echo "account_id=$ACCOUNT_ID"
+            echo "registry=$REGISTRY"
+            echo "account_label=$LABEL"
+          } >> "$GITHUB_OUTPUT"
+          echo "✓ ECR registry from vars: $REGISTRY (account $ACCOUNT_ID)"
+
+      - name: Export ECR coordinates
+        run: |
+          echo "DCM_ECR_ACCOUNT_ID=${{ steps.ecr_env.outputs.account_id }}" >> "$GITHUB_ENV"
+          echo "DCM_ECR_REGISTRY=${{ steps.ecr_env.outputs.registry }}" >> "$GITHUB_ENV"
+          echo "DCM_ECR_ACCOUNT_LABEL=${{ steps.ecr_env.outputs.account_label }}" >> "$GITHUB_ENV"
+
+      - name: Load deploy target
+        id: target
+        env:
+          DCM_APIGEE_BASE_URL: ${{ vars.DCM_APIGEE_BASE_URL }}
+          DCM_ENTRA_SCOPE: ${{ vars.DCM_ENTRA_SCOPE }}
+        run: |
+          set -euo pipefail
+          TARGET="$DEPLOY_TARGET"
+          TARGETS_FILE=".github/azure-collector-deploy-targets.json"
+          DEFAULT_COLLECTORS="datafactory,databricks,cost_management,databases"
+
+          if [[ -z "${DCM_APIGEE_BASE_URL:-}" || -z "${DCM_ENTRA_SCOPE:-}" ]]; then
+            echo "::error::Missing vars DCM_APIGEE_BASE_URL / DCM_ENTRA_SCOPE on GitHub Environment '${{ needs.setup.outputs.deploy_env }}'."
+            exit 1
+          fi
+
+          jq -r --arg t "$TARGET" '
+            .[$t] |
+            [
+              .azure_subscription_id // "",
+              .resource_group // "",
+              .webapp_name // "",
+              .key_vault_url // "",
+              .source_lz_id // "",
+              (.subscription_id_monitored // .azure_subscription_id // ""),
+              (.enabled_collectors // ""),
+              (.description // "")
+            ] | @tsv
+          ' "$TARGETS_FILE" | {
+            IFS=$'\t' read -r SUB RESOURCE_GROUP WEBAPP KV SOURCE_LZ SUB_MON COLLECTORS DESC
+            COLLECTORS="${COLLECTORS:-$DEFAULT_COLLECTORS}"
+            SUB_MON="${SUB_MON:-$SUB}"
+            {
+              echo "subscription_id=$SUB"
+              echo "resource_group=$RESOURCE_GROUP"
+              echo "webapp_name=$WEBAPP"
+              echo "key_vault_url=$KV"
+              echo "source_lz_id=$SOURCE_LZ"
+              echo "subscription_monitored=$SUB_MON"
+              echo "enabled_collectors=$COLLECTORS"
+            } >> "$GITHUB_OUTPUT"
+            echo "Deploy: $TARGET${DESC:+ — $DESC}"
+            echo "App Service: $WEBAPP ($RESOURCE_GROUP)"
+            echo "Apigee (from env vars): $DCM_APIGEE_BASE_URL"
+            echo "Entra scope (from env vars): $DCM_ENTRA_SCOPE"
+          }
+
+          if [[ -z "$AZURE_CLIENT_ID" || -z "$AZURE_CLIENT_SECRET" || -z "$AZURE_TENANT_ID" ]]; then
+            echo "::error::Set AZURE_BUILDER_CLIENT_ID, AZURE_BUILDER_CLIENT_SECRET, AZURE_TENANT_ID on environment '${{ needs.setup.outputs.deploy_env }}'."
+            exit 1
+          fi
+          if [[ -z "$AWS_COLLECTOR_ROLE_ARN" ]]; then
+            echo "::error::Missing AWS_AZURE_COLLECTOR_ECR_ROLE_ARN on environment '${{ needs.setup.outputs.deploy_env }}'."
+            exit 1
+          fi
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ env.AWS_COLLECTOR_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Verify AWS account (central DCM ECR)
+        run: |
+          set -euo pipefail
+          ACCOUNT="$(aws sts get-caller-identity --query Account --output text)"
+          if [[ "$ACCOUNT" != "$DCM_ECR_ACCOUNT_ID" ]]; then
+            echo "::error::AWS role is in account $ACCOUNT — expected $DCM_ECR_ACCOUNT_ID ($DCM_ECR_ACCOUNT_LABEL)."
+            exit 1
+          fi
+          echo "✓ AWS account $ACCOUNT — central DCM ECR"
+
+      - name: Verify ECR image exists
+        id: image
+        run: |
+          set -euo pipefail
+          TAG="$IMAGE_TAG"
+          if [[ -z "$TAG" || "$TAG" == "latest" ]]; then
+            TAG="$(aws ecr describe-images \
+              --registry-id "$DCM_ECR_ACCOUNT_ID" \
+              --repository-name "$ECR_REPOSITORY" \
+              --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags' \
+              --output json \
+              | jq -r '[.[] | select(test("^[a-f0-9]{40}$"))][0] // .[0] // empty')"
+            if [[ -z "$TAG" ]]; then
+              echo "::error::No image in ECR $ECR_REPOSITORY — run full pipeline first."
+              exit 1
+            fi
+            echo "Resolved image_tag=latest → $TAG (newest in ECR)"
+          fi
+          META="$(aws ecr describe-images \
+            --registry-id "$DCM_ECR_ACCOUNT_ID" \
+            --repository-name "$ECR_REPOSITORY" \
+            --image-ids "imageTag=$TAG" \
+            --query 'imageDetails[0].{pushed:imagePushedAt,digest:imageDigest}' \
+            --output json)"
+          if [[ "$META" == "null" || -z "$META" ]]; then
+            echo "::error::No image $ECR_REPOSITORY:$TAG in ECR."
+            exit 1
+          fi
+          FULL_IMAGE="$DCM_ECR_REGISTRY/$ECR_REPOSITORY:$TAG"
+          echo "full_image=$FULL_IMAGE" >> "$GITHUB_OUTPUT"
+          echo "ecr_login_server=$DCM_ECR_REGISTRY" >> "$GITHUB_OUTPUT"
+          echo "Image: $FULL_IMAGE"
+
+      - name: Get ECR pull credentials for App Service
+        id: ecr_creds
+        run: |
+          ECR_PASSWORD="$(aws ecr get-login-password --region "$AWS_REGION")"
+          echo "::add-mask::$ECR_PASSWORD"
+          echo "password=$ECR_PASSWORD" >> "$GITHUB_OUTPUT"
+
+      - name: Login to Azure
+        run: |
+          az login \
+            --service-principal \
+            --username "$AZURE_CLIENT_ID" \
+            --password "$AZURE_CLIENT_SECRET" \
+            --tenant "$AZURE_TENANT_ID" \
+            --output none
+
+      - name: Verify SP can access LZ subscription
+        env:
+          LZ_SUBSCRIPTION_ID: ${{ steps.target.outputs.subscription_id }}
+        run: |
+          if ! az account show --subscription "$LZ_SUBSCRIPTION_ID" >/dev/null 2>&1; then
+            echo "::error::Builder SP cannot access subscription $LZ_SUBSCRIPTION_ID — grant Contributor on LZ sub."
+            exit 1
+          fi
+          echo "✓ SP can access LZ subscription"
+
+      - name: Configure App Service (settings + VNet — before container creds)
+        env:
+          LZ_SUBSCRIPTION_ID: ${{ steps.target.outputs.subscription_id }}
+          DCM_APIGEE_BASE_URL: ${{ vars.DCM_APIGEE_BASE_URL }}
+          DCM_ENTRA_SCOPE: ${{ vars.DCM_ENTRA_SCOPE }}
+        run: |
+          set -euo pipefail
+          az account set --subscription "$LZ_SUBSCRIPTION_ID"
+          RG="${{ steps.target.outputs.resource_group }}"
+          APP="${{ steps.target.outputs.webapp_name }}"
+
+          az webapp identity assign -g "$RG" -n "$APP" --output none 2>/dev/null || true
+
+          # Worker container — in-process health on WEBSITES_PORT (see health_server.py).
+          az webapp config set -g "$RG" -n "$APP" \
+            --startup-file "dcm-azure-collector" \
+            --vnet-route-all-enabled true \
+            --output none
+
+          az webapp config appsettings delete -g "$RG" -n "$APP" \
+            --setting-names WEBSITE_RUN_FROM_PACKAGE DOCKER_CUSTOM_IMAGE_NAME 2>/dev/null || true
+
+          az webapp config appsettings set -g "$RG" -n "$APP" --settings \
+            "DCM_KEY_VAULT_URL=${{ steps.target.outputs.key_vault_url }}" \
+            "AZURE_SUBSCRIPTION_ID=${{ steps.target.outputs.subscription_monitored }}" \
+            "DCM_SOURCE_LZ_ID=${{ steps.target.outputs.source_lz_id }}" \
+            "DCM_APIGEE_BASE_URL=${DCM_APIGEE_BASE_URL}" \
+            "DCM_ENTRA_SCOPE=${DCM_ENTRA_SCOPE}" \
+            "DCM_ENABLED_COLLECTORS=${{ steps.target.outputs.enabled_collectors }}" \
+            "DCM_COLLECTION_INTERVAL=1200" \
+            "DCM_PIPELINE_LOOKBACK_HOURS=24" \
+            "DCM_LOG_LEVEL=INFO" \
+            WEBSITES_PORT=8080 \
+            WEBSITES_ENABLE_APP_SERVICE_STORAGE=false \
+            WEBSITE_VNET_ROUTE_ALL=1 \
+            WEBSITE_PULL_IMAGE_OVER_VNET=false \
+            WEBSITES_CONTAINER_START_TIME_LIMIT=1800 \
+            --output none
+
+          az webapp config set -g "$RG" -n "$APP" \
+            --generic-configurations '{"vnetImagePullEnabled": false, "acrUseManagedIdentityCreds": false}' \
+            --output none
+
+          az resource update -g "$RG" -n "$APP" \
+            --resource-type "Microsoft.Web/sites" \
+            --set properties.publicNetworkAccess=Disabled \
+            --set properties.outboundVnetRouting.imagePullTraffic=false \
+            --set properties.outboundVnetRouting.applicationTraffic=true \
+            --output none
+
+          az webapp log config -g "$RG" -n "$APP" \
+            --application-logging filesystem \
+            --level information \
+            --docker-container-logging filesystem \
+            --output none
+
+          echo "✓ App settings + hybrid VNet routing configured"
+
+      - name: Deploy ECR container (last — preserves DOCKER_REGISTRY_* creds)
+        env:
+          LZ_SUBSCRIPTION_ID: ${{ steps.target.outputs.subscription_id }}
+        run: |
+          set -euo pipefail
+          az account set --subscription "$LZ_SUBSCRIPTION_ID"
+          RG="${{ steps.target.outputs.resource_group }}"
+          APP="${{ steps.target.outputs.webapp_name }}"
+
+          az webapp config container set \
+            -g "$RG" -n "$APP" \
+            --container-image-name "${{ steps.image.outputs.full_image }}" \
+            --container-registry-url "https://${{ steps.image.outputs.ecr_login_server }}" \
+            --container-registry-user AWS \
+            --container-registry-password "${{ steps.ecr_creds.outputs.password }}"
+
+          az webapp stop -g "$RG" -n "$APP" --output none
+          sleep 15
+          az webapp start -g "$RG" -n "$APP" --output none
+
+          echo "✓ Deployed ${{ steps.image.outputs.full_image }} — App Service will pull on restart"
+          echo "::notice::ECR password expires ~12h — cron refresh-ecr-creds.yml every 6h"
+
+      - name: Verify container started
+        env:
+          LZ_SUBSCRIPTION_ID: ${{ steps.target.outputs.subscription_id }}
+        run: |
+          set -euo pipefail
+          az account set --subscription "$LZ_SUBSCRIPTION_ID"
+          RG="${{ steps.target.outputs.resource_group }}"
+          APP="${{ steps.target.outputs.webapp_name }}"
+
+          APP_OK="false"
+          for _ in $(seq 1 12); do
+            META="$(az webapp show -g "$RG" -n "$APP" -o json --query '{
+              state: state,
+              availability: availabilityState,
+              image: siteConfig.linuxFxVersion
+            }')"
+            WEB_STATE="$(echo "$META" | jq -r '.state')"
+            AVAIL="$(echo "$META" | jq -r '.availability')"
+            IMAGE="$(echo "$META" | jq -r '.image')"
+            echo "  poll: state=$WEB_STATE availability=$AVAIL"
+            if [[ "$WEB_STATE" == "Running" && "$AVAIL" == "Normal" && "$IMAGE" == DOCKER\|* ]]; then
+              APP_OK="true"
+              break
+            fi
+            sleep 10
+          done
+
+          az webapp show -g "$RG" -n "$APP" \
+            --query "{name:name,state:state,availability:availabilityState,image:siteConfig.linuxFxVersion}" \
+            -o table
+
+          if [[ "$APP_OK" != "true" ]]; then
+            echo "::error::App Service not Running/Normal with DOCKER image after 2 min."
+            exit 1
+          fi
+          echo "✓ App Service Running — DOCKER image configured"
+
+          PUBLIC="$(az webapp show -g "$RG" -n "$APP" --query publicNetworkAccess -o tsv)"
+          if [[ "$PUBLIC" == "Disabled" ]]; then
+            echo "✓ Deploy verify OK (private VNet LZ — confirm via Portal Log stream)"
+            exit 0
+          fi
+
+          for _ in $(seq 1 12); do
+            STATE="$(az webapp list-instances -g "$RG" -n "$APP" --query "[0].state" -o tsv 2>/dev/null || echo UNKNOWN)"
+            if [[ "$STATE" == "STARTED" ]]; then
+              echo "✓ Container instance STARTED"
+              exit 0
+            fi
+            sleep 10
+          done
+
+          echo "::warning::list-instances still not STARTED — App Service Running; check Log stream if needed."

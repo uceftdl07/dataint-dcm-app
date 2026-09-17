@@ -1,0 +1,32 @@
+name: "Continuous AI : Code Review with private Claude"
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+    id-token: write
+    contents: write
+    pull-requests: write
+    issues: write
+
+jobs:
+  review-with-claude:
+    if: github.event.issue.pull_request && github.event.comment.body == '@claude'
+    runs-on: ubuntu-latest
+    environment: continuous-ai
+    steps:
+      - 
+        name: Run claude code
+        uses: TotalEnergiesCode/cicd-shared-workflows-continuous-ai/claude-code-review@8e21fd1b3291524a37b4fbf396531bdc258f5cc6 # v2.3.0
+        with:
+          azure_client_id: ${{ vars.AZURE_CLIENT_ID }}
+          aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
+          pr_number: ${{ 
+              (github.event_name == 'pull_request' && github.event.pull_request.number) ||
+              (github.event_name == 'issue_comment' && github.event.issue.pull_request && github.event.issue.number) ||
+              (github.event_name == 'pull_request_review' && github.event.pull_request.number) ||
+              (github.event_name == 'pull_request_review_comment' && github.event.pull_request.number) ||
+              ''
+            }}
+          oidc_api_key: ${{ vars.CICD_GH_OIDC_API_KEY }}

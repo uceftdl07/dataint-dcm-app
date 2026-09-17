@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DCM — Databricks / Lakeflow / Overview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Tokens extraits du bundle DCM  /assets/index-BvTme7MZ.css
+   (oklch résolus en hex) — 3 août 2026
+   ============================================================ */
+:root{
+  --background:#ffffff; --foreground:#09090b;
+  --card-background:#fdfdfd; --card-radius:1.375rem;
+  --card-padding-x:1.25rem; --card-padding-y:1rem;
+  --card-title-size:.9375rem; --card-subtitle-size:.8125rem; --card-value-size:1.5rem;
+  --card-shadow:0 10px 30px #0f172a12; --card-hover-shadow:0 18px 42px #0f172a1f;
+  --border:#e4e4e7; --ring:#d4d4d8; --muted:#f4f4f5; --muted-foreground:#71717b;
+  --radius:.625rem;
+  --primary:#306dff; --info:#306dff; --info-subtle:#e5f0ff; --info-border:#a8c4ff;
+  --success:#437a00; --success-subtle:#e6fae5; --success-border:#a6dba7;
+  --warning:#844700; --warning-subtle:#fff5d5; --warning-border:#fac871;
+  --danger:#e7000b;  --danger-subtle:#ffe9e6;  --danger-border:#ffb6ae;
+  --purple:#8b46df;
+  --tdf-blue:#1f49d2; --tdf-blue-subtle:#e6edfe; --tdf-blue-border:#7b99f9;
+  --tdf-teal:#0f6656; --tdf-green:#437a00; --tdf-grey:#68707d;
+  --tdf-red:#b30000; --tdf-pink:#a71b4a; --tdf-purple:#6f37b9;
+  --tdf-gradient-brand:linear-gradient(135deg,var(--tdf-blue),var(--tdf-teal));
+  --chart-1:#f54a00; --chart-2:#009689; --chart-3:#104e64; --chart-4:#ffb900; --chart-5:#fe9a00;
+  --sidebar:#fafafa; --sidebar-border:#e4e4e7;
+  --cat-blue-main:#0055a4; --cat-blue-night:#0c2340;
+
+  /* statuts run — dérivés des tokens DCM */
+  --st-succeeded:var(--success); --st-failed:var(--danger);
+  --st-timeout:var(--chart-5);   --st-cancelled:var(--tdf-grey);
+  --st-running:var(--primary);   --st-skipped:var(--muted);
+}
+*{box-sizing:border-box}
+body{margin:0;background:#f7f7f8;color:var(--foreground);
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1360px;margin:0 auto;padding:0 24px 56px}
+
+/* ---------- eyebrow / labels DCM : 10px / 900 / ls 2px / uppercase ---------- */
+.eyebrow{font-size:10px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--muted-foreground)}
+
+/* ---------- top bar ---------- */
+.topbar{display:flex;align-items:center;gap:20px;padding:16px 0;border-bottom:1px solid var(--border);margin-bottom:20px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo .mark{width:26px;height:26px;border-radius:9px;background:var(--tdf-gradient-brand);
+  display:grid;place-items:center;color:#fff;font-weight:900;font-size:11px;letter-spacing:.5px}
+.logo .txt{font-weight:900;font-size:13px;letter-spacing:1.4px;text-transform:uppercase}
+.navlinks{display:flex;gap:22px;margin-left:14px}
+.navlinks a{text-decoration:none;color:var(--muted-foreground);font-size:10px;font-weight:900;letter-spacing:2px;text-transform:uppercase}
+.navlinks a.on{color:var(--foreground)}
+.spacer{flex:1}
+.opstatus{display:flex;align-items:center;gap:7px;font-size:10px;font-weight:900;letter-spacing:1.6px;
+  text-transform:uppercase;color:var(--success)}
+.opstatus i{width:7px;height:7px;border-radius:50%;background:var(--success);display:inline-block}
+.mockflag{background:var(--warning-subtle);color:var(--warning);border:1px solid var(--warning-border);
+  padding:5px 12px;border-radius:999px;font-size:9.5px;font-weight:900;letter-spacing:1.4px;text-transform:uppercase}
+
+/* ---------- page head ---------- */
+.pagehead{display:flex;align-items:flex-end;gap:16px;margin-bottom:18px}
+.pagehead h1{margin:2px 0 0;font-size:22px;font-weight:900;letter-spacing:-.55px}
+.pagehead .crumb{font-size:10px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--muted-foreground)}
+.pagehead .crumb b{color:var(--tdf-blue)}
+
+/* ---------- tabs ---------- */
+.tabs{display:flex;gap:6px;margin-bottom:18px;border-bottom:1px solid var(--border)}
+.tab{padding:9px 16px;font-size:10px;font-weight:900;letter-spacing:1.6px;text-transform:uppercase;
+  color:var(--muted-foreground);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab.on{color:var(--tdf-blue);border-bottom-color:var(--tdf-blue)}
+
+/* ---------- filter bar ---------- */
+.filters{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--card-background);
+  border:1px solid var(--border);border-radius:var(--card-radius);padding:11px 18px;margin-bottom:22px;
+  box-shadow:var(--card-shadow)}
+.sel{display:flex;align-items:center;gap:7px;border:1px solid var(--ring);background:#fff;border-radius:var(--radius);
+  padding:6px 12px;font-size:12.5px;font-weight:600;cursor:pointer}
+.sel .lbl{font-size:9.5px;font-weight:900;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted-foreground)}
+.seg{display:flex;border:1px solid var(--ring);border-radius:var(--radius);overflow:hidden;background:#fff}
+.seg button{border:0;background:transparent;padding:6px 14px;cursor:pointer;color:var(--muted-foreground);
+  font-family:inherit;font-size:9.5px;font-weight:900;letter-spacing:1.4px;text-transform:uppercase;
+  border-right:1px solid var(--border)}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--tdf-blue);color:#fff}
+.fresh{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--muted-foreground);font-weight:500}
+.fresh i{width:6px;height:6px;border-radius:50%;background:var(--success);display:inline-block}
+
+/* ---------- section ---------- */
+.sec{display:flex;align-items:center;gap:12px;margin:26px 4px 12px}
+.sec .line{flex:1;height:1px;background:var(--border)}
+
+/* ---------- cards ---------- */
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.card{background:var(--card-background);border:1px solid var(--border);border-radius:var(--card-radius);
+  padding:var(--card-padding-y) var(--card-padding-x);box-shadow:var(--card-shadow);position:relative;
+  cursor:pointer;transition:box-shadow .18s ease,transform .18s ease,border-color .18s ease}
+.card:hover{box-shadow:var(--card-hover-shadow);transform:translateY(-2px);border-color:var(--ring)}
+.card.alert{border-color:var(--danger-border);background:linear-gradient(180deg,var(--danger-subtle) 0%,var(--card-background) 46%)}
+.card.warnbox{border-color:var(--warning-border);background:linear-gradient(180deg,var(--warning-subtle) 0%,var(--card-background) 46%)}
+.chead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;min-height:20px}
+.ctitle{font-size:9.5px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted-foreground)}
+.cvalue{font-size:var(--card-value-size);font-weight:900;letter-spacing:-.9px;margin:10px 0 2px;line-height:1.1}
+.cvalue small{font-size:11px;font-weight:700;letter-spacing:0;color:var(--muted-foreground);margin-left:5px}
+.csub{font-size:var(--card-subtitle-size);color:var(--muted-foreground);font-weight:500}
+.clink{position:absolute;right:18px;bottom:13px;font-size:9.5px;font-weight:900;letter-spacing:1.3px;
+  text-transform:uppercase;color:var(--tdf-blue);opacity:0;transition:opacity .18s}
+.card:hover .clink{opacity:1}
+
+.badge{font-size:9px;font-weight:900;letter-spacing:1.1px;text-transform:uppercase;padding:3px 9px;
+  border-radius:999px;white-space:nowrap;border:1px solid transparent}
+.b-ok{background:var(--success-subtle);color:var(--success);border-color:var(--success-border)}
+.b-warn{background:var(--warning-subtle);color:var(--warning);border-color:var(--warning-border)}
+.b-ko{background:var(--danger-subtle);color:var(--danger);border-color:var(--danger-border)}
+.b-info{background:var(--info-subtle);color:var(--info);border-color:var(--info-border)}
+.b-n{background:var(--muted);color:var(--muted-foreground);border-color:var(--border)}
+
+.delta{font-size:12px;font-weight:800}
+.delta.up{color:var(--success)} .delta.down{color:var(--danger)}
+
+.segbar{display:flex;height:8px;border-radius:999px;overflow:hidden;margin-top:11px;background:var(--muted)}
+.segbar i{display:block;height:100%}
+.legend{display:flex;gap:13px;flex-wrap:wrap;margin-top:9px;font-size:11px;color:var(--muted-foreground);font-weight:500}
+.legend s{width:8px;height:8px;border-radius:2px;display:inline-block;margin-right:5px;text-decoration:none}
+.gwrap{display:flex;align-items:center;gap:16px;margin-top:6px}
+.gval{font-size:26px;font-weight:900;letter-spacing:-1px;line-height:1.05}
+
+/* ---------- panels ---------- */
+.panel{background:var(--card-background);border:1px solid var(--border);border-radius:var(--card-radius);
+  box-shadow:var(--card-shadow);margin-top:16px;overflow:hidden}
+.ph{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;border-bottom:1px solid var(--border)}
+.ph h3{margin:0;font-size:var(--card-title-size);font-weight:800;letter-spacing:-.2px}
+.ph .note{font-size:11px;color:var(--muted-foreground);font-weight:500}
+.pb{padding:16px 20px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{text-align:left;font-size:9.5px;font-weight:900;letter-spacing:1.4px;text-transform:uppercase;
+  color:var(--muted-foreground);padding:9px 10px;border-bottom:1px solid var(--border)}
+td{padding:10px;border-bottom:1px solid var(--muted);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--muted)}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;color:var(--muted-foreground)}
+.wname{font-weight:700}
+.trunc{color:var(--muted-foreground);max-width:330px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+.mini{height:6px;background:var(--muted);border-radius:999px;overflow:hidden;width:64px;display:inline-block;vertical-align:middle}
+.mini i{display:block;height:100%;border-radius:999px}
+a.ext{color:var(--tdf-blue);text-decoration:none;font-weight:900}
+
+.callout{margin-top:26px;background:var(--warning-subtle);border:1px solid var(--warning-border);
+  border-radius:var(--card-radius);padding:16px 20px;font-size:12.5px;color:#5c3200}
+.callout b.h{display:block;margin-bottom:8px;color:var(--warning);font-size:9.5px;font-weight:900;
+  letter-spacing:1.5px;text-transform:uppercase}
+.callout ul{margin:0;padding-left:18px} .callout li{margin:5px 0}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;
+  background:#ffffffb0;padding:1px 5px;border-radius:5px;border:1px solid #00000010}
+@media(max-width:1050px){.grid3{grid-template-columns:1fr}.two{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="logo"><div class="mark">DCM</div><div class="txt">Data Connect Monitoring</div></div>
+    <div class="navlinks">
+      <a href="#">Infrastructures</a><a href="#" class="on">Databricks</a>
+      <a href="#">Compliance</a><a href="#">Performance</a>
+    </div>
+    <div class="spacer"></div>
+    <div class="opstatus"><i></i>Collecte opérationnelle</div>
+    <div class="mockflag">Maquette · données fictives</div>
+  </div>
+
+  <div class="pagehead">
+    <div>
+      <div class="crumb">Databricks / <b>Lakeflow</b></div>
+      <h1>Overview</h1>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab on">Overview</div><div class="tab">Jobs</div>
+    <div class="tab">Pipelines</div><div class="tab">Compute</div>
+  </div>
+
+  <div class="filters">
+    <div class="sel"><span class="lbl">Landing zone</span><b>Toutes (4)</b> ▾</div>
+    <div class="sel"><span class="lbl">Workspace</span><b>Tous (3)</b> ▾</div>
+    <div class="seg"><button class="on">Aujourd'hui</button><button>7 jours</button><button>30 jours</button></div>
+    <div class="spacer"></div>
+    <div class="fresh"><i></i>Collecte 14:31 · rafraîchissement 60 s</div>
+  </div>
+
+  <!-- ================= ACTIVITÉ ================= -->
+  <div class="sec"><span class="eyebrow">Activité</span><span class="line"></span></div>
+  <div class="grid3">
+
+    <div class="card" title="gold_dbx_workflow_concurrency_1min">
+      <div class="chead"><span class="ctitle">Runs actifs</span><span class="badge b-n">à 14:31</span></div>
+      <div class="cvalue">12</div>
+      <div class="csub">Concurrence reconstruite — pas de sonde temps réel</div>
+      <svg viewBox="0 0 300 46" width="100%" height="46" style="margin-top:10px" id="spark"></svg>
+      <div class="clink">Runs en cours →</div>
+    </div>
+
+    <div class="card" title="gold_dbx_workflow_success_rate">
+      <div class="chead"><span class="ctitle">Runs terminés</span></div>
+      <div class="cvalue">143</div>
+      <div class="csub">sur le jour courant</div>
+      <div class="segbar">
+        <i style="width:95.1%;background:var(--st-succeeded)"></i>
+        <i style="width:2.1%;background:var(--st-failed)"></i>
+        <i style="width:.7%;background:var(--st-timeout)"></i>
+        <i style="width:2.1%;background:var(--st-cancelled)"></i>
+      </div>
+      <div class="legend">
+        <span><s style="background:var(--st-succeeded)"></s>136 succès</span>
+        <span><s style="background:var(--st-failed)"></s>3 échecs</span>
+        <span><s style="background:var(--st-timeout)"></s>1 timeout</span>
+        <span><s style="background:var(--st-cancelled)"></s>3 annulés</span>
+      </div>
+      <div class="clink">Tous les workflows →</div>
+    </div>
+
+    <div class="card alert" title="failed_runs + timed_out_runs">
+      <div class="chead"><span class="ctitle">Runs en échec</span><span class="badge b-ko">à traiter</span></div>
+      <div class="cvalue" style="color:var(--danger)">4</div>
+      <div class="csub"><span class="delta up">▼ 2</span> vs période précédente · 3 workflows touchés</div>
+      <div class="clink">Workflows en échec →</div>
+    </div>
+  </div>
+
+  <!-- ================= FIABILITÉ ================= -->
+  <div class="sec"><span class="eyebrow">Fiabilité</span><span class="line"></span></div>
+  <div class="grid3">
+
+    <div class="card" title="SUM(succeeded_runs)/SUM(terminal_runs)">
+      <div class="chead"><span class="ctitle">Taux de succès · aujourd'hui</span><span class="badge b-ok">≥ 95 %</span></div>
+      <div class="gwrap">
+        <svg width="94" height="55" viewBox="0 0 94 55" id="g1"></svg>
+        <div>
+          <div class="gval" style="color:var(--success)">97,2 %</div>
+          <div class="csub">n = 143 · <span class="delta up">▲ 1,1 pt</span></div>
+        </div>
+      </div>
+      <div class="clink">Détail par workflow →</div>
+    </div>
+
+    <div class="card" title="SUM(succeeded_runs)/SUM(terminal_runs) — 7 j">
+      <div class="chead"><span class="ctitle">Taux de succès · 7 jours</span><span class="badge b-warn">90–95 %</span></div>
+      <div class="gwrap">
+        <svg width="94" height="55" viewBox="0 0 94 55" id="g2"></svg>
+        <div>
+          <div class="gval" style="color:var(--warning)">94,1 %</div>
+          <div class="csub">n = 1 021 · <span class="delta down">▼ 0,8 pt</span></div>
+        </div>
+      </div>
+      <div class="clink">Détail par workflow →</div>
+    </div>
+
+    <div class="card" title="gold_dbx_workflow_task_failure_rate">
+      <div class="chead"><span class="ctitle">Tâches en échec</span><span class="badge b-warn">2–5 %</span></div>
+      <div class="cvalue" style="color:var(--warning)">3,4 %</div>
+      <div class="csub">41 tâches KO sur 1 204 · <span class="delta down">▲ 0,6 pt</span></div>
+      <div class="segbar"><i style="width:3.4%;background:var(--warning)"></i></div>
+      <div class="clink">Workflows touchés →</div>
+    </div>
+  </div>
+
+  <!-- ================= PERFORMANCE ================= -->
+  <div class="sec"><span class="eyebrow">Performance</span><span class="line"></span></div>
+  <div class="grid3">
+
+    <div class="card warnbox" title="gold_dbx_workflow_duration_drift">
+      <div class="chead"><span class="ctitle">Durée moyenne</span><span class="badge b-warn">⚠ dérive</span></div>
+      <div class="cvalue">4 m 12 s</div>
+      <div class="csub"><span class="delta down">+23,4 % ↗</span> vs baseline 14 j (3 m 25 s)</div>
+      <div class="clink">Trier par dérive →</div>
+    </div>
+
+    <div class="card" title="gold_dbx_workflow_duration_percentiles">
+      <div class="chead"><span class="ctitle">Distribution des durées</span></div>
+      <div class="cvalue">18 m 40 s<small>p95</small></div>
+      <div class="csub">p50 <b>3 m 48 s</b> · p99 <b>42 m 11 s</b> · max <b>1 h 04</b></div>
+      <svg viewBox="0 0 300 36" width="100%" height="36" style="margin-top:10px" id="pct"></svg>
+      <div class="clink">Runs les plus longs →</div>
+    </div>
+
+    <div class="card" title="avg_queued_duration_seconds + avg_schedule_lag_seconds">
+      <div class="chead"><span class="ctitle">Attente avant exécution</span></div>
+      <div class="cvalue">1 m 05 s</div>
+      <div class="csub">Provisionnement cluster vs retard d'orchestration</div>
+      <div class="segbar"><i style="width:74%;background:var(--tdf-blue)"></i><i style="width:26%;background:var(--tdf-blue-border)"></i></div>
+      <div class="legend">
+        <span><s style="background:var(--tdf-blue)"></s>File d'attente 48 s</span>
+        <span><s style="background:var(--tdf-blue-border)"></s>Retard planif. 17 s</span>
+      </div>
+      <div class="clink">Détail par workflow →</div>
+    </div>
+  </div>
+
+  <!-- ================= TIMELINE ================= -->
+  <div class="panel">
+    <div class="ph">
+      <h3>Runs terminés par statut</h3>
+      <div class="note"><code>gold_dbx_workflow_success_rate</code> · grain jour — masqué en fenêtre « aujourd'hui »</div>
+    </div>
+    <div class="pb"><svg viewBox="0 0 1000 190" width="100%" height="190" id="bars"></svg></div>
+  </div>
+
+  <div class="two">
+    <div class="panel" style="margin-top:0">
+      <div class="ph"><h3>Top 5 workflows instables</h3><div class="note">7 derniers jours</div></div>
+      <div class="pb" style="padding-top:6px">
+        <table><thead><tr><th>Workflow</th><th style="width:52px">KO</th><th style="width:118px">Fiabilité</th></tr></thead>
+        <tbody id="unstable"></tbody></table>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:0">
+      <div class="ph"><h3>Derniers runs en échec</h3><div class="note">à remplacer par « Top 5 codes d'erreur »</div></div>
+      <div class="pb" style="padding-top:6px">
+        <table><thead><tr><th>Workflow</th><th style="width:60px">Heure</th><th>Erreur</th><th style="width:30px"></th></tr></thead>
+        <tbody id="errs"></tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <b class="h">Écarts assumés dans cette maquette</b>
+    <ul>
+      <li><b>Pas de badge « LIVE »</b> sur « Runs actifs » : <code>gold_dbx_workflow_concurrency_1min</code> est reconstruit depuis les intervalles de runs, pas échantillonné en direct. Le sous-titre porte l'horodatage réel du dernier bucket.</li>
+      <li><b>« Aujourd'hui » au lieu de « 24 h »</b> : les agrégats gold sont au grain journalier. Une vraie fenêtre glissante suppose un agrégat horaire (écart n° 2 de la spec).</li>
+      <li><b>Bloc « Top 5 codes d'erreur » remplacé</b> par les derniers runs en échec : <code>termination_code</code> n'existe pas en gold, seul <code>error_message</code> en texte libre est disponible.</li>
+      <li><b>Carte « En attente » supprimée</b> : la table de concurrence ne porte qu'un compteur unique, sans décomposition queued / pending / running.</li>
+      <li><b>Tous les taux sont recalculés depuis les compteurs</b> (<code>SUM(succeeded_runs)/SUM(terminal_runs)</code>), jamais par moyenne de pourcentages.</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+const CSS = getComputedStyle(document.documentElement);
+const T = n => CSS.getPropertyValue(n).trim();
+const OK=T('--success'), KO=T('--danger'), TO=T('--chart-5'), CA=T('--tdf-grey'), BL=T('--tdf-blue');
+
+const spark=[6,5,7,9,8,6,4,3,3,2,4,7,11,14,16,13,10,9,12,15,13,11,9,12];
+const days=[{d:'28/07',s:472,f:14,t:2,c:5},{d:'29/07',s:489,f:9,t:1,c:4},{d:'30/07',s:466,f:21,t:3,c:7},
+            {d:'31/07',s:495,f:7,t:0,c:3},{d:'01/08',s:481,f:12,t:2,c:6},{d:'02/08',s:298,f:5,t:1,c:2},
+            {d:'03/08',s:136,f:3,t:1,c:3}];
+const unstable=[{n:'wf_ingest_sap_finance',id:'8412',ko:7,tot:42},{n:'wf_curated_customer_360',id:'2287',ko:5,tot:168},
+  {n:'wf_gold_sales_daily',id:'9031',ko:3,tot:7},{n:'wf_ingest_crm_delta',id:'5540',ko:2,tot:96},
+  {n:'wf_export_reporting_pack',id:'1177',ko:2,tot:14}];
+const errors=[
+ {n:'wf_ingest_sap_finance',h:'13:47',e:'CLUSTER_ERROR: instance pool exhausted in region westeurope'},
+ {n:'wf_gold_sales_daily',h:'12:02',e:'RUN_EXECUTION_ERROR: AnalysisException — column `amount_eur` not found'},
+ {n:'wf_curated_customer_360',h:'09:31',e:'Task task_dedup failed after 3 attempts — driver OOM'},
+ {n:'wf_export_reporting_pack',h:'06:15',e:'STORAGE_ACCESS_ERROR: 403 on abfss://exports@dclake.dfs...'},
+ {n:'wf_ingest_crm_delta',h:'04:08',e:'MAX_CONCURRENT_RUNS_EXCEEDED: limit 1 reached'}];
+
+/* sparkline */
+(()=>{const w=300,h=46,max=Math.max(...spark),
+ pts=spark.map((v,i)=>[i*(w/(spark.length-1)),h-4-(v/max)*(h-12)]),
+ line=pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+ document.getElementById('spark').innerHTML=
+  `<polyline points="${line} ${w},${h} 0,${h}" fill="${T('--tdf-blue-subtle')}" stroke="none"/>
+   <polyline points="${line}" fill="none" stroke="${BL}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+   <circle cx="${pts.at(-1)[0]}" cy="${pts.at(-1)[1]}" r="3.2" fill="${BL}"/>`;})();
+
+/* jauges */
+function gauge(id,pct,col){const cx=47,cy=47,r=36,a=Math.PI*(1-pct/100),
+ x=cx+r*Math.cos(a),y=cy-r*Math.sin(a);
+ document.getElementById(id).innerHTML=
+  `<path d="M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}" fill="none" stroke="${T('--muted')}" stroke-width="10" stroke-linecap="round"/>
+   <path d="M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${x.toFixed(2)} ${y.toFixed(2)}" fill="none" stroke="${col}" stroke-width="10" stroke-linecap="round"/>`;}
+gauge('g1',97.2,OK); gauge('g2',94.1,T('--warning'));
+
+/* percentiles */
+(()=>{const w=300,h=36,marks=[['p50',12,BL],['p95',58,T('--warning')],['p99',88,KO]];
+ let s=`<rect x="0" y="12" width="${w}" height="9" rx="4.5" fill="${T('--muted')}"/>
+        <rect x="0" y="12" width="${w*.58}" height="9" rx="4.5" fill="${T('--tdf-blue-subtle')}"/>`;
+ marks.forEach(([l,v,c])=>{const x=w*v/100;
+  s+=`<line x1="${x}" y1="7" x2="${x}" y2="26" stroke="${c}" stroke-width="2.6" stroke-linecap="round"/>
+      <text x="${Math.min(x,w-14)}" y="35" font-size="9" font-weight="700" fill="${T('--muted-foreground')}" text-anchor="middle" font-family="Inter">${l}</text>`;});
+ document.getElementById('pct').innerHTML=s;})();
+
+/* barres empilées */
+(()=>{const W=1000,H=190,pad={l:46,r:14,t:10,b:26},iw=W-pad.l-pad.r,ih=H-pad.t-pad.b,
+ max=Math.max(...days.map(d=>d.s+d.f+d.t+d.c))*1.1,gap=iw/days.length,bw=gap*.5;
+ let s='';
+ [0,.25,.5,.75,1].forEach(g=>{const y=pad.t+ih-ih*g;
+  s+=`<line x1="${pad.l}" y1="${y}" x2="${W-pad.r}" y2="${y}" stroke="${T('--muted')}"/>
+      <text x="${pad.l-9}" y="${y+3.5}" font-size="10" font-weight="600" fill="${T('--muted-foreground')}" text-anchor="end" font-family="Inter">${Math.round(max*g)}</text>`;});
+ days.forEach((d,i)=>{const x=pad.l+gap*i+(gap-bw)/2;let y=pad.t+ih;
+  [[d.c,CA],[d.t,TO],[d.f,KO],[d.s,OK]].forEach(([v,c])=>{const bh=v/max*ih;y-=bh;
+   if(bh>.4) s+=`<rect x="${x}" y="${y}" width="${bw}" height="${bh}" fill="${c}"><title>${v}</title></rect>`;});
+  s+=`<text x="${x+bw/2}" y="${H-8}" font-size="10" font-weight="700" fill="${T('--muted-foreground')}" text-anchor="middle" font-family="Inter">${d.d}</text>`;});
+ document.getElementById('bars').innerHTML=s;})();
+
+/* tables */
+document.getElementById('unstable').innerHTML=unstable.map(u=>{
+ const rate=(1-u.ko/u.tot)*100, col=rate>=95?OK:rate>=90?T('--warning'):KO;
+ return `<tr><td><div class="wname">${u.n}</div><div class="mono">workflow_id ${u.id}</div></td>
+  <td><span class="badge b-ko">${u.ko}</span></td>
+  <td><span class="mini"><i style="width:${rate.toFixed(1)}%;background:${col}"></i></span>
+      <span style="color:${col};font-weight:800;margin-left:7px">${rate.toFixed(1)}%</span></td></tr>`;}).join('');
+
+document.getElementById('errs').innerHTML=errors.map(e=>`<tr>
+ <td><span class="wname">${e.n}</span></td><td class="mono">${e.h}</td>
+ <td><span class="trunc" title="${e.e}">${e.e}</span></td>
+ <td><a class="ext" href="#" title="run_page_url">↗</a></td></tr>`).join('');
+</script>
+</body>
+</html>

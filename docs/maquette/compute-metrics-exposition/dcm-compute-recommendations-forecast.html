@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCM — Compute · Recommandations & Forecast</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --font-sans:"Inter",ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --background:oklch(100% 0 0); --foreground:oklch(14.1% .005 285.823);
+  --card-background:oklch(99.5% 0 0); --card-radius:1.375rem; --card-padding-x:1.25rem; --card-padding-y:1rem;
+  --card-shadow:0 10px 30px #0f172a12; --card-hover-shadow:0 18px 42px #0f172a1f;
+  --primary:oklch(60% .25 264.376); --primary-foreground:oklch(100% 0 0);
+  --secondary:oklch(96.7% .001 286.375); --secondary-foreground:oklch(21% .006 285.885);
+  --muted:oklch(96.7% .001 286.375); --muted-foreground:oklch(55.2% .016 285.938);
+  --success:oklch(52% .1483 133.57); --success-subtle:oklch(96.5% .035 145); --success-border:oklch(84% .09 145);
+  --warning:oklch(46% .13 70); --warning-subtle:oklch(97.5% .045 85); --warning-border:oklch(86% .12 80);
+  --danger:oklch(57.7% .245 27.325); --danger-foreground:oklch(100% 0 0); --danger-subtle:oklch(96% .035 25); --danger-border:oklch(86% .105 25);
+  --info:oklch(60% .25 264.376); --info-subtle:oklch(95.5% .035 265); --info-border:oklch(82% .09 265);
+  --purple:oklch(56% .22 300); --purple-subtle:oklch(95.5% .035 300); --purple-border:oklch(82% .09 300);
+  --border:oklch(92% .004 286.32); --input:oklch(98.5% 0 0); --ring:oklch(87.1% .006 286.286); --radius:.625rem;
+  --sidebar:oklch(98.5% 0 0); --sidebar-foreground:oklch(14.1% .005 285.823);
+  --sidebar-accent:oklch(96.7% .001 286.375); --sidebar-accent-foreground:oklch(21% .006 285.885); --sidebar-border:oklch(92% .004 286.32);
+  --tdf-gradient-brand:linear-gradient(135deg,oklch(47.42% .215 265.21),oklch(45.82% .081 176.28));
+}
+*{box-sizing:border-box;} body{margin:0;font-family:var(--font-sans);background:var(--background);color:var(--foreground);font-size:16px;-webkit-font-smoothing:antialiased;}
+.btn{font-family:inherit;cursor:pointer;border:1px solid var(--border);background:var(--background);color:var(--foreground);border-radius:999px;padding:.4rem .9rem;font-size:.8125rem;font-weight:600;display:inline-flex;align-items:center;gap:.4rem;}
+.btn-guide{background:var(--info-subtle);color:var(--info);border-color:var(--info-border);}
+.icon-btn{width:2rem;height:2rem;border-radius:999px;border:1px solid var(--border);background:var(--background);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:.9rem;}
+.dropdown-btn{border:1px solid var(--border);border-radius:999px;padding:.4rem .9rem;font-size:.8125rem;background:var(--background);display:inline-flex;align-items:center;gap:.5rem;color:var(--foreground);cursor:pointer;}
+.date-field{font-size:.8125rem;color:var(--muted-foreground);padding:.4rem .75rem;} .date-field b{color:var(--foreground);font-weight:600;}
+.segmented{display:inline-flex;background:var(--muted);border-radius:999px;padding:3px;gap:2px;}
+.segmented button{font-family:inherit;border:none;background:transparent;padding:.4rem .8rem;border-radius:999px;font-size:.8125rem;font-weight:700;color:var(--muted-foreground);cursor:pointer;}
+.segmented button.active{background:var(--primary);color:var(--primary-foreground);}
+select.select-pill{appearance:none;border:1px solid var(--border);border-radius:999px;padding:.4rem 1.75rem .4rem .9rem;font-size:.8125rem;font-family:inherit;background:var(--background) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><path d="M1 3l4 4 4-4" stroke="%2355544f" fill="none" stroke-width="1.4"/></svg>') no-repeat right .75rem center;color:var(--foreground);cursor:pointer;}
+.pill{font-family:inherit;border:1px solid var(--border);border-radius:999px;padding:.4rem .9rem;font-size:.8125rem;font-weight:600;background:var(--background);color:var(--foreground);cursor:pointer;}
+.pill.active{background:var(--primary);color:var(--primary-foreground);border-color:var(--primary);}
+.search{display:inline-flex;align-items:center;gap:.5rem;border:1px solid var(--border);border-radius:999px;padding:.5rem 1rem;color:var(--muted-foreground);font-size:.875rem;min-width:200px;}
+.search input{border:none;outline:none;background:transparent;font-family:inherit;font-size:.875rem;color:var(--foreground);width:100%;}
+.badge{display:inline-flex;align-items:center;gap:.3rem;padding:.15rem .55rem;border-radius:999px;font-size:.72rem;font-weight:700;border:1px solid transparent;white-space:nowrap;}
+.badge-danger{background:var(--danger-subtle);color:var(--danger);border-color:var(--danger-border);}
+.badge-success{background:var(--success-subtle);color:var(--success);border-color:var(--success-border);}
+.badge-warning{background:var(--warning-subtle);color:var(--warning);border-color:var(--warning-border);}
+.badge-info{background:var(--info-subtle);color:var(--info);border-color:var(--info-border);}
+.badge-purple{background:var(--purple-subtle);color:var(--purple);border-color:var(--purple-border);}
+.card{background:var(--card-background);border:1px solid var(--border);border-radius:var(--card-radius);padding:var(--card-padding-y) var(--card-padding-x);box-shadow:var(--card-shadow);}
+.kpi-card{border:1px solid var(--border);border-radius:var(--card-radius);overflow:hidden;background:var(--card-background);}
+.kpi-card-header{padding:.75rem 1rem;display:flex;justify-content:space-between;align-items:center;font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;}
+.kpi-card.amber .kpi-card-header{background:var(--warning-subtle);color:var(--foreground);}
+.kpi-card.green .kpi-card-header{background:var(--success-subtle);color:var(--foreground);}
+.kpi-card.blue .kpi-card-header{background:var(--info-subtle);color:var(--foreground);}
+.kpi-card.purple .kpi-card-header{background:var(--purple-subtle);color:var(--foreground);}
+.kpi-card.danger .kpi-card-header{background:var(--danger-subtle);color:var(--foreground);}
+.kpi-icon{width:2rem;height:2rem;border-radius:999px;background:var(--background);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.9rem;}
+.kpi-card-body{padding:1rem;} .kpi-value{font-size:1.5rem;font-weight:700;}
+.kpi-value.amber{color:var(--warning);} .kpi-value.green{color:var(--success);} .kpi-value.blue{color:var(--primary);} .kpi-value.purple{color:var(--purple);} .kpi-value.danger{color:var(--danger);}
+.kpi-sub{font-size:.8125rem;color:var(--muted-foreground);}
+.section-label{font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-foreground);margin:.5rem 0;}
+table.data-table{width:100%;border-collapse:collapse;font-size:.8125rem;}
+.data-table thead th{text-align:left;text-transform:uppercase;font-size:.68rem;letter-spacing:.05em;color:var(--muted-foreground);padding:.7rem .5rem;border-bottom:1px solid var(--border);white-space:nowrap;}
+.data-table tbody td{padding:.7rem .5rem;border-bottom:1px solid var(--border);vertical-align:middle;}
+.data-table tbody tr:last-child td{border-bottom:none;}
+.data-table tbody tr.clickable{cursor:pointer;}
+.data-table tbody tr.clickable:hover{background:var(--muted);}
+.muted{color:var(--muted-foreground);} .mono-id{font-size:.72rem;color:var(--muted-foreground);display:block;}
+.ext-link{color:var(--primary);font-weight:600;text-decoration:none;font-size:.8125rem;}
+.empty-state{text-align:center;color:var(--muted-foreground);font-size:.8125rem;padding:2rem 0;}
+.app-shell{display:grid;grid-template-columns:220px 1fr;min-height:100vh;border:1px solid var(--border);}
+.app-sidebar{background:var(--sidebar);color:var(--sidebar-foreground);border-right:1px solid var(--sidebar-border);padding:1rem .75rem;display:flex;flex-direction:column;justify-content:space-between;}
+.app-logo{display:flex;align-items:center;gap:.5rem;padding:.5rem;margin-bottom:1rem;}
+.app-logo .mark{width:28px;height:28px;border-radius:8px;background:var(--tdf-gradient-brand);}
+.app-logo .word b{display:block;line-height:1.1;font-size:.95rem;} .app-logo .word .accent{color:var(--primary);}
+.nav-group{margin-bottom:.25rem;}
+.nav-item{display:flex;align-items:center;gap:.6rem;padding:.5rem .6rem;border-radius:var(--radius);font-size:.85rem;font-weight:500;color:var(--sidebar-foreground);cursor:pointer;text-decoration:none;}
+.nav-item:hover{background:var(--sidebar-accent);} .nav-item.current{background:var(--sidebar-accent);font-weight:700;}
+.nav-sub{margin-left:1.5rem;display:flex;flex-direction:column;} .nav-sub .nav-item{font-size:.82rem;padding:.4rem .6rem;}
+.sidebar-footer{border-top:1px solid var(--sidebar-border);padding-top:.75rem;}
+.user-chip{display:flex;align-items:center;gap:.5rem;padding:.4rem;font-size:.75rem;}
+.avatar{width:28px;height:28px;border-radius:999px;background:var(--secondary);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.7rem;}
+.app-main{display:flex;flex-direction:column;}
+.app-topbar{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:.75rem;}
+.topbar-left .breadcrumb{font-size:.75rem;color:var(--muted-foreground);margin-bottom:.15rem;}
+.topbar-left .page-title{font-size:1.15rem;font-weight:700;}
+.topbar-right{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;}
+.app-content{padding:1.5rem;display:flex;flex-direction:column;gap:1.25rem;}
+.content-toolbar{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;}
+
+.subtabs{display:flex;gap:.5rem;flex-wrap:wrap;}
+.subtab{font-family:inherit;border:1px solid var(--border);border-radius:999px;padding:.45rem 1rem;font-size:.8125rem;font-weight:600;background:var(--background);color:var(--foreground);cursor:pointer;}
+.subtab.active{background:var(--info-subtle);color:var(--info);border-color:var(--info-border);}
+.tab-panel{display:flex;flex-direction:column;gap:1.25rem;}
+.subpanel{display:flex;flex-direction:column;gap:1.25rem;}
+.tab-panel[hidden],.subpanel[hidden]{display:none;}
+.hint-banner{display:flex;gap:.6rem;align-items:flex-start;background:var(--info-subtle);border:1px solid var(--info-border);border-radius:var(--radius);padding:.75rem 1rem;font-size:.8125rem;}
+
+/* drawer */
+.drawer-overlay{position:fixed;inset:0;background:oklch(14.1% .005 285.823 / .35);z-index:40;display:none;}
+.drawer-overlay.open{display:block;}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:460px;max-width:92vw;background:var(--card-background);box-shadow:var(--card-hover-shadow);z-index:41;transform:translateX(100%);transition:transform .22s ease;display:flex;flex-direction:column;}
+.drawer.open{transform:translateX(0);}
+.drawer-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:.75rem;}
+.drawer-header .type-tag{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted-foreground);font-weight:700;margin-bottom:.2rem;}
+.drawer-header h2{margin:0;font-size:1.05rem;font-weight:700;}
+.drawer-body{padding:1.25rem 1.5rem;overflow-y:auto;display:flex;flex-direction:column;gap:1.4rem;}
+.close-btn{width:2rem;height:2rem;border-radius:999px;border:1px solid var(--border);background:var(--background);cursor:pointer;font-size:.9rem;flex:none;}
+.id-card{border:1px solid var(--border);border-radius:var(--radius);padding:.9rem 1rem;display:grid;grid-template-columns:1fr 1fr;gap:.7rem .5rem;font-size:.8125rem;}
+.id-card .f .k{color:var(--muted-foreground);font-size:.68rem;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:.1rem;}
+.id-card .f .v{font-weight:600;}
+.drawer-kpis{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;}
+.mini-kpi{border:1px solid var(--border);border-radius:var(--radius);padding:.6rem .75rem;}
+.mini-kpi .k{font-size:.68rem;text-transform:uppercase;color:var(--muted-foreground);letter-spacing:.04em;}
+.mini-kpi .v{font-size:1.1rem;font-weight:700;margin-top:.15rem;}
+.trend-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.5rem;}
+.trend-head .lbl{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted-foreground);font-weight:700;}
+.trend-head .val{font-size:1.15rem;font-weight:700;}
+.mini-reco{border:1px solid var(--border);border-radius:var(--radius);padding:.65rem .8rem;font-size:.8125rem;display:flex;flex-direction:column;gap:.35rem;margin-bottom:.5rem;}
+.mini-reco:last-child{margin-bottom:0;}
+.mini-reco .top{display:flex;justify-content:space-between;align-items:center;gap:.5rem;}
+.mini-sq{border-top:1px solid var(--border);padding:.55rem 0;font-size:.8125rem;}
+.mini-sq:first-child{border-top:none;padding-top:0;}
+.mini-sq .top{display:flex;justify-content:space-between;align-items:center;}
+.drawer-cta{display:block;text-align:center;padding:.6rem;border:1px solid var(--info-border);background:var(--info-subtle);color:var(--info);border-radius:var(--radius);font-weight:700;font-size:.8125rem;text-decoration:none;}
+
+/* forecast card */
+.forecast-card .fc-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.75rem;margin-bottom:.75rem;}
+.fc-value{font-size:1.5rem;font-weight:700;}
+.fc-range{font-size:.8125rem;color:var(--muted-foreground);}
+.fc-legend{display:flex;gap:1rem;font-size:.75rem;color:var(--muted-foreground);margin-top:.5rem;}
+.fc-legend span{display:inline-flex;align-items:center;gap:.35rem;}
+.fc-dot{width:18px;height:2px;display:inline-block;}
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="app-sidebar">
+    <div>
+      <div class="app-logo"><span class="mark"></span><span class="word"><b>Data</b><b class="accent">connect</b></span></div>
+      <nav>
+        <a class="nav-item">▦ Home</a>
+        <div class="nav-group"><a class="nav-item">⛓ Databricks</a>
+          <div class="nav-sub">
+            <a class="nav-item">Overview</a>
+            <a class="nav-item">Jobs &amp; Pipelines</a>
+            <div class="nav-group">
+              <a class="nav-item">Compute</a>
+              <div class="nav-sub">
+                <a class="nav-item ">Clusters</a>
+                <a class="nav-item ">SQL Warehouses</a>
+                <a class="nav-item current" style="justify-content:space-between;">Recommandations &amp; Forecast <span class="badge badge-warning" style="margin-left:.4rem;">9</span></a>
+              </div>
+            </div>
+            <a class="nav-item">FinOps</a>
+            <a class="nav-item">Usage Data Product</a>
+          </div>
+        </div>
+        <div class="nav-group"><a class="nav-item">🛎 Anomalies</a>
+          <div class="nav-sub"><a class="nav-item">Rules</a><a class="nav-item">Reports</a></div>
+        </div>
+        <a class="nav-item">🗂 Talk to your Data</a>
+      </nav>
+    </div>
+    <div class="sidebar-footer">
+      <div class="nav-group"><a class="nav-item">⚙ Administration</a><div class="nav-sub"><a class="nav-item">Notification Settings</a></div></div>
+      <div class="user-chip"><span class="avatar">ML</span> Maher Lezhari</div>
+    </div>
+  </aside>
+  <div class="app-main">
+    <div class="app-topbar">
+      <div class="topbar-left"><div class="breadcrumb">DCM · Databricks · Compute</div><div class="page-title">Recommandations &amp; Forecast</div></div>
+      <div class="topbar-right">
+        <button class="btn btn-guide">◎ Guide</button>
+        <button class="icon-btn" aria-label="Notifications">🔔</button>
+        <button class="dropdown-btn">☁ Toutes les LZ ▾</button>
+        <select class="select-pill"><option>Tous les clouds</option><option>Azure</option><option>AWS</option></select>
+        <select class="select-pill"><option>Tous les workspaces</option><option>ws-data-eng-prod</option><option>ws-ml-platform</option></select>
+        <span class="date-field">Du <b>14/07/2026</b></span>
+        <span class="date-field">Au <b>13/08/2026</b></span>
+        <div class="segmented"><button>30d</button><button class="active">90d</button><button>6m</button><button>1y</button></div>
+      </div>
+    </div>
+
+    <div class="app-content">
+      <div class="kpi-grid">
+        <div class="kpi-card amber"><div class="kpi-card-header">Reco ouvertes <span class="kpi-icon">🎯</span></div><div class="kpi-card-body"><div class="kpi-value amber">9</div><div class="kpi-sub">clusters + warehouses</div></div></div>
+        <div class="kpi-card green"><div class="kpi-card-header">Économies potentielles <span class="kpi-icon">💰</span></div><div class="kpi-card-body"><div class="kpi-value green">≈ 6 200 €</div><div class="kpi-sub">estimation chiffrable</div></div></div>
+        <div class="kpi-card blue"><div class="kpi-card-header">Résolues (30j) <span class="kpi-icon">✓</span></div><div class="kpi-card-body"><div class="kpi-value blue">5</div><div class="kpi-sub">statut resolved</div></div></div>
+        <div class="kpi-card danger"><div class="kpi-card-header">Sévérité haute <span class="kpi-icon">🚩</span></div><div class="kpi-card-body"><div class="kpi-value danger">4</div><div class="kpi-sub">à traiter en priorité</div></div></div>
+      </div>
+
+      <div class="content-toolbar" id="recoPills">
+        <button class="pill active" data-type="">Tous</button>
+        <button class="pill" data-type="cluster">Clusters</button>
+        <button class="pill" data-type="warehouse">Warehouses</button>
+        <select class="select-pill" id="recoCategory" onchange="filterReco()">
+          <option value="">Toutes catégories</option>
+          <option value="FinOps">FinOps</option>
+          <option value="Rightsizing">Rightsizing</option>
+          <option value="Governance">Governance</option>
+          <option value="Reliability">Reliability</option>
+        </select>
+        <select class="select-pill" id="recoSeverity" onchange="filterReco()">
+          <option value="">Toutes sévérités</option>
+          <option value="Low">Low</option>
+          <option value="Medium">Medium</option>
+          <option value="High">High</option>
+        </select>
+      </div>
+      <div class="card">
+        <table class="data-table">
+          <thead><tr><th>Objet</th><th>Catégorie</th><th>Titre</th><th>Sévérité</th><th>Économie estimée</th><th>Statut</th><th>Depuis</th></tr></thead>
+          <tbody id="recoRows">
+            <tr class="clickable" data-type="cluster" data-category="Governance" data-severity="High" onclick="openDrawer('cluster','sap_datasphere_run','Governance','Monter vers DBR 14.3 LTS','High','—','21j')"><td>sap_datasphere_run</td><td><span class="badge badge-purple">Governance</span></td><td>Monter vers DBR 14.3 LTS</td><td><span class="badge badge-danger">High</span></td><td class="muted">—</td><td><span class="badge badge-warning">Open</span></td><td>21j</td></tr>
+            <tr class="clickable" data-type="cluster" data-category="FinOps" data-severity="High" onclick="openDrawer('cluster','sap_datasphere_run','FinOps','Cluster quasi inactif — éteindre ou activer l\'auto-stop','High','2 000 €','14j')"><td>sap_datasphere_run</td><td><span class="badge badge-purple">FinOps</span></td><td>Cluster quasi inactif — éteindre ou activer l'auto-stop</td><td><span class="badge badge-danger">High</span></td><td>2 000 €</td><td><span class="badge badge-warning">Open</span></td><td>14j</td></tr>
+            <tr class="clickable" data-type="warehouse" data-category="FinOps" data-severity="High" onclick="openDrawer('warehouse','wh_datascience_adhoc','FinOps','Activer l\'auto-stop','High','~1 400 €','9j')"><td>wh_datascience_adhoc</td><td><span class="badge badge-purple">FinOps</span></td><td>Activer l'auto-stop</td><td><span class="badge badge-danger">High</span></td><td>~1 400 €</td><td><span class="badge badge-warning">Open</span></td><td>9j</td></tr>
+            <tr class="clickable" data-type="warehouse" data-category="Reliability" data-severity="High" onclick="openDrawer('warehouse','wh_datascience_adhoc','Reliability','Investiguer les requêtes en échec (3,1 %)','High','—','3j')"><td>wh_datascience_adhoc</td><td><span class="badge badge-purple">Reliability</span></td><td>Investiguer les requêtes en échec (3,1 %)</td><td><span class="badge badge-danger">High</span></td><td class="muted">—</td><td><span class="badge badge-warning">Open</span></td><td>3j</td></tr>
+            <tr class="clickable" data-type="cluster" data-category="Rightsizing" data-severity="Medium" onclick="openDrawer('cluster','ml_training_gpu','Rightsizing','Réduire vers Standard_NC4as_T4_v3','Medium','4 100 €','6j')"><td>ml_training_gpu</td><td><span class="badge badge-purple">Rightsizing</span></td><td>Réduire vers Standard_NC4as_T4_v3</td><td><span class="badge badge-warning">Medium</span></td><td>4 100 €</td><td><span class="badge badge-warning">Open</span></td><td>6j</td></tr>
+            <tr class="clickable" data-type="warehouse" data-category="Rightsizing" data-severity="Medium" onclick="openDrawer('warehouse','wh_datascience_adhoc','Rightsizing','Augmenter max_clusters — queue time élevé','Medium','—','3j')"><td>wh_datascience_adhoc</td><td><span class="badge badge-purple">Rightsizing</span></td><td>Augmenter max_clusters — queue time élevé</td><td><span class="badge badge-warning">Medium</span></td><td class="muted">—</td><td><span class="badge badge-warning">Open</span></td><td>3j</td></tr>
+            <tr class="clickable" data-type="warehouse" data-category="Rightsizing" data-severity="Medium" onclick="openDrawer('warehouse','wh_marketing_dash','Rightsizing','Tuner les requêtes avec spill / upsize ciblé','Medium','—','5j')"><td>wh_marketing_dash</td><td><span class="badge badge-purple">Rightsizing</span></td><td>Tuner les requêtes avec spill / upsize ciblé</td><td><span class="badge badge-warning">Medium</span></td><td class="muted">—</td><td><span class="badge badge-warning">Open</span></td><td>5j</td></tr>
+            <tr class="clickable" data-type="cluster" data-category="Governance" data-severity="Low" onclick="openDrawer('cluster','ml_training_gpu','Governance','Ajouter le tag cost-center','Low','—','6j')"><td>ml_training_gpu</td><td><span class="badge badge-purple">Governance</span></td><td>Ajouter le tag cost-center</td><td><span class="badge badge-info">Low</span></td><td class="muted">—</td><td><span class="badge badge-warning">Open</span></td><td>6j</td></tr>
+            <tr class="clickable" data-type="cluster" data-category="Governance" data-severity="Low" onclick="openDrawer('cluster','sap_datasphere_run','Governance','Ajouter le tag owner','Low','—','21j')"><td>sap_datasphere_run</td><td><span class="badge badge-purple">Governance</span></td><td>Ajouter le tag owner</td><td><span class="badge badge-info">Low</span></td><td class="muted">—</td><td><span class="badge badge-warning">Open</span></td><td>21j</td></tr>
+          </tbody>
+        </table>
+        <p class="empty-state" id="recoEmpty" hidden>Aucune recommandation ne correspond à ce filtre.</p>
+      </div>
+
+      <div class="card forecast-card">
+        <div class="fc-head">
+          <div>
+            <div class="section-label" style="margin:0;">Forecast</div>
+            <div class="fc-value" id="fcValue">46 900 €</div>
+            <div class="fc-range" id="fcRange">Intervalle de confiance : 44 200 – 49 700 € · projection à 14 jours</div>
+          </div>
+          <select class="select-pill" id="fcMetric" onchange="renderForecast(this.value)">
+            <option value="cost">Coût total (LZ azure-sub-fa5abbc4)</option>
+            <option value="dbu">DBU consommés (clusters + warehouses)</option>
+            <option value="cpu">CPU p95 moyen (clusters)</option>
+            <option value="queue">Queue time p95 (warehouses)</option>
+            <option value="queries">Volume de requêtes (warehouses)</option>
+          </select>
+        </div>
+        <svg viewBox="0 0 640 120" width="100%" height="120" id="fcChart"></svg>
+        <div class="fc-legend">
+          <span><span class="fc-dot" style="background:var(--primary);"></span>Historique</span>
+          <span><span class="fc-dot" style="background:var(--purple);border-top:2px dashed var(--purple);background:none;"></span>Prévision (ai_forecast)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Mini-drawer reco (résumé + lien vers la fiche complète Clusters/Warehouses) -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <div><div class="type-tag" id="drawerType">Recommandation</div><h2 id="drawerTitle">—</h2></div>
+    <button class="close-btn" onclick="closeDrawer()" aria-label="Fermer">✕</button>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+</div>
+
+<script>
+var SEV_BADGE={Low:'badge-info',Medium:'badge-warning',High:'badge-danger'};
+var TARGET_PAGE={cluster:'./dcm-compute-clusters.html',warehouse:'./dcm-compute-warehouses.html'};
+var TARGET_LABEL={cluster:'Cluster',warehouse:'SQL Warehouse'};
+
+/* ---------- filtre reco : type objet (pills) + catégorie + sévérité (combinables) ---------- */
+var recoActiveType = '';
+document.getElementById('recoPills').querySelectorAll('.pill').forEach(function(b){
+  b.addEventListener('click',function(){
+    document.getElementById('recoPills').querySelectorAll('.pill').forEach(function(x){x.classList.remove('active');});
+    b.classList.add('active');
+    recoActiveType = b.dataset.type;
+    filterReco();
+  });
+});
+function filterReco(){
+  var category = document.getElementById('recoCategory').value;
+  var severity = document.getElementById('recoSeverity').value;
+  var rows = document.getElementById('recoRows').querySelectorAll('tr');
+  var visible = 0;
+  rows.forEach(function(r){
+    var matchesType = !recoActiveType || r.dataset.type === recoActiveType;
+    var matchesCategory = !category || r.dataset.category === category;
+    var matchesSeverity = !severity || r.dataset.severity === severity;
+    var show = matchesType && matchesCategory && matchesSeverity;
+    r.hidden = !show;
+    if(show) visible++;
+  });
+  document.getElementById('recoEmpty').hidden = visible !== 0;
+}
+
+function openDrawer(objectType,objectId,category,title,severity,savings,since){
+  document.getElementById('drawerType').textContent = TARGET_LABEL[objectType];
+  document.getElementById('drawerTitle').textContent = objectId;
+  var idCard = '<div class="id-card">'+
+    '<div class="f"><span class="k">Catégorie</span><span class="v">'+category+'</span></div>'+
+    '<div class="f"><span class="k">Sévérité</span><span class="v"><span class="badge '+SEV_BADGE[severity]+'">'+severity+'</span></span></div>'+
+    '<div class="f"><span class="k">Économie estimée</span><span class="v">'+savings+'</span></div>'+
+    '<div class="f"><span class="k">Ouverte depuis</span><span class="v">'+since+'</span></div>'+
+  '</div>';
+  var detail = '<div><div class="trend-head"><span class="lbl">Recommandation</span></div>'+
+    '<div class="mini-reco"><div class="top"><span>'+title+'</span></div></div></div>';
+  var cta = '<a class="drawer-cta" href="'+TARGET_PAGE[objectType]+'">Ouvrir la fiche '+TARGET_LABEL[objectType].toLowerCase()+' complète →</a>';
+  document.getElementById('drawerBody').innerHTML = idCard+detail+cta;
+  document.getElementById('drawerOverlay').classList.add('open');
+  document.getElementById('drawer').classList.add('open');
+}
+function closeDrawer(){
+  document.getElementById('drawerOverlay').classList.remove('open');
+  document.getElementById('drawer').classList.remove('open');
+}
+
+function spark(points,w,h){
+  var max=Math.max.apply(null,points), min=Math.min.apply(null,points);
+  var step=w/(points.length-1);
+  return points.map(function(v,i){
+    var x=i*step, y=h-((v-min)/((max-min)||1))*h;
+    return x.toFixed(1)+','+y.toFixed(1);
+  }).join(' ');
+}
+
+var FORECASTS = {
+  cost:{value:'46 900 €',range:'Intervalle de confiance : 44 200 – 49 700 € · projection à 14 jours',hist:[32000,32500,33100,33400,33900,34200,34520],fc:[36800,39200,41500,43600,44900,45900,46900]},
+  dbu:{value:'198 400',range:'Intervalle de confiance : 189 000 – 207 500 · projection à 14 jours',hist:[142380,146200,149800,153100,157000,160500,163800],fc:[172000,180500,187300,191800,194600,196900,198400]},
+  cpu:{value:'61 %',range:'Intervalle de confiance : 55 – 67 % · projection à 14 jours',hist:[48,50,49,52,53,55,53],fc:[54,56,57,58,59,60,61]},
+  queue:{value:'3,4 s',range:'Intervalle de confiance : 2,8 – 4,1 s · projection à 14 jours',hist:[1.8,1.9,2.0,2.1,2.2,2.2,2.2],fc:[2.4,2.6,2.8,3.0,3.1,3.3,3.4]},
+  queries:{value:'41 900',range:'Intervalle de confiance : 39 600 – 44 200 · projection à 14 jours',hist:[36830,37400,38100,38900,39600,40200,40700],fc:[41000,41300,41500,41650,41750,41830,41900]}
+};
+function renderForecast(metric){
+  var f=FORECASTS[metric];
+  document.getElementById('fcValue').textContent=f.value;
+  document.getElementById('fcRange').textContent=f.range;
+  var all=f.hist.concat(f.fc);
+  var histPts=spark(f.hist,640,110);
+  var fcSeries=[f.hist[f.hist.length-1]].concat(f.fc);
+  var max=Math.max.apply(null,all), min=Math.min.apply(null,all);
+  var stepAll=640/(all.length-1);
+  var startX=(f.hist.length-1)*stepAll;
+  var fcPts=fcSeries.map(function(v,i){
+    var x=startX+i*stepAll, y=110-((v-min)/((max-min)||1))*110;
+    return x.toFixed(1)+','+y.toFixed(1);
+  }).join(' ');
+  document.getElementById('fcChart').innerHTML =
+    '<polyline points="'+histPts+'" fill="none" stroke="var(--primary)" stroke-width="2.5"/>'+
+    '<polyline points="'+fcPts+'" fill="none" stroke="var(--purple)" stroke-width="2.5" stroke-dasharray="5,4"/>';
+}
+renderForecast('cost');
+</script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "spec": "018-alerting-email-mailjet",
+  "epic": {
+    "key": "DCINT-315",
+    "url": "https://tdf.atlassian.net/browse/DCINT-315"
+  },
+  "stories": {
+    "T001": {
+      "jira_key": "DCINT-323",
+      "branch": "backend/018-implement-emailchannel-mailjet-templates",
+      "sub_spec": "stories/T001-backend-email-mailjet.md"
+    },
+    "T002": {
+      "jira_key": "DCINT-324",
+      "branch": "frontend/018-enable-email-channel-creation-and",
+      "sub_spec": "stories/T002-frontend-email-config.md"
+    }
+  }
+}

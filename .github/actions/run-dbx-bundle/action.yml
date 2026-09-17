@@ -1,0 +1,25 @@
+name: 'Validate DAB bundle'
+description: 'It validates DAB bundles for the specified Databricks environment'
+
+inputs:
+  WORKFLOW_NAME:
+    description: 'databricks workflow name'
+    required: true
+  DATABRICKS_ENVIRONMENT:
+    description: 'databricks environment'
+    required: true
+
+
+runs:
+  using: "composite"
+  steps:   
+    - uses: actions/checkout@v4    
+    - uses: databricks/setup-cli@main
+    - name: validate bundle
+      shell: bash
+      run: |
+        databricks bundle run -t "$DATABRICKS_BUNDLE_ENV" "$WORKFLOW_NAME"
+      working-directory: packages/dcm-databricks-pipeline
+      env:
+        WORKFLOW_NAME: ${{ inputs.WORKFLOW_NAME }}
+        DATABRICKS_BUNDLE_ENV: ${{ inputs.DATABRICKS_ENVIRONMENT }}
