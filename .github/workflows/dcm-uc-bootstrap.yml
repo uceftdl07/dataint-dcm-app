@@ -66,7 +66,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Acquire Entra token via GitHub OIDC (secretless)
         uses: ./.github/actions/acquire-entra-token-oidc
@@ -75,7 +75,7 @@ jobs:
           client_id: ${{ secrets.AZURE_SP_CLIENT_ID }}
 
       - name: Setup Python 3.12
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.12'
 
