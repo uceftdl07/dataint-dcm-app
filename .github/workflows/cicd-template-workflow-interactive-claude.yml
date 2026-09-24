@@ -45,7 +45,7 @@ jobs:
     environment: continuous-ai
     steps:
       -
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 #v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 #v7.0.1
       - 
         name: Run claude code
         uses: TotalEnergiesCode/cicd-shared-workflows-continuous-ai/claude-code-interactive@8e21fd1b3291524a37b4fbf396531bdc258f5cc6 #v2.3.0

@@ -63,7 +63,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 🌱 Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: 🔥 Install dependencies
         uses: ./.github/actions/install-dbx-dependencies
@@ -80,7 +80,7 @@ jobs:
           uv run pytest tests --cov=. --cov-report xml:coverage.xml
 
       - name: Upload report coverage.xml
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-${{ github.sha }}
           path: packages/dcm-databricks-pipeline/coverage.xml
@@ -93,7 +93,7 @@ jobs:
       - quality
     steps:
       - name: 🌱 Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: 🦺 Run security scans
         uses: ./.github/actions/security
@@ -132,7 +132,7 @@ jobs:
     environment: ${{ matrix.context.env }}
     steps:
       - name: 🌱 Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: 🔑 Acquire Entra token via GitHub OIDC (secretless)
         id: entra-token
